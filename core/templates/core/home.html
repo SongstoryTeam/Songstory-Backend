@@ -52,6 +52,12 @@
 
     <section class="section-wrap" id="catalog">
         <div class="section-head">
+            <div class="filters-container flex gap-12 mb-24" style="flex-wrap: wrap;">
+                <button class="btn btn-primary filter-btn" data-filter="all">Всі</button>
+                <button class="btn btn-ghost filter-btn" data-filter="Fantasy">Fantasy</button>
+                <button class="btn btn-ghost filter-btn" data-filter="Romance">Romance</button>
+                <button class="btn btn-ghost filter-btn" data-filter="Detective">Detective</button>
+            </div>
             <h2 class="section-head__title">{{ books_section_title }}</h2>
             {% if user.is_authenticated %}
                 <a href="{% url 'core:create_book' %}" class="btn btn-ghost btn-sm">

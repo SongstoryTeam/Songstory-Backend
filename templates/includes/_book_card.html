@@ -1,5 +1,5 @@
 {% load static %}
-<a href="{% url 'core:book_detail' book.id %}" class="book-card">
+<a href="{% url 'core:book_detail' book.id %}" class="book-card" data-category="{{ book.genre }}">
     <div class="book-card__spine-wrap">
         <div class="book-card__cover">
             {% with cover=book.get_cover %}
