@@ -5,7 +5,7 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.db.models import F, Q
 from django.core.paginator import Paginator
-from django.http import HttpResponseNotAllowed
+from django.http import HttpResponseNotAllowed, Http404
 
 from .models import Book, Chapter, MusicRecommendation, Playlist, Like, SavedBook, Comment
 from .forms import (
@@ -20,7 +20,7 @@ def signup(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            messages.success(request, 'Welcome to Songstery!')
+            messages.success(request, 'Welcome to Songstory!')
             return redirect('core:home')
     else:
         form = SignUpForm()
@@ -40,9 +40,9 @@ class HomeView(TemplateView):
 
         if search_query:
             books_qs = books_qs.filter(
-                Q(title__icontains=search_query) |
-                Q(author__icontains=search_query) |
-                Q(genre__icontains=search_query)
+                Q(title__icontains=search_query)
+                | Q(author__icontains=search_query)
+                | Q(genre__icontains=search_query)
             )
 
         if active_genre:
@@ -58,21 +58,23 @@ class HomeView(TemplateView):
         paginator = Paginator(books_qs, 8)
         page_obj = paginator.get_page(self.request.GET.get('page'))
 
-        context['db_books'] = page_obj
-        context['page_obj'] = page_obj
-        context['search_query'] = search_query
-        context['active_genre'] = active_genre
-        context['books_section_title'] = section_title
-        context['genres'] = (
-            Book.objects
-            .exclude(genre='')
-            .values_list('genre', flat=True)
-            .distinct()
-            .order_by('genre')
-        )
-        context['top_music_db'] = MusicRecommendation.objects.select_related(
-            'user', 'chapter__book'
-        ).order_by('-likes_count')[:6]
+        context.update({
+            'db_books': page_obj,
+            'page_obj': page_obj,
+            'search_query': search_query,
+            'active_genre': active_genre,
+            'books_section_title': section_title,
+            'genres': (
+                Book.objects
+                .exclude(genre='')
+                .values_list('genre', flat=True)
+                .distinct()
+                .order_by('genre')
+            ),
+            'top_music_db': MusicRecommendation.objects.select_related(
+                'user', 'chapter__book'
+            ).order_by('-likes_count')[:6],
+        })
 
         return context
 
@@ -85,29 +87,31 @@ class BookDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         book = self.object
+        user = self.request.user
 
         session_key = f'viewed_book_{book.pk}'
         if not self.request.session.get(session_key):
             Book.objects.filter(pk=book.pk).update(views_count=F('views_count') + 1)
             self.request.session[session_key] = True
 
-        if self.request.user == book.creator or self.request.user.is_staff:
-            context['chapters'] = book.chapters.all()
-        else:
-            context['chapters'] = book.chapters.filter(is_approved=True)
+        is_privileged = user == book.creator or (user.is_authenticated and user.is_staff)
+        chapters_qs = book.chapters.all() if is_privileged else book.chapters.filter(is_approved=True)
 
-        context['popular_playlists'] = book.playlists.filter(is_public=True).order_by('-likes_count')[:5]
-        context['top_music'] = MusicRecommendation.objects.filter(
-            chapter__book=book
-        ).order_by('-likes_count')[:10]
-        context['comments'] = book.comments.filter(
-            parent=None
-        ).select_related('user').prefetch_related('replies__user')
-        context['comment_form'] = CommentForm()
+        context.update({
+            'chapters': chapters_qs,
+            'popular_playlists': book.playlists.filter(is_public=True).order_by('-likes_count')[:5],
+            'top_music': MusicRecommendation.objects.filter(
+                chapter__book=book
+            ).order_by('-likes_count')[:10],
+            'comments': book.comments.filter(
+                parent=None
+            ).select_related('user').prefetch_related('replies__user'),
+            'comment_form': CommentForm(),
+        })
 
-        if self.request.user.is_authenticated:
-            context['is_saved'] = SavedBook.objects.filter(user=self.request.user, book=book).exists()
-            context['is_owner'] = (self.request.user == book.creator)
+        if user.is_authenticated:
+            context['is_saved'] = SavedBook.objects.filter(user=user, book=book).exists()
+            context['is_owner'] = is_privileged
 
         return context
 
@@ -121,43 +125,50 @@ class ChapterDetailView(DetailView):
         chapter = get_object_or_404(
             Chapter,
             book_id=self.kwargs['book_id'],
-            number=self.kwargs['chapter_num']
+            number=self.kwargs['chapter_num'],
         )
         user = self.request.user
-        if not chapter.is_approved and not (user == chapter.book.creator or user.is_staff):
-            from django.http import Http404
+        is_privileged = user == chapter.book.creator or (user.is_authenticated and user.is_staff)
+        if not chapter.is_approved and not is_privileged:
             raise Http404
         return chapter
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         chapter = self.object
+        user = self.request.user
+        is_privileged = user == chapter.book.creator or (user.is_authenticated and user.is_staff)
 
-        context['music_recommendations'] = chapter.music_recommendations.select_related('user')
-        context['playlists'] = chapter.playlists.filter(is_public=True)
-        context['comments'] = chapter.comments.filter(
-            parent=None
-        ).select_related('user').prefetch_related('replies__user')
-        context['comment_form'] = CommentForm()
+        chapter_qs = Chapter.objects.filter(book=chapter.book)
+        if not is_privileged:
+            chapter_qs = chapter_qs.filter(is_approved=True)
 
-        context['prev_chapter'] = (
-            Chapter.objects
-            .filter(book=chapter.book, number__lt=chapter.number, is_approved=True)
-            .order_by('-number')
-            .first()
-        )
-        context['next_chapter'] = (
-            Chapter.objects
-            .filter(book=chapter.book, number__gt=chapter.number, is_approved=True)
-            .order_by('number')
-            .first()
-        )
+        context.update({
+            'music_recommendations': chapter.music_recommendations.select_related('user'),
+            'playlists': chapter.playlists.filter(is_public=True),
+            'comments': chapter.comments.filter(
+                parent=None
+            ).select_related('user').prefetch_related('replies__user'),
+            'comment_form': CommentForm(),
+            'prev_chapter': (
+                chapter_qs
+                .filter(number__lt=chapter.number)
+                .order_by('-number')
+                .first()
+            ),
+            'next_chapter': (
+                chapter_qs
+                .filter(number__gt=chapter.number)
+                .order_by('number')
+                .first()
+            ),
+        })
 
-        if self.request.user.is_authenticated:
-            context['liked_music_ids'] = list(
+        if user.is_authenticated:
+            context['liked_music_ids'] = set(
                 Like.objects.filter(
-                    user=self.request.user,
-                    music_recommendation__in=context['music_recommendations']
+                    user=user,
+                    music_recommendation__in=context['music_recommendations'],
                 ).values_list('music_recommendation_id', flat=True)
             )
 
@@ -236,9 +247,7 @@ def create_book(request):
             book = form.save(commit=False)
             book.creator = request.user
             book.save()
-            Chapter.objects.create(
-                book=book, number=1, title='Chapter 1', is_approved=True
-            )
+            Chapter.objects.create(book=book, number=1, title='Chapter 1', is_approved=True)
             messages.success(request, 'Book added successfully.')
             return redirect('core:book_detail', pk=book.pk)
     else:
@@ -311,15 +320,15 @@ def add_music_recommendation(request, chapter_id):
 
 @login_required
 def like_music(request, music_id):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
     music = get_object_or_404(MusicRecommendation, id=music_id)
     like, created = Like.objects.get_or_create(user=request.user, music_recommendation=music)
     if created:
         MusicRecommendation.objects.filter(pk=music_id).update(likes_count=F('likes_count') + 1)
     else:
         like.delete()
-        MusicRecommendation.objects.filter(pk=music_id).update(
-            likes_count=F('likes_count') - 1
-        )
+        MusicRecommendation.objects.filter(pk=music_id).update(likes_count=F('likes_count') - 1)
     return redirect(request.META.get('HTTP_REFERER', '/'))
 
 
@@ -387,6 +396,8 @@ def add_track_to_playlist(request, pk):
 
 @login_required
 def like_playlist(request, playlist_id):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
     playlist = get_object_or_404(Playlist, id=playlist_id)
     like, created = Like.objects.get_or_create(user=request.user, playlist=playlist)
     if created:

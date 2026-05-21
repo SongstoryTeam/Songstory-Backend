@@ -23,7 +23,7 @@ class BookForm(StyledFormMixin, forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'rows': 4,
                 'class': 'form-textarea',
-                'placeholder': 'Про що ця книга?',
+                'placeholder': 'About this book',
             }),
             'cover_url': forms.URLInput(attrs={'placeholder': 'https://...'}),
         }
@@ -32,19 +32,27 @@ class BookForm(StyledFormMixin, forms.ModelForm):
 class SignUpForm(StyledFormMixin, UserCreationForm):
     email = forms.EmailField(
         required=True,
-        label="Email",
+        label='Email',
         widget=forms.EmailInput(attrs={'placeholder': 'example@mail.com'}),
+    )
+    phone = forms.CharField(
+        required=False,
+        max_length=20,
+        label='Phone',
+        widget=forms.TextInput(attrs={'placeholder': '+380...'}),
     )
 
     class Meta:
         model = User
-        fields = ('username', 'email', 'first_name', 'last_name')
+        fields = ('username', 'email', 'first_name', 'last_name', 'phone')
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data['email']
         if commit:
             user.save()
+            user.profile.phone = self.cleaned_data.get('phone', '')
+            user.profile.save(update_fields=['phone'])
         return user
 
 
@@ -64,7 +72,7 @@ class MusicRecommendationForm(StyledFormMixin, forms.ModelForm):
             'comment': forms.Textarea(attrs={
                 'rows': 3,
                 'class': 'form-textarea',
-                'placeholder': 'Чому саме ця музика?',
+                'placeholder': 'Why this track fits this chapter',
             }),
             'link_type': forms.Select(attrs={'class': 'form-select'}),
         }
@@ -78,7 +86,7 @@ class PlaylistForm(StyledFormMixin, forms.ModelForm):
             'description': forms.Textarea(attrs={
                 'rows': 3,
                 'class': 'form-textarea',
-                'placeholder': 'Опис плейлиста',
+                'placeholder': 'Playlist description',
             }),
         }
 
@@ -88,9 +96,9 @@ class PlaylistTrackForm(StyledFormMixin, forms.ModelForm):
         model = PlaylistTrack
         fields = ['track_title', 'artist', 'link_url']
         widgets = {
-            'track_title': forms.TextInput(attrs={'placeholder': 'Назва пісні'}),
-            'artist': forms.TextInput(attrs={'placeholder': 'Виконавець'}),
-            'link_url': forms.URLInput(attrs={'placeholder': 'Посилання на трек'}),
+            'track_title': forms.TextInput(attrs={'placeholder': 'Track name'}),
+            'artist': forms.TextInput(attrs={'placeholder': 'Artist'}),
+            'link_url': forms.URLInput(attrs={'placeholder': 'Track URL'}),
         }
 
 
@@ -102,7 +110,7 @@ class CommentForm(StyledFormMixin, forms.ModelForm):
             'text': forms.Textarea(attrs={
                 'rows': 3,
                 'class': 'form-textarea',
-                'placeholder': 'Ваш коментар...',
+                'placeholder': 'Your comment...',
             }),
         }
 
@@ -111,6 +119,6 @@ class BulkChaptersForm(StyledFormMixin, forms.Form):
     number_of_chapters = forms.IntegerField(
         min_value=1,
         max_value=100,
-        label="Кількість розділів",
-        widget=forms.NumberInput(attrs={'placeholder': 'Наприклад: 10'}),
+        label='Number of chapters',
+        widget=forms.NumberInput(attrs={'placeholder': '10'}),
     )

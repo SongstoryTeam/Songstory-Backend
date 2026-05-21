@@ -1,7 +1,13 @@
+import re
 from django.db import models
 from django.contrib.auth.models import User
 from django.urls import reverse
 from .book import Book, Chapter
+
+_YOUTUBE_RE = re.compile(r'(?:v=|youtu\.be/|embed/)([A-Za-z0-9_-]{11})')
+_MUSIC_YT_RE = re.compile(r'music\.youtube\.com')
+_SPOTIFY_RE = re.compile(r'spotify\.com/track/([A-Za-z0-9]+)')
+
 
 class MusicRecommendation(models.Model):
     LINK_TYPES = [
@@ -27,8 +33,21 @@ class MusicRecommendation(models.Model):
         verbose_name_plural = "Музичні рекомендації"
         ordering = ['-likes_count', '-created_at']
 
+    def save(self, *args, **kwargs):
+        if self.link_type == 'youtube' and _MUSIC_YT_RE.search(self.link_url):
+            self.link_url = self.link_url.replace('music.youtube.com', 'www.youtube.com')
+        if not self.embed_code:
+            if self.link_type == 'youtube':
+                match = _YOUTUBE_RE.search(self.link_url)
+                self.embed_code = match.group(1) if match else ''
+            elif self.link_type == 'spotify':
+                match = _SPOTIFY_RE.search(self.link_url)
+                self.embed_code = match.group(1) if match else ''
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.track_title} - {self.artist}"
+        return f"{self.track_title} — {self.artist}"
+
 
 class Playlist(models.Model):
     title = models.CharField(max_length=255, verbose_name="Назва")
@@ -53,6 +72,7 @@ class Playlist(models.Model):
     def get_absolute_url(self):
         return reverse('core:playlist_detail', kwargs={'pk': self.pk})
 
+
 class PlaylistTrack(models.Model):
     playlist = models.ForeignKey(Playlist, on_delete=models.CASCADE, related_name='tracks')
     track_title = models.CharField(max_length=255)
@@ -63,3 +83,6 @@ class PlaylistTrack(models.Model):
 
     class Meta:
         ordering = ['order']
+
+    def __str__(self):
+        return f"{self.track_title} — {self.artist} (#{self.order})"

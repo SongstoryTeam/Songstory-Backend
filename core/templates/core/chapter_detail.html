@@ -149,24 +149,25 @@
     </div>
 
     <div id="sticky-player" class="sticky-player player--hidden" role="region" aria-label="Music player">
-        <div class="sticky-player__embed">
-            <iframe
-                    id="player-iframe"
-                    src=""
-                    frameborder="0"
-                    allow="autoplay; encrypted-media; picture-in-picture"
-                    allowfullscreen
-            ></iframe>
-        </div>
-        <div class="sticky-player__info">
-            <div class="sticky-player__track">
-                <span id="player-title" class="sticky-player__title"></span>
-                <span id="player-artist" class="sticky-player__artist"></span>
+
+        <div class="player__bar">
+            <span id="player-dot" class="player__dot"></span>
+            <div class="player__meta">
+                <span id="player-title" class="player__title"></span>
+                <span id="player-artist" class="player__artist"></span>
             </div>
-            <button id="player-close" class="sticky-player__close" aria-label="Close player">
-                <i data-lucide="x" style="width:16px;height:16px;"></i>
+            <span id="player-platform" class="player__platform"></span>
+            <a id="player-open" href="#" target="_blank" rel="noopener" class="player__open">
+                <i data-lucide="external-link" style="width:11px;height:11px;"></i>
+                Відкрити
+            </a>
+            <button id="player-close" class="player__close" aria-label="Close player">
+                <i data-lucide="x" style="width:14px;height:14px;"></i>
             </button>
         </div>
+
+        <div id="player-embed-area" class="player__embed"></div>
+
     </div>
 
 {% endblock %}

@@ -1,30 +1,83 @@
 const Player = (() => {
-    const EMBED_BUILDERS = {
-        youtube: (code) =>
-            `https://www.youtube.com/embed/${code}?autoplay=1&rel=0`,
-        spotify: (code) =>
-            `https://open.spotify.com/embed/track/${code}?autoplay=1`,
-        soundcloud: (code) =>
-            `https://w.soundcloud.com/player/?url=${encodeURIComponent(code)}&auto_play=true&color=%23c4622d`,
-        other: null,
+    const PLATFORM_COLORS = {
+        youtube:    '#FF0000',
+        spotify:    '#1DB954',
+        soundcloud: '#FF5500',
+        other:      'var(--clr-accent)',
+    };
+
+    const PLATFORM_LABELS = {
+        youtube:    'YouTube',
+        spotify:    'Spotify',
+        soundcloud: 'SoundCloud',
+        other:      'Link',
     };
 
     let currentTrackId = null;
+    let currentLinkUrl = '#';
 
-    const bar = document.getElementById('sticky-player');
-    const iframe = document.getElementById('player-iframe');
-    const titleEl = document.getElementById('player-title');
-    const artistEl = document.getElementById('player-artist');
-    const closeBtn = document.getElementById('player-close');
+    const bar        = document.getElementById('sticky-player');
+    const embedArea  = document.getElementById('player-embed-area');
+    const titleEl    = document.getElementById('player-title');
+    const artistEl   = document.getElementById('player-artist');
+    const platformEl = document.getElementById('player-platform');
+    const dotEl      = document.getElementById('player-dot');
+    const openBtn    = document.getElementById('player-open');
+    const closeBtn   = document.getElementById('player-close');
 
-    function buildEmbedUrl(linkType, embedCode, linkUrl) {
-        const builder = EMBED_BUILDERS[linkType];
-        if (!builder) return null;
+    function buildSpotifyEmbed(code) {
+        return `https://open.spotify.com/embed/track/${code}?utm_source=generator&theme=0`;
+    }
 
-        const source = (linkType === 'soundcloud') ? linkUrl : embedCode;
-        if (!source) return null;
+    function buildSoundCloudEmbed(url) {
+        return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%23c4622d&auto_play=false&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false`;
+    }
 
-        return builder(source);
+    function buildYouTubeThumbnail(code, title, artist, linkUrl) {
+        const thumb = `https://img.youtube.com/vi/${code}/mqdefault.jpg`;
+        return `
+            <div class="yt-preview">
+                <img src="${thumb}" alt="${title}" class="yt-preview__thumb"
+                     onerror="this.style.display='none'">
+                <div class="yt-preview__overlay">
+                    <svg class="yt-preview__icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                </div>
+                <a href="${linkUrl}" target="_blank" rel="noopener" class="yt-preview__link">
+                    Відкрити на YouTube
+                </a>
+            </div>
+        `;
+    }
+
+    function renderEmbed(linkType, embedCode, linkUrl) {
+        embedArea.innerHTML = '';
+
+        if (linkType === 'youtube') {
+            embedArea.innerHTML = buildYouTubeThumbnail(embedCode, '', '', linkUrl);
+            embedArea.className = 'player__embed player__embed--youtube';
+            return;
+        }
+
+        const iframe = document.createElement('iframe');
+        iframe.id = 'player-iframe';
+        iframe.frameBorder = '0';
+        iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+
+        if (linkType === 'spotify' && embedCode) {
+            iframe.src = buildSpotifyEmbed(embedCode);
+            iframe.allow += '; clipboard-write';
+            embedArea.className = 'player__embed player__embed--spotify';
+        } else if (linkType === 'soundcloud') {
+            iframe.src = buildSoundCloudEmbed(linkUrl);
+            iframe.scrolling = 'no';
+            embedArea.className = 'player__embed player__embed--soundcloud';
+        } else {
+            embedArea.className = 'player__embed';
+        }
+
+        embedArea.appendChild(iframe);
     }
 
     function load(trackId, title, artist, linkType, embedCode, linkUrl) {
@@ -33,18 +86,26 @@ const Player = (() => {
             return;
         }
 
-        const url = buildEmbedUrl(linkType, embedCode, linkUrl);
+        if (!embedCode && linkType !== 'soundcloud' && linkType !== 'other') {
+            window.open(linkUrl, '_blank', 'noopener,noreferrer');
+            return;
+        }
 
-        if (!url) {
+        if (linkType === 'other') {
             window.open(linkUrl, '_blank', 'noopener,noreferrer');
             return;
         }
 
         currentTrackId = trackId;
+        currentLinkUrl = linkUrl;
 
-        iframe.src = url;
         titleEl.textContent = title;
         artistEl.textContent = artist;
+        platformEl.textContent = PLATFORM_LABELS[linkType] || linkType;
+        dotEl.style.background = PLATFORM_COLORS[linkType] || 'var(--clr-accent)';
+        openBtn.href = linkUrl;
+
+        renderEmbed(linkType, embedCode, linkUrl);
 
         bar.classList.remove('player--hidden');
         bar.classList.add('player--visible');
@@ -53,13 +114,13 @@ const Player = (() => {
     }
 
     function toggle() {
-        const isHidden = bar.classList.contains('player--hidden');
-        bar.classList.toggle('player--hidden', !isHidden);
-        bar.classList.toggle('player--visible', isHidden);
+        const hidden = bar.classList.contains('player--hidden');
+        bar.classList.toggle('player--hidden', !hidden);
+        bar.classList.toggle('player--visible', hidden);
     }
 
     function close() {
-        iframe.src = '';
+        embedArea.innerHTML = '';
         currentTrackId = null;
         bar.classList.remove('player--visible');
         bar.classList.add('player--hidden');
@@ -97,7 +158,7 @@ const Player = (() => {
         });
     }
 
-    return {init};
+    return { init };
 })();
 
 document.addEventListener('DOMContentLoaded', Player.init);

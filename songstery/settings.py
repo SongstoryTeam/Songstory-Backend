@@ -56,9 +56,28 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'songstery.wsgi.application'
 
+# ---------------------------------------------------------------------------
+# Database
+# Defaults to SQLite for local dev. Set DATABASE_URL in .env for MySQL/Postgres.
+#
+# MySQL example:
+#   DATABASE_URL=mysql://user:password@localhost:3306/songstory
+#
+# Requires mysqlclient:
+#   pip install mysqlclient==2.2.4
+# ---------------------------------------------------------------------------
+_db_default = f'sqlite:///{BASE_DIR / "db.sqlite3"}'
 DATABASES = {
-    'default': env.db('DATABASE_URL', default=f'sqlite:///{BASE_DIR / "db.sqlite3"}')
+    'default': env.db('DATABASE_URL', default=_db_default)
 }
+
+# MySQL-specific options injected when the engine is MySQL
+if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+    DATABASES['default'].setdefault('OPTIONS', {})
+    DATABASES['default']['OPTIONS']['charset'] = 'utf8mb4'
+    DATABASES['default']['OPTIONS']['init_command'] = (
+        "SET sql_mode='STRICT_TRANS_TABLES'"
+    )
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -73,7 +92,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / "static"]
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
