@@ -1,0 +1,30 @@
+.author-link {
+    color: var(--clr-ink);
+    transition: color var(--transition);
+}
+
+.author-link:hover {
+    color: var(--clr-accent);
+}
+
+.author-picks {
+    background: linear-gradient(135deg, #FDF8F5, #FAF3ED);
+    border: 1px solid rgba(196, 98, 45, .2);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+}
+
+.author-picks__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--clr-ink);
+    margin-bottom: 14px;
+}
+
+.author-picks__header a {
+    color: var(--clr-accent);
+    font-weight: 500;
+}

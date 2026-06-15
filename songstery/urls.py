@@ -12,7 +12,6 @@ from core.sitemaps import BookSitemap, ChapterSitemap
 
 handler404 = 'core.views.page_not_found'
 handler500 = 'core.views.server_error'
-handler429 = 'core.views.too_many_requests'
 
 sitemaps = {
     'books': BookSitemap,

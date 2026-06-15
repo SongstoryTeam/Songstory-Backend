@@ -1,13 +1,11 @@
 User-agent: *
 Allow: /
 
-# Disallow admin and user-specific pages
 Disallow: /admin/
 Disallow: /profile/
 Disallow: /comments/add/
 Disallow: /author/apply/
 
-# Allow important pages
 Allow: /book/
 Allow: /playlist/
 

@@ -3,17 +3,7 @@ from django.conf import settings
 
 def site(request):
     return {
-        "SITE_NAME": settings.SITE_NAME,
-        "PLAUSIBLE_DOMAIN": getattr(settings, "PLAUSIBLE_DOMAIN", ""),
-        "GOOGLE_SITE_VERIFICATION": getattr(settings, "GOOGLE_SITE_VERIFICATION", ""),
+        'SITE_NAME': settings.SITE_NAME,
+        'PLAUSIBLE_DOMAIN': getattr(settings, 'PLAUSIBLE_DOMAIN', ''),
+        'GOOGLE_SITE_VERIFICATION': getattr(settings, 'GOOGLE_SITE_VERIFICATION', ''),
     }
-
-
-def notifications(request):
-    """Inject unread notification count into every template context."""
-    if not request.user.is_authenticated:
-        return {"unread_notifications": 0}
-
-    from .models.notification import Notification
-
-    return {"unread_notifications": Notification.unread_count(request.user)}

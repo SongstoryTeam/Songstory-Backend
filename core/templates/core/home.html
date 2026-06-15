@@ -67,7 +67,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/pages/home.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/components/sort-bar.css' %}">
 {% endblock %}
 
 {% block content %}
@@ -138,6 +138,7 @@
             <span class="sort-bar__label">Сортування</span>
             {% for slug, label in sort_options %}
                 <a href="?sort=
+
                         {{ slug }}{% if search_query %}&search={{ search_query }}{% endif %}{% if active_genre %}&genre={{ active_genre }}{% endif %}"
                    class="sort-btn {% if current_sort == slug %}sort-btn--active{% endif %}">
                     {{ label }}
@@ -156,6 +157,7 @@
                 <nav class="pagination" aria-label="Пагінація">
                     {% if page_obj.has_previous %}
                         <a href="?page={{ page_obj.previous_page_number }}&sort=
+
                                 {{ current_sort }}{% if search_query %}&search={{ search_query }}{% endif %}{% if active_genre %}&genre={{ active_genre }}{% endif %}"
                            class="btn btn-ghost btn-sm" rel="prev">
                             <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Назад
@@ -164,6 +166,7 @@
                     <span class="pagination__info">Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
                         <a href="?page={{ page_obj.next_page_number }}&sort=
+
                                 {{ current_sort }}{% if search_query %}&search={{ search_query }}{% endif %}{% if active_genre %}&genre={{ active_genre }}{% endif %}"
                            class="btn btn-ghost btn-sm" rel="next">
                             Далі <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>

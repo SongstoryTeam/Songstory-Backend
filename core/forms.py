@@ -1,8 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import MusicRecommendation, Playlist, Comment, Book, PlaylistTrack, AuthorVerification, BookRating, BookTranslation, Language
-from .validators import validate_image_url
+from .models import MusicRecommendation, Playlist, Comment, Book, PlaylistTrack, AuthorVerification, BookRating
 
 
 class StyledFormMixin:
@@ -19,47 +18,13 @@ class StyledFormMixin:
 
 
 class BookForm(StyledFormMixin, forms.ModelForm):
-    title = forms.CharField(max_length=255)
-    description = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 4, 'class': 'form-textarea'}),
-        required=False
-    )
-
     class Meta:
         model = Book
-        fields = ['author', 'year', 'genre', 'cover_image', 'cover_url']
+        fields = ['title', 'author', 'year', 'genre', 'description', 'cover_image', 'cover_url']
         widgets = {
+            'description': forms.Textarea(attrs={'rows': 4, 'class': 'form-textarea'}),
             'cover_url': forms.URLInput(attrs={'placeholder': 'https://...'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance and self.instance.pk:
-            translation = self.instance.translations.first()
-            if translation:
-                self.fields['title'].initial = translation.title
-                self.fields['description'].initial = translation.description
-
-    def clean_cover_url(self):
-        url = self.cleaned_data.get('cover_url', '')
-        if url:
-            validate_image_url(url)
-        return url
-
-    def save(self, commit=True):
-        book = super().save(commit=commit)
-        if commit:
-            language = Language.objects.filter(is_active=True).first()
-            if language:
-                BookTranslation.objects.update_or_create(
-                    book=book,
-                    language=language,
-                    defaults={
-                        'title': self.cleaned_data.get('title', ''),
-                        'description': self.cleaned_data.get('description', ''),
-                    }
-                )
-        return book
 
 
 class SignUpForm(StyledFormMixin, UserCreationForm):

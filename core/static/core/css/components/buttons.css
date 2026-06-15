@@ -79,3 +79,19 @@
   border-color: var(--clr-accent);
   color: var(--clr-accent);
 }
+
+.delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-danger);
+  border: 1px solid rgba(192, 57, 43, .25);
+  background: transparent;
+  transition: all var(--transition);
+  cursor: pointer;
+}
+
+.delete-btn:hover { background: var(--clr-danger-lt); }
