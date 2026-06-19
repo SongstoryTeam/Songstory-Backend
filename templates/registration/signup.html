@@ -3,6 +3,10 @@
 
 {% block title %}Реєстрація — {{ SITE_NAME }}{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'core/css/components/social-auth.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="form-wrap">
         <div class="form-box">
@@ -28,6 +32,8 @@
                     <button type="submit" class="btn btn-accent">Створити акаунт</button>
                 </div>
             </form>
+
+            {% include 'includes/_social_auth.html' with cta_label="Зареєструватись через Google" %}
 
             <p class="text-sm text-muted mt-16" style="text-align:center;">
                 Вже є акаунт?
