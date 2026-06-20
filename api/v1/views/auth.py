@@ -1,76 +1,36 @@
-from django.contrib.auth.models import User
-from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.request import Request
+from rest_framework import generics, permissions
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from api.v1.serializers.user import RegisterSerializer, UserSerializer
+from api.v1.serializers.auth import RegisterSerializer, UserMeSerializer
 
 
-class RegisterView(APIView):
-    permission_classes = (AllowAny,)
+class MeView(generics.RetrieveAPIView):
+    serializer_class = UserMeSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    def post(self, request: Request) -> Response:
-        serializer = RegisterSerializer(data=request.data)
+    def get_object(self):
+        return self.request.user
+
+
+class RegisterView(generics.CreateAPIView):
+    serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user: User = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response(
-            {
-                "user": UserSerializer(user, context={"request": request}).data,
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-            },
-            status=status.HTTP_201_CREATED,
-        )
-
-
-class LoginView(APIView):
-    permission_classes = (AllowAny,)
-
-    def post(self, request: Request) -> Response:
-        from django.contrib.auth import authenticate
-
-        username = request.data.get("username", "")
-        password = request.data.get("password", "")
-        user = authenticate(request, username=username, password=password)
-
-        if user is None:
-            return Response(
-                {"detail": "Invalid credentials."},
-                status=status.HTTP_401_UNAUTHORIZED,
-            )
+        user = serializer.save()
 
         refresh = RefreshToken.for_user(user)
         return Response(
-            {
-                "user": UserSerializer(user, context={"request": request}).data,
-                "refresh": str(refresh),
-                "access": str(refresh.access_token),
-            }
+            {"access": str(refresh.access_token), "refresh": str(refresh)},
+            status=201,
         )
 
 
-class LogoutView(APIView):
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request: Request) -> Response:
-        import logging
-
-        logger = logging.getLogger(__name__)
-
-        refresh_token = request.data.get("refresh")
-        if not refresh_token:
-            return Response(
-                {"detail": "Refresh token required."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-        try:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        except Exception as exc:
-            logger.warning("Token blacklist failed: %s", exc)
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+# Re-exported so urls.py can reference token endpoints from one module
+LoginView = TokenObtainPairView
+RefreshView = TokenRefreshView
