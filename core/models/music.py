@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.urls import reverse
 
 from .book import Book, Chapter
@@ -50,7 +50,9 @@ class Playlist(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     description = models.TextField(blank=True)
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="playlists")
-    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, null=True, blank=True, related_name="playlists")
+    chapter = models.ForeignKey(
+        Chapter, on_delete=models.CASCADE, null=True, blank=True, related_name="playlists"
+    )
     creator = models.ForeignKey(User, on_delete=models.CASCADE)
     mood = models.CharField(max_length=200, blank=True)
     external_link = models.URLField(blank=True)

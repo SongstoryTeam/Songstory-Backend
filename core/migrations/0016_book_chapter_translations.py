@@ -1,5 +1,5 @@
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # ── BookTranslation ───────────────────────────────────────────────
         migrations.CreateModel(
             name="BookTranslation",
             fields=[
@@ -21,7 +20,6 @@ class Migration(migrations.Migration):
             ],
             options={"verbose_name": "Book translation", "verbose_name_plural": "Book translations", "unique_together": {("book", "language")}},
         ),
-        # ── ChapterTranslation ────────────────────────────────────────────
         migrations.CreateModel(
             name="ChapterTranslation",
             fields=[

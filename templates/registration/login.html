@@ -3,10 +3,6 @@
 
 {% block title %}Увійти — {{ SITE_NAME }}{% endblock %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/components/social-auth.css' %}">
-{% endblock %}
-
 {% block content %}
     <div class="form-wrap">
         <div class="form-box">
@@ -22,8 +18,7 @@
 
                 <div class="form-group">
                     <label for="id_username">Ім'я користувача</label>
-                    <input type="text" name="username" id="id_username" class="form-input" autocomplete="username"
-                           required>
+                    <input type="text" name="username" id="id_username" class="form-input" autocomplete="username" required>
                 </div>
 
                 <div class="form-group">
@@ -37,12 +32,9 @@
                 </div>
             </form>
 
-            {% include 'includes/_social_auth.html' with cta_label="Увійти через Google" %}
-
             <p class="text-sm text-muted mt-16" style="text-align:center;">
                 Ще немає акаунту?
-                <a href="{% url 'signup' %}" style="color:var(--clr-accent); font-weight:500;">Зареєструватись
-                    безкоштовно</a>
+                <a href="{% url 'signup' %}" style="color:var(--clr-accent); font-weight:500;">Зареєструватись безкоштовно</a>
             </p>
         </div>
     </div>

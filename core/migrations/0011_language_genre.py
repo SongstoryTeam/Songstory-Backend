@@ -1,5 +1,5 @@
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # ── Language ────────────────────────────────────────────────────
         migrations.CreateModel(
             name="Language",
             fields=[
@@ -20,7 +19,6 @@ class Migration(migrations.Migration):
             ],
             options={"verbose_name": "Language", "verbose_name_plural": "Languages", "ordering": ["code"]},
         ),
-        # ── Genre ────────────────────────────────────────────────────────
         migrations.CreateModel(
             name="Genre",
             fields=[

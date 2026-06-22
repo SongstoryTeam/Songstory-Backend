@@ -6,11 +6,14 @@ from .models import (
     AuthorVerification,
     Book,
     BookRating,
+    BookTranslation,
     Comment,
+    Language,
     MusicRecommendation,
     Playlist,
     PlaylistTrack,
 )
+from .validators import validate_image_url
 
 
 class StyledFormMixin:
@@ -27,22 +30,45 @@ class StyledFormMixin:
 
 
 class BookForm(StyledFormMixin, forms.ModelForm):
-    title = forms.CharField(
-        max_length=255,
-        label="Назва",
-    )
+    title = forms.CharField(max_length=255)
     description = forms.CharField(
         widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea"}),
         required=False,
-        label="Опис",
     )
 
     class Meta:
         model = Book
-        fields = ["year", "cover_image", "cover_url", "isbn"]
-        widgets = {
-            "cover_url": forms.URLInput(attrs={"placeholder": "https://..."}),
-        }
+        fields = ["author", "year", "genre", "cover_image", "cover_url"]
+        widgets = {"cover_url": forms.URLInput(attrs={"placeholder": "https://..."})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            translation = self.instance.translations.first()
+            if translation:
+                self.fields["title"].initial = translation.title
+                self.fields["description"].initial = translation.description
+
+    def clean_cover_url(self):
+        url = self.cleaned_data.get("cover_url", "")
+        if url:
+            validate_image_url(url)
+        return url
+
+    def save(self, commit=True):
+        book = super().save(commit=commit)
+        if commit:
+            language = Language.objects.filter(is_active=True).first()
+            if language:
+                BookTranslation.objects.update_or_create(
+                    book=book,
+                    language=language,
+                    defaults={
+                        "title": self.cleaned_data.get("title", ""),
+                        "description": self.cleaned_data.get("description", ""),
+                    },
+                )
+        return book
 
 
 class SignUpForm(StyledFormMixin, UserCreationForm):
@@ -92,9 +118,7 @@ class PlaylistForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Playlist
         fields = ["title", "description", "mood", "external_link", "is_public"]
-        widgets = {
-            "description": forms.Textarea(attrs={"rows": 3, "class": "form-textarea"}),
-        }
+        widgets = {"description": forms.Textarea(attrs={"rows": 3, "class": "form-textarea"})}
 
 
 class PlaylistTrackForm(StyledFormMixin, forms.ModelForm):
@@ -107,9 +131,7 @@ class CommentForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Comment
         fields = ["text"]
-        widgets = {
-            "text": forms.Textarea(attrs={"rows": 3, "class": "form-textarea"}),
-        }
+        widgets = {"text": forms.Textarea(attrs={"rows": 3, "class": "form-textarea"})}
 
 
 class BulkChaptersForm(StyledFormMixin, forms.Form):
@@ -135,6 +157,4 @@ class BookRatingForm(forms.ModelForm):
     class Meta:
         model = BookRating
         fields = ["score"]
-        widgets = {
-            "score": forms.HiddenInput(),
-        }
+        widgets = {"score": forms.HiddenInput()}

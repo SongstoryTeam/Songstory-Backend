@@ -12,11 +12,11 @@ app_name = "core"
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
 
-    path("book/create/", views.create_book, name="create_book"),
     path("book/<int:pk>/", views.BookDetailView.as_view(), name="book_detail"),
     path("book/<slug:slug>/", views.BookDetailView.as_view(), name="book_detail_slug"),
     path("book/<int:book_id>/save/", views.save_book, name="save_book"),
     path("book/<int:book_id>/rate/", views.rate_book, name="rate_book"),
+    path("book/create/", views.create_book, name="create_book"),
 
     path("book/<int:book_id>/chapter/<int:chapter_num>/", views.ChapterDetailView.as_view(), name="chapter_detail"),
     path("chapter/<int:chapter_id>/add-music/", views.add_music_recommendation, name="add_music"),

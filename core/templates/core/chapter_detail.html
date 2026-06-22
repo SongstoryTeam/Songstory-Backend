@@ -25,21 +25,21 @@
               "position": 1,
               "name": "Каталог",
               "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:home' %}"
-    },
-    {
-      "@type": "ListItem",
-      "position": 2,
-      "name": "{{ chapter.book.title|escapejs }}",
-      "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' chapter.book.pk %}"
-    },
-    {
-      "@type": "ListItem",
-      "position": 3,
-      "name": "Розділ {{ chapter.number }}: {{ chapter.title|escapejs }}",
-      "item": "{{ request.build_absolute_uri }}"
-    }
-  ]
-}
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "{{ chapter.book.title|escapejs }}",
+              "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' chapter.book.pk %}"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Розділ {{ chapter.number }}: {{ chapter.title|escapejs }}",
+              "item": "{{ request.build_absolute_uri }}"
+            }
+          ]
+        }
     </script>
     {% if other_music or author_music %}
         {% with author_count=author_music|length %}
@@ -48,35 +48,35 @@
                   "@context": "https://schema.org",
                   "@type": "ItemList",
                   "name": "Музика до розділу {{ chapter.number }} — {{ chapter.title|escapejs }}",
-  "description": "Музичні рекомендації до розділу {{ chapter.number }} книги {{ chapter.book.title|escapejs }}",
-  "numberOfItems": {{ other_music|length|add:author_count }},
-  "itemListElement": [
+                  "description": "Музичні рекомендації до розділу {{ chapter.number }} книги {{ chapter.book.title|escapejs }}",
+                  "numberOfItems": {{ other_music|length|add:author_count }},
+                  "itemListElement": [
                 {% for music in author_music %}
                     {
                       "@type": "ListItem",
                       "position": {{ forloop.counter }},
-      "item": {
-        "@type": "MusicRecording",
-        "name": "{{ music.track_title|escapejs }}",
-        "byArtist": { "@type": "MusicGroup", "name": "{{ music.artist|escapejs }}" },
-        "url": "{{ music.link_url }}"
-      }
-    }{% if not forloop.last or other_music %},{% endif %}
-    {% endfor %}
-    {% for music in other_music %}
-                {
-                  "@type": "ListItem",
-                  "position": {{ forloop.counter|add:author_count }},
-      "item": {
-        "@type": "MusicRecording",
-        "name": "{{ music.track_title|escapejs }}",
-        "byArtist": { "@type": "MusicGroup", "name": "{{ music.artist|escapejs }}" },
-        "url": "{{ music.link_url }}"
-      }
-    }{% if not forloop.last %},{% endif %}
-    {% endfor %}
-                ]
-              }
+                      "item": {
+                        "@type": "MusicRecording",
+                        "name": "{{ music.track_title|escapejs }}",
+                        "byArtist": { "@type": "MusicGroup", "name": "{{ music.artist|escapejs }}" },
+                        "url": "{{ music.link_url }}"
+                      }
+                    }{% if not forloop.last or other_music %},{% endif %}
+                {% endfor %}
+                {% for music in other_music %}
+                    {
+                      "@type": "ListItem",
+                      "position": {{ forloop.counter|add:author_count }},
+                      "item": {
+                        "@type": "MusicRecording",
+                        "name": "{{ music.track_title|escapejs }}",
+                        "byArtist": { "@type": "MusicGroup", "name": "{{ music.artist|escapejs }}" },
+                        "url": "{{ music.link_url }}"
+                      }
+                    }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+                  ]
+                }
             </script>
         {% endwith %}
     {% endif %}
@@ -85,7 +85,7 @@
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/pages/chapter.css' %}">
     <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/player.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/components/extras.css' %}">
 {% endblock %}
 
 {% block content %}

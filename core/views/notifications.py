@@ -1,5 +1,5 @@
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseNotAllowed
+from django.http import HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404
 
 from core.models.notification import Notification
@@ -7,7 +7,6 @@ from core.models.notification import Notification
 
 @login_required
 def notification_list(request):
-    """Return the 20 most recent notifications for the authenticated user."""
     notifications = (
         Notification.objects.filter(recipient=request.user)
         .select_related("content_type")
@@ -28,7 +27,6 @@ def notification_list(request):
 
 @login_required
 def notification_mark_read(request, pk: int):
-    """Mark a single notification as read."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
     notification = get_object_or_404(Notification, pk=pk, recipient=request.user)
@@ -39,7 +37,6 @@ def notification_mark_read(request, pk: int):
 
 @login_required
 def notification_mark_all_read(request):
-    """Mark all unread notifications for the current user as read."""
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
     count = Notification.mark_all_read(request.user)

@@ -1,6 +1,6 @@
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.contrib.auth.models import User
 
 from .book import Book, Chapter
 from .music import MusicRecommendation, Playlist
@@ -34,7 +34,6 @@ class Like(models.Model):
     def clean(self) -> None:
         has_track = self.music_recommendation_id is not None
         has_playlist = self.playlist_id is not None
-
         if not has_track and not has_playlist:
             raise ValidationError("A like must be attached to a track or a playlist.")
         if has_track and has_playlist:

@@ -1,5 +1,5 @@
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
@@ -9,7 +9,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        # ── Book: legacy + new FK fields ─────────────────────────────────
         migrations.AddField(
             model_name="book",
             name="author_legacy",
@@ -42,7 +41,6 @@ class Migration(migrations.Migration):
                 verbose_name="Genre",
             ),
         ),
-        # ── Book: slug + dedup ───────────────────────────────────────────
         migrations.AddField(
             model_name="book",
             name="slug",
@@ -73,7 +71,6 @@ class Migration(migrations.Migration):
                 to="core.book",
             ),
         ),
-        # ── Playlist: slug ───────────────────────────────────────────────
         migrations.AddField(
             model_name="playlist",
             name="slug",

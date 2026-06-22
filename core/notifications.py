@@ -17,7 +17,6 @@ def _send(subject: str, template: str, context: dict, to) -> None:
 
 
 def _create_in_app(recipient, notification_type: str, obj=None) -> None:
-    """Create an in-app Notification record; fails silently."""
     try:
         from django.contrib.contenttypes.models import ContentType
         from core.models.notification import Notification

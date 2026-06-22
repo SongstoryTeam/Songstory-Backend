@@ -9,15 +9,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.db.models import F, Q
-from django.http import Http404, HttpResponseNotAllowed, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
-from django.http import HttpResponse
 from django.views.generic import DetailView, TemplateView
 from django.views.static import serve
 
-from core.notifications import notify_admin_new_verification
-from core.utils.slugs import generate_unique_slug
 from core.forms import (
     AuthorVerificationForm,
     BookForm,
@@ -45,13 +42,15 @@ from core.models import (
     Playlist,
     SavedBook,
 )
+from core.notifications import notify_admin_new_verification
 from core.rate_limit import (
-    likes_limit,
-    comments_limit,
     add_music_limit,
+    comments_limit,
+    likes_limit,
     signup_limit,
     youtube_search_limit,
 )
+from core.utils.slugs import generate_unique_slug
 
 _SORT_MAP = {
     "newest": "-created_at",
@@ -68,13 +67,9 @@ _SORT_OPTIONS = [
 ]
 
 
-# ── Utility ──────────────────────────────────────────────────────────────────
-
 def _get_uk_language():
     return Language.objects.filter(code="uk").first()
 
-
-# ── Error / utility views ────────────────────────────────────────────────────
 
 def robots_txt(request):
     content = render_to_string("robots.txt", {"request": request}, request=request)
@@ -97,8 +92,6 @@ def service_worker(request):
     return serve(request, "sw.js", document_root=settings.BASE_DIR / "static")
 
 
-# ── Auth ─────────────────────────────────────────────────────────────────────
-
 @signup_limit
 def signup(request):
     if request.method == "POST":
@@ -113,14 +106,11 @@ def signup(request):
     return render(request, "registration/signup.html", {"form": form})
 
 
-# ── Home ─────────────────────────────────────────────────────────────────────
-
 class HomeView(TemplateView):
     template_name = "core/home.html"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
         search_query = self.request.GET.get("search", "").strip()
         active_genre = self.request.GET.get("genre", "").strip()
         current_sort = self.request.GET.get("sort", "newest")
@@ -143,32 +133,27 @@ class HomeView(TemplateView):
             ).distinct()
 
         sort_field = _SORT_MAP.get(current_sort, "-created_at")
-        # title sort goes through translation — use stable secondary sort
         if current_sort == "title":
             books_qs = books_qs.order_by(sort_field, "-created_at")
         else:
             books_qs = books_qs.order_by(sort_field)
 
-        if search_query:
-            section_title = f'Results: "{search_query}"'
-        elif active_genre:
-            section_title = active_genre
-        else:
-            section_title = "All books"
+        section_title = (
+            f'Results: "{search_query}"' if search_query
+            else active_genre if active_genre
+            else "All books"
+        )
 
         paginator = Paginator(books_qs, 8)
         page_obj = paginator.get_page(self.request.GET.get("page"))
 
-        # Genre list: prefer translated names, fall back to legacy
         genres = sorted(set(
             list(
-                Book.published
-                .exclude(genre__isnull=True)
+                Book.published.exclude(genre__isnull=True)
                 .values_list("genre__translations__name", flat=True)
                 .exclude(genre__translations__name=None)
             ) + list(
-                Book.published
-                .filter(genre__isnull=True)
+                Book.published.filter(genre__isnull=True)
                 .exclude(genre_legacy="")
                 .values_list("genre_legacy", flat=True)
             )
@@ -189,8 +174,6 @@ class HomeView(TemplateView):
         })
         return context
 
-
-# ── Book detail ──────────────────────────────────────────────────────────────
 
 class BookDetailView(DetailView):
     model = Book
@@ -222,9 +205,7 @@ class BookDetailView(DetailView):
         context.update({
             "chapters": chapters_qs,
             "popular_playlists": book.playlists.filter(is_public=True).order_by("-likes_count")[:5],
-            "top_music": MusicRecommendation.objects.filter(
-                chapter__book=book
-            ).order_by("-likes_count")[:10],
+            "top_music": MusicRecommendation.objects.filter(chapter__book=book).order_by("-likes_count")[:10],
             "comments": book.comments.filter(parent=None).select_related("user").prefetch_related("replies__user"),
             "comment_form": CommentForm(),
             "book_id": book.pk,
@@ -247,8 +228,6 @@ class BookDetailView(DetailView):
 
         return context
 
-
-# ── Chapter detail ───────────────────────────────────────────────────────────
 
 class ChapterDetailView(DetailView):
     model = Chapter
@@ -310,8 +289,6 @@ class ChapterDetailView(DetailView):
         return context
 
 
-# ── Playlist detail ──────────────────────────────────────────────────────────
-
 class PlaylistDetailView(DetailView):
     model = Playlist
     template_name = "core/playlist_detail.html"
@@ -335,8 +312,6 @@ class PlaylistDetailView(DetailView):
         return context
 
 
-# ── Author profile ───────────────────────────────────────────────────────────
-
 def author_profile(request, user_id: int):
     author_user = get_object_or_404(User, id=user_id)
     if not hasattr(author_user, "profile") or not author_user.profile.is_verified_author:
@@ -356,8 +331,6 @@ def author_profile(request, user_id: int):
         "followers_count": followers_count,
     })
 
-
-# ── Author verification ───────────────────────────────────────────────────────
 
 @login_required
 def apply_author_verification(request, book_id: int):
@@ -391,8 +364,6 @@ def apply_author_verification(request, book_id: int):
     return render(request, "core/apply_author.html", {"form": form, "book": book})
 
 
-# ── Social ───────────────────────────────────────────────────────────────────
-
 @login_required
 def follow_user(request, user_id: int):
     if request.method != "POST":
@@ -405,8 +376,6 @@ def follow_user(request, user_id: int):
         follow.delete()
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
-
-# ── Book rating ───────────────────────────────────────────────────────────────
 
 @login_required
 def rate_book(request, book_id: int):
@@ -423,8 +392,6 @@ def rate_book(request, book_id: int):
     BookRating.objects.update_or_create(user=request.user, book=book, defaults={"score": score})
     return redirect("core:book_detail", pk=book_id)
 
-
-# ── YouTube search ────────────────────────────────────────────────────────────
 
 @youtube_search_limit
 def youtube_search(request):
@@ -461,11 +428,8 @@ def youtube_search(request):
         for item in data.get("items", [])
         if item.get("id", {}).get("videoId")
     ]
-
     return JsonResponse({"results": results})
 
-
-# ── Comments ──────────────────────────────────────────────────────────────────
 
 @login_required
 @comments_limit
@@ -513,8 +477,6 @@ def delete_comment(request, comment_id: int):
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
 
-# ── Book CRUD ─────────────────────────────────────────────────────────────────
-
 @login_required
 def create_book(request):
     if request.method == "POST":
@@ -525,7 +487,6 @@ def create_book(request):
             book.slug = generate_unique_slug(Book, form.cleaned_data.get("title", ""))
             book.save()
 
-            # Seed initial Ukrainian translation
             uk = _get_uk_language()
             if uk:
                 BookTranslation.objects.create(
@@ -535,12 +496,9 @@ def create_book(request):
                     description=form.cleaned_data.get("description", ""),
                 )
 
-            # Seed chapter 1 with translation
             chapter = Chapter.objects.create(book=book, number=1, is_approved=True)
             if uk:
-                ChapterTranslation.objects.create(
-                    chapter=chapter, language=uk, title="Chapter 1"
-                )
+                ChapterTranslation.objects.create(chapter=chapter, language=uk, title="Chapter 1")
 
             messages.success(request, "Book added successfully. It will appear in the catalog once approved.")
             return redirect("core:book_detail", pk=book.pk)
@@ -581,11 +539,7 @@ def add_chapters(request, book_id: int):
 
             if uk:
                 ChapterTranslation.objects.bulk_create([
-                    ChapterTranslation(
-                        chapter=ch,
-                        language=uk,
-                        title=f"Chapter {start_num + i}",
-                    )
+                    ChapterTranslation(chapter=ch, language=uk, title=f"Chapter {start_num + i}")
                     for i, ch in enumerate(chapters)
                 ])
 
@@ -600,8 +554,6 @@ def add_chapters(request, book_id: int):
 
     return render(request, "core/add_chapters.html", {"form": form, "book": book})
 
-
-# ── Music ─────────────────────────────────────────────────────────────────────
 
 @login_required
 @add_music_limit
@@ -655,8 +607,6 @@ def delete_music(request, music_id: int):
         return redirect(url)
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
-
-# ── Playlist ──────────────────────────────────────────────────────────────────
 
 @login_required
 def create_playlist(request, book_id: int):
@@ -722,8 +672,6 @@ def like_playlist(request, playlist_id: int):
         Playlist.objects.filter(pk=playlist_id).update(likes_count=F("likes_count") - 1)
     return redirect(request.META.get("HTTP_REFERER", "/"))
 
-
-# ── Profile ───────────────────────────────────────────────────────────────────
 
 @login_required
 def profile(request):

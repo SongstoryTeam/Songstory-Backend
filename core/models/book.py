@@ -1,5 +1,6 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
+from django.db.models import Avg
 from django.urls import reverse
 
 from .language import Language
@@ -40,9 +41,7 @@ class Book(models.Model):
         related_name="books",
         verbose_name="Author",
     )
-    # Kept for backward compat during migration; will be nullable after data migration
     author_legacy = models.CharField(max_length=255, blank=True, verbose_name="Author (legacy)")
-
     genre = models.ForeignKey(
         "Genre",
         on_delete=models.SET_NULL,
@@ -52,7 +51,6 @@ class Book(models.Model):
         verbose_name="Genre",
     )
     genre_legacy = models.CharField(max_length=100, blank=True, verbose_name="Genre (legacy)")
-
     slug = models.SlugField(unique=True, blank=True)
     year = models.IntegerField(verbose_name="Year")
     cover_image = models.ImageField(
@@ -65,8 +63,6 @@ class Book(models.Model):
     is_approved = models.BooleanField(default=False, db_index=True, verbose_name="Approved")
     created_at = models.DateTimeField(auto_now_add=True)
     views_count = models.IntegerField(default=0)
-
-    # Deduplication / external IDs
     isbn = models.CharField(max_length=20, blank=True, db_index=True)
     open_library_id = models.CharField(max_length=50, blank=True, unique=True, null=True)
     google_books_id = models.CharField(max_length=50, blank=True)
@@ -88,10 +84,6 @@ class Book(models.Model):
 
     def __str__(self) -> str:
         return f"{self.get_title()} — {self.get_author_name()}"
-
-    # ------------------------------------------------------------------ #
-    # Translated accessors                                                 #
-    # ------------------------------------------------------------------ #
 
     def get_title(self, lang: str = "uk") -> str:
         translation = self.translations.filter(language__code=lang).first()
@@ -117,10 +109,6 @@ class Book(models.Model):
             return self.genre.get_name(lang)
         return self.genre_legacy
 
-    # ------------------------------------------------------------------ #
-    # Cover / URL helpers                                                  #
-    # ------------------------------------------------------------------ #
-
     def get_cover(self) -> str | None:
         if self.cover_image:
             return self.cover_image.url
@@ -131,23 +119,13 @@ class Book(models.Model):
             return reverse("core:book_detail_slug", kwargs={"slug": self.slug})
         return reverse("core:book_detail", kwargs={"pk": self.pk})
 
-    # ------------------------------------------------------------------ #
-    # Visibility / access control                                          #
-    # ------------------------------------------------------------------ #
-
     def is_visible_to(self, user) -> bool:
         if self.is_approved:
             return True
         return user.is_authenticated and (user == self.creator or user.is_staff)
 
-    # ------------------------------------------------------------------ #
-    # Aggregate helpers                                                    #
-    # ------------------------------------------------------------------ #
-
     @property
     def average_rating(self) -> float:
-        from django.db.models import Avg
-
         result = self.ratings.aggregate(avg=Avg("score"))
         return round(result["avg"] or 0, 1)
 

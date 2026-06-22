@@ -1,20 +1,28 @@
 from django.contrib import admin
 
 from .models import (
-    Author, AuthorTranslation, AuthorVerification,
-    Book, BookTranslation, Chapter, ChapterTranslation,
-    Genre, GenreTranslation,
+    Author,
+    AuthorTranslation,
+    AuthorVerification,
+    Book,
+    BookRating,
+    BookTranslation,
+    Chapter,
+    ChapterTranslation,
+    Comment,
+    Follow,
+    Genre,
+    GenreTranslation,
     Language,
+    Like,
     MusicRecommendation,
     Notification,
-    Playlist, PlaylistTrack,
-    Like, Comment, SavedBook,
+    Playlist,
+    PlaylistTrack,
+    SavedBook,
     UserProfile,
-    Follow, BookRating,
 )
 
-
-# ── Inline helpers ───────────────────────────────────────────────────────────
 
 class AuthorTranslationInline(admin.TabularInline):
     model = AuthorTranslation
@@ -50,15 +58,11 @@ class MusicRecommendationInline(admin.TabularInline):
     readonly_fields = ["likes_count"]
 
 
-# ── Language ─────────────────────────────────────────────────────────────────
-
 @admin.register(Language)
 class LanguageAdmin(admin.ModelAdmin):
     list_display = ["code", "name", "is_active"]
     list_editable = ["is_active"]
 
-
-# ── Genre ─────────────────────────────────────────────────────────────────────
 
 @admin.register(Genre)
 class GenreAdmin(admin.ModelAdmin):
@@ -67,8 +71,6 @@ class GenreAdmin(admin.ModelAdmin):
     inlines = [GenreTranslationInline]
 
 
-# ── Author ────────────────────────────────────────────────────────────────────
-
 @admin.register(Author)
 class AuthorAdmin(admin.ModelAdmin):
     list_display = ["slug", "birth_year", "open_library_id"]
@@ -76,8 +78,6 @@ class AuthorAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("slug",)}
     inlines = [AuthorTranslationInline]
 
-
-# ── Book ──────────────────────────────────────────────────────────────────────
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
@@ -103,8 +103,6 @@ class BookAdmin(admin.ModelAdmin):
         self.message_user(request, f"{updated} book(s) rejected.")
 
 
-# ── Chapter ───────────────────────────────────────────────────────────────────
-
 @admin.register(Chapter)
 class ChapterAdmin(admin.ModelAdmin):
     list_display = ["book", "number", "get_title_uk", "is_approved"]
@@ -117,16 +115,12 @@ class ChapterAdmin(admin.ModelAdmin):
         return obj.get_title("uk")
 
 
-# ── Music ─────────────────────────────────────────────────────────────────────
-
 @admin.register(MusicRecommendation)
 class MusicRecommendationAdmin(admin.ModelAdmin):
     list_display = ["track_title", "artist", "mood", "chapter", "user", "likes_count", "created_at"]
     list_filter = ["link_type", "mood", "created_at"]
     search_fields = ["track_title", "artist"]
 
-
-# ── Playlist ──────────────────────────────────────────────────────────────────
 
 @admin.register(Playlist)
 class PlaylistAdmin(admin.ModelAdmin):
@@ -138,8 +132,6 @@ class PlaylistAdmin(admin.ModelAdmin):
 class PlaylistTrackAdmin(admin.ModelAdmin):
     list_display = ["playlist", "track_title", "artist", "order"]
 
-
-# ── Interactions ──────────────────────────────────────────────────────────────
 
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
@@ -160,16 +152,12 @@ class SavedBookAdmin(admin.ModelAdmin):
     list_display = ["user", "book", "created_at"]
 
 
-# ── Profile ───────────────────────────────────────────────────────────────────
-
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ["user", "phone", "is_verified_author"]
     list_filter = ["is_verified_author"]
     search_fields = ["user__username", "user__email"]
 
-
-# ── AuthorVerification ────────────────────────────────────────────────────────
 
 @admin.register(AuthorVerification)
 class AuthorVerificationAdmin(admin.ModelAdmin):
@@ -196,8 +184,6 @@ class AuthorVerificationAdmin(admin.ModelAdmin):
         self.message_user(request, f"{count} application(s) rejected.")
 
 
-# ── Follow / Rating ───────────────────────────────────────────────────────────
-
 @admin.register(Follow)
 class FollowAdmin(admin.ModelAdmin):
     list_display = ["follower", "following", "created_at"]
@@ -209,8 +195,6 @@ class BookRatingAdmin(admin.ModelAdmin):
     list_display = ["user", "book", "score"]
     list_filter = ["score"]
 
-
-# ── Notification ──────────────────────────────────────────────────────────────
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):

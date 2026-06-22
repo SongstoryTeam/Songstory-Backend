@@ -26,24 +26,24 @@
           "@context": "https://schema.org",
           "@type": "Book",
           "name": "{{ book.title|escapejs }}",
-  "author": {
-    "@type": "Person",
-    "name": "{{ book.author|escapejs }}"
-  },
-        {% if book.year %}"datePublished": "{{ book.year }}",{% endif %}
-  {% if book.genre %}"genre": "{{ book.genre|escapejs }}",{% endif %}
-  {% if book.description %}"description": "{{ book.description|truncatechars:300|escapejs }}",{% endif %}
-  {% if book.get_cover %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}",{% endif %}
-        "url": "{{ request.build_absolute_uri }}",
-  "numberOfPages": {{ chapters|length }},
-  "inLanguage": "uk",
-  "aggregateRating": {% if book.ratings.count %}{
-    "@type": "AggregateRating",
-    "ratingValue": "{{ book.average_rating }}",
-    "reviewCount": "{{ book.ratings.count }}",
-    "bestRating": "5",
-    "worstRating": "1"
-  }{% else %}null{% endif %}
+          "author": {
+            "@type": "Person",
+            "name": "{{ book.author|escapejs }}"
+          },
+          {% if book.year %}"datePublished": "{{ book.year }}",{% endif %}
+          {% if book.genre %}"genre": "{{ book.genre|escapejs }}",{% endif %}
+          {% if book.description %}"description": "{{ book.description|truncatechars:300|escapejs }}",{% endif %}
+          {% if book.get_cover %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}",{% endif %}
+          "url": "{{ request.build_absolute_uri }}",
+          "numberOfPages": {{ chapters|length }},
+          "inLanguage": "uk",
+          "aggregateRating": {% if book.ratings.count %}{
+            "@type": "AggregateRating",
+            "ratingValue": "{{ book.average_rating }}",
+            "reviewCount": "{{ book.ratings.count }}",
+            "bestRating": "5",
+            "worstRating": "1"
+          }{% else %}null{% endif %}
         }
     </script>
     <script type="application/ld+json">
@@ -56,22 +56,21 @@
               "position": 1,
               "name": "Каталог",
               "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:home' %}"
-    },
-    {
-      "@type": "ListItem",
-      "position": 2,
-      "name": "{{ book.title|escapejs }}",
-      "item": "{{ request.build_absolute_uri }}"
-    }
-  ]
-}
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "{{ book.title|escapejs }}",
+              "item": "{{ request.build_absolute_uri }}"
+            }
+          ]
+        }
     </script>
 {% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/pages/book.css' %}">
     <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/rating.css' %}">
 {% endblock %}
 
 {% block content %}

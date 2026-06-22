@@ -22,8 +22,7 @@
     <meta property="og:description"
           content="{% block og_description %}Знаходь музичні рекомендації до кожного розділу улюбленої книги.{% endblock %}">
     <meta property="og:image"
-          content="
-                  {% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
+          content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
@@ -35,26 +34,25 @@
     <meta name="twitter:description"
           content="{% block twitter_description %}Знаходь музику до кожного розділу улюбленої книги — разом зі спільнотою читачів.{% endblock %}">
     <meta name="twitter:image"
-          content="
-                  {% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
+          content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
 
     <script type="application/ld+json">
         {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "{{ SITE_NAME }}",
-      "url": "{{ request.scheme }}://{{ request.get_host }}",
-      "description": "Музичні рекомендації до кожного розділу книги",
-      "inLanguage": "uk",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-          "@type": "EntryPoint",
-          "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}/?search={search_term_string}"
-        },
-        "query-input": "required name=search_term_string"
-      }
-    }
+          "url": "{{ request.scheme }}://{{ request.get_host }}",
+          "description": "Музичні рекомендації до кожного розділу книги",
+          "inLanguage": "uk",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": {
+              "@type": "EntryPoint",
+              "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}/?search={search_term_string}"
+            },
+            "query-input": "required name=search_term_string"
+          }
+        }
     </script>
     {% block structured_data %}{% endblock %}
 

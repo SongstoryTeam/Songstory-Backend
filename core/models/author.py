@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 from django.utils import timezone
 
 from .language import Language
@@ -106,7 +106,7 @@ class AuthorVerification(models.Model):
         ordering = ["-submitted_at"]
 
     def __str__(self) -> str:
-        return f"{self.user.username} → {self.book.title} ({self.get_status_display()})"
+        return f"{self.user.username} → {self.book} ({self.get_status_display()})"
 
     def approve(self, admin_user: User, note: str = "") -> None:
         from core.notifications import notify_author_approved

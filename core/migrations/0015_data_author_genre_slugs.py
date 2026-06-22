@@ -1,17 +1,3 @@
-"""
-Data migration: Phase 1 — copy CharField values to legacy fields.
-
-We do NOT remove the old CharField columns yet (that happens after
-BookTranslation is populated in 0017).  This migration:
-
-1. Copies Book.author (CharField) → Book.author_legacy
-2. Copies Book.genre (CharField)  → Book.genre_legacy
-3. Creates Author objects from distinct author strings
-4. Creates Genre objects from distinct genre strings
-5. Creates AuthorTranslation / GenreTranslation entries (uk)
-6. Links Book → Author FK and Book → Genre FK
-7. Generates slugs for existing Books and Playlists
-"""
 from django.db import migrations
 from django.utils.text import slugify as django_slugify
 
@@ -38,15 +24,13 @@ def forward(apps, schema_editor):
 
     uk = Language.objects.get(code="uk")
 
-    # ── 1. Copy old text fields to legacy columns ────────────────────────
     for book in Book.objects.all():
         book.author_legacy = book.author if isinstance(book.author, str) else ""
         book.genre_legacy = book.genre if isinstance(book.genre, str) else ""
         book.save(update_fields=["author_legacy", "genre_legacy"])
 
-    # ── 2. Build Author objects ──────────────────────────────────────────
     seen_slugs: set = set(Author.objects.values_list("slug", flat=True))
-    author_map: dict[str, int] = {}  # name → Author.pk
+    author_map: dict[str, int] = {}
 
     for name in Book.objects.exclude(author_legacy="").values_list("author_legacy", flat=True).distinct():
         slug = _safe_slug(name, seen_slugs)
@@ -57,7 +41,6 @@ def forward(apps, schema_editor):
             AuthorTranslation.objects.get_or_create(author=author, language=uk, defaults={"name": name})
         author_map[name] = author.pk
 
-    # ── 3. Build Genre objects ───────────────────────────────────────────
     seen_slugs2: set = set(Genre.objects.values_list("slug", flat=True))
     genre_map: dict[str, int] = {}
 
@@ -70,7 +53,6 @@ def forward(apps, schema_editor):
             GenreTranslation.objects.get_or_create(genre=genre, language=uk, defaults={"name": name})
         genre_map[name] = genre.pk
 
-    # ── 4. Link Books to Author / Genre FKs ─────────────────────────────
     seen_book_slugs: set = set()
     for book in Book.objects.all():
         if book.author_legacy and book.author_legacy in author_map:
@@ -80,7 +62,6 @@ def forward(apps, schema_editor):
         book.slug = _safe_slug(book.title or f"book-{book.pk}", seen_book_slugs)
         book.save(update_fields=["author_id", "genre_id", "slug"])
 
-    # ── 5. Generate Playlist slugs ───────────────────────────────────────
     seen_pl_slugs: set = set()
     for pl in Playlist.objects.all():
         pl.slug = _safe_slug(pl.title or f"playlist-{pl.pk}", seen_pl_slugs, prefix="")

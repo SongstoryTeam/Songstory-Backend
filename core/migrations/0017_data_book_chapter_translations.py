@@ -1,13 +1,3 @@
-"""
-Data migration: populate BookTranslation / ChapterTranslation from the
-existing CharField columns (title, description, mood_tags) using Ukrainian
-as the source language.
-
-After this migration the old CharField columns on Book (title, description)
-and Chapter (title, description, mood_tags) are no longer the source of truth,
-but they are NOT dropped here — removal is deferred until the codebase has
-fully migrated all queries to use the translation accessors.
-"""
 from django.db import migrations
 
 
@@ -24,10 +14,7 @@ def forward(apps, schema_editor):
         BookTranslation.objects.get_or_create(
             book=book,
             language=uk,
-            defaults={
-                "title": book.title or "",
-                "description": book.description or "",
-            },
+            defaults={"title": book.title or "", "description": book.description or ""},
         )
 
     for chapter in Chapter.objects.all():
