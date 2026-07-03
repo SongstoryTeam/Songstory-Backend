@@ -216,7 +216,7 @@ class BookDetailView(DetailView):
             context["is_saved"] = SavedBook.objects.filter(user=user, book=book).exists()
             context["is_owner"] = is_privileged
             context["user_rating"] = (
-                BookRating.objects.filter(user=user, book=book).values_list("score", flat=True).first() or 0
+                    BookRating.objects.filter(user=user, book=book).values_list("score", flat=True).first() or 0
             )
             has_pending = AuthorVerification.objects.filter(
                 user=user, book=book, status=AuthorVerification.STATUS_PENDING
@@ -296,14 +296,23 @@ class PlaylistDetailView(DetailView):
 
     def get_object(self):
         if "slug" in self.kwargs:
-            return get_object_or_404(Playlist, slug=self.kwargs["slug"])
-        return get_object_or_404(Playlist, pk=self.kwargs["pk"])
+            playlist = get_object_or_404(Playlist, slug=self.kwargs["slug"])
+        else:
+            playlist = get_object_or_404(Playlist, pk=self.kwargs["pk"])
+
+        user = self.request.user
+        is_owner = user.is_authenticated and (user == playlist.creator or user.is_staff)
+        if not playlist.is_public and not is_owner:
+            raise Http404
+
+        return playlist
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update({
             "tracks": self.object.tracks.all(),
-            "comments": self.object.comments.filter(parent=None).select_related("user").prefetch_related("replies__user"),
+            "comments": self.object.comments.filter(parent=None).select_related("user").prefetch_related(
+                "replies__user"),
             "comment_form": CommentForm(),
             "playlist_id": self.object.pk,
         })
@@ -320,8 +329,8 @@ def author_profile(request, user_id: int):
     authored_books = Book.objects.filter(verified_author=author_user)
     followers_count = author_user.followers.count()
     is_following = (
-        request.user.is_authenticated
-        and Follow.objects.filter(follower=request.user, following=author_user).exists()
+            request.user.is_authenticated
+            and Follow.objects.filter(follower=request.user, following=author_user).exists()
     )
 
     return render(request, "core/author_profile.html", {
@@ -337,13 +346,13 @@ def apply_author_verification(request, book_id: int):
     book = get_object_or_404(Book, id=book_id)
 
     if AuthorVerification.objects.filter(
-        user=request.user, book=book, status=AuthorVerification.STATUS_PENDING
+            user=request.user, book=book, status=AuthorVerification.STATUS_PENDING
     ).exists():
         messages.info(request, "Your application is already under review.")
         return redirect("core:book_detail", pk=book_id)
 
     if AuthorVerification.objects.filter(
-        user=request.user, book=book, status=AuthorVerification.STATUS_APPROVED
+            user=request.user, book=book, status=AuthorVerification.STATUS_APPROVED
     ).exists():
         messages.info(request, "Your authorship has already been verified.")
         return redirect("core:book_detail", pk=book_id)
