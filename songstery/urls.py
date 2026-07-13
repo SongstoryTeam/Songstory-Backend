@@ -22,6 +22,7 @@ sitemaps = {
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/", include("api.urls")),
+    path("accounts/", include("allauth.urls")),
     path("", include("core.urls")),
     path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="core:home"), name="logout"),

@@ -6,4 +6,7 @@
 @import './components/cards.css';
 @import './components/forms.css';
 @import './components/comments.css';
+@import './components/badges.css';
+@import './components/author-picks.css';
+@import './components/social-auth.css';
 @import './author.css';
