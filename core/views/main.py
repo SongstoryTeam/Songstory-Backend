@@ -701,3 +701,6 @@ def profile(request):
             user=request.user
         ).select_related("chapter__book"),
     })
+
+class AboutView(TemplateView):
+    template_name = "core/about.html"

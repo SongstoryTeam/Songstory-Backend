@@ -26,4 +26,5 @@ from .main import (  # noqa: F401
     server_error,
     too_many_requests,
     service_worker,
+    AboutView
 )

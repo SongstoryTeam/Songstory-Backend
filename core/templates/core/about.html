@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Про нас — {{ SITE_NAME }}{% endblock %}
+
+{% block meta_description %}
+    Songstory — платформа, де читачі підбирають музику до кожного розділу книги. Дізнайтесь, чому ми це робимо
+    і хто стоїть за проєктом.
+{% endblock %}
+
+{% block meta_keywords %}про songstory, команда songstory, музика до книг стартап, історія проєкту{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'core/css/pages/about.css' %}">
+{% endblock %}
+
+{% block content %}
+
+    <section class="about-hero">
+        <div class="about-hero__label">Про нас</div>
+        <h1 class="about-hero__title">Ми віримо, що у <em>кожної історії</em> є свій саундтрек.</h1>
+        <p class="about-hero__sub">
+            Songstory — спільнота читачів і меломанів, яка підбирає музику до книг.
+            Не до обкладинки — до конкретного розділу, сцени, настрою.
+        </p>
+    </section>
+
+    <section class="about-section about-story">
+        <div class="about-section__label">Наша історія</div>
+        <h2 class="about-section__title">Як почалася Songstory</h2>
+
+        <div class="about-story__body">
+            <div class="about-story__text">
+                <p>
+                    Все почалося з простого спостереження: майже кожна книга, яку ми любимо, у нашій пам'яті
+                    пов'язана з якоюсь мелодією — треком, що грав, поки читали певний розділ, або піснею,
+                    яка ідеально передавала настрій сцени. Але поділитися цим зв'язком було ніде.
+                </p>
+                <p>
+                    Спільноти читачів і музичні спільноти існували окремо одна від одної, хоча емоційно
+                    завжди перетиналися. Ми вирішили це змінити — і почали будувати платформу, де книга
+                    й музика нарешті можуть існувати в одному просторі.
+                </p>
+                <p>
+                    Сьогодні Songstory — невелика команда з чотирьох людей, яка з нуля розробляє продукт:
+                    від бекенду й дизайну до першого користувача, що додав свій перший трек до улюбленого розділу.
+                </p>
+            </div>
+
+            <div class="about-pullquote">
+                Ми не хотіли робити ще один сервіс рекомендацій. Ми хотіли місце, де читання звучить.
+                <span>— Юлія, засновниця Songstory</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section about-mission">
+        <div class="about-section__label">Наша місія</div>
+        <p class="about-mission__statement">
+            Ми будуємо простір, де <em>література й музика</em> нарешті говорять однією мовою —
+            і читачі створюють цей саундтрек разом.
+        </p>
+    </section>
+
+    <section class="about-section">
+        <div class="about-section__label">Що ми будуємо</div>
+        <h2 class="about-section__title">Не просто рекомендації — спільний емоційний архів</h2>
+
+        <div class="values-grid">
+            <div class="value-card">
+                <div class="value-card__icon"><i data-lucide="book-open" size="20"></i></div>
+                <div class="value-card__title">Музика до розділів</div>
+                <div class="value-card__desc">
+                    Не до книги в цілому, а до конкретної сцени, яка вас зачепила.
+                </div>
+            </div>
+            <div class="value-card">
+                <div class="value-card__icon"><i data-lucide="eye-off" size="20"></i></div>
+                <div class="value-card__title">Без спойлерів</div>
+                <div class="value-card__desc">
+                    Переглядайте розділи та підібрану музику, не розкриваючи сюжет наперед.
+                </div>
+            </div>
+            <div class="value-card">
+                <div class="value-card__icon"><i data-lucide="users" size="20"></i></div>
+                <div class="value-card__title">Спільнота, не алгоритм</div>
+                <div class="value-card__desc">
+                    Плейлісти й рекомендації створює спільнота читачів — щиро, а не за формулою.
+                </div>
+            </div>
+            <div class="value-card">
+                <div class="value-card__icon"><i data-lucide="badge-check" size="20"></i></div>
+                <div class="value-card__title">Верифіковані автори</div>
+                <div class="value-card__desc">
+                    Автори можуть підтвердити свої книги й спілкуватися з читачами напряму.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section about-team">
+        <div class="about-section__label">Команда</div>
+        <h2 class="about-section__title">Люди за Songstory</h2>
+
+        <div class="team-grid">
+            <div class="team-card">
+                <div class="team-card__avatar" style="background: var(--clr-accent);">Ю</div>
+                <div class="team-card__name">Юлія</div>
+                <div class="team-card__handle">plskyll</div>
+                <div class="team-card__role">Засновниця &amp; CEO</div>
+                <div class="team-card__desc">Формує бачення продукту та веде команду вперед.</div>
+            </div>
+            <div class="team-card">
+                <div class="team-card__avatar" style="background: var(--clr-ink);">І</div>
+                <div class="team-card__name">Іван Амброзяк</div>
+                <div class="team-card__handle">ivasx</div>
+                <div class="team-card__role">Технічний лідер</div>
+                <div class="team-card__desc">Пише весь код проєкту — від бекенду до інтеграцій зі Spotify.</div>
+            </div>
+            <div class="team-card">
+                <div class="team-card__avatar" style="background: var(--clr-green);">С</div>
+                <div class="team-card__name">Саша</div>
+                <div class="team-card__handle">sahuk21</div>
+                <div class="team-card__role">UI/UX дизайнерка</div>
+                <div class="team-card__desc">Продумує, як виглядає та відчувається кожен екран.</div>
+            </div>
+            <div class="team-card">
+                <div class="team-card__avatar" style="background: var(--clr-accent-dk);">В</div>
+                <div class="team-card__name">Віка</div>
+                <div class="team-card__handle">potato</div>
+                <div class="team-card__role">Графічна дизайнерка</div>
+                <div class="team-card__desc">Відповідає за візуальну айдентику, іконки та ілюстрації.</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section">
+        <div class="about-section__label">Де ми зараз</div>
+        <h2 class="about-section__title">Songstory сьогодні</h2>
+
+        <div class="about-timeline">
+            <div class="timeline-row">
+                <div class="timeline-row__marker"></div>
+                <div>
+                    <div class="timeline-row__title">Каталог книг, розділи, музичні рекомендації, плейлісти</div>
+                    <div class="timeline-row__desc">Основний функціонал платформи вже працює.</div>
+                </div>
+            </div>
+            <div class="timeline-row">
+                <div class="timeline-row__marker"></div>
+                <div>
+                    <div class="timeline-row__title">Авторизація, профілі, верифікація авторів</div>
+                    <div class="timeline-row__desc">Читачі й автори мають окремі можливості на платформі.</div>
+                </div>
+            </div>
+            <div class="timeline-row">
+                <div class="timeline-row__marker"></div>
+                <div>
+                    <div class="timeline-row__title">Система коментарів, лайків, нотифікацій</div>
+                    <div class="timeline-row__desc">Спільнота може взаємодіяти навколо книг і треків.</div>
+                </div>
+            </div>
+            <div class="timeline-row">
+                <div class="timeline-row__marker"></div>
+                <div>
+                    <div class="timeline-row__title">Інтеграція зі Spotify та Open Library</div>
+                    <div class="timeline-row__desc">Пошук книг і музики працює на перевірених джерелах.</div>
+                </div>
+            </div>
+            <div class="timeline-row">
+                <div class="timeline-row__marker timeline-row__marker--muted"></div>
+                <div>
+                    <div class="timeline-row__title">Мобільний застосунок</div>
+                    <div class="timeline-row__desc">У планах — ще не в розробці.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="about-cta">
+        <h2 class="about-cta__title">Приєднуйтесь до Songstory</h2>
+        <p class="about-cta__sub">
+            Знайдіть саундтрек до улюбленої книги — або поділіться своїм із спільнотою.
+        </p>
+        <div class="about-cta__actions">
+            <a href="{% url 'core:home' %}" class="btn btn-accent btn-lg">Перейти до каталогу</a>
+            {% if not user.is_authenticated %}
+                <a href="{% url 'signup' %}" class="btn btn-ghost btn-lg">Зареєструватися</a>
+            {% endif %}
+        </div>
+    </section>
+
+{% endblock %}

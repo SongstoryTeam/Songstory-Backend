@@ -45,4 +45,6 @@ urlpatterns = [
     path("notifications/", notification_list, name="notifications"),
     path("notifications/<int:pk>/read/", notification_mark_read, name="notification_read"),
     path("notifications/read-all/", notification_mark_all_read, name="notifications_read_all"),
+
+    path("about/", views.AboutView.as_view(), name="about"),
 ]
