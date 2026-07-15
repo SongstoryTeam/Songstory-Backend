@@ -6,7 +6,8 @@ import environ
 
 env = environ.Env(DEBUG=(bool, False))
 
-SITE_NAME = "Songstory"
+SITE_DOMAIN = env("SITE_DOMAIN", default="localhost:8000")
+SITE_NAME = env("SITE_NAME", default="Songstory")
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))

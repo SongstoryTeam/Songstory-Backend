@@ -12,7 +12,7 @@
           content="{% block meta_keywords %}музичні рекомендації до книг, музика під час читання, саундтрек до книги, треки до розділів, музика до літератури{% endblock %}">
     <meta name="author" content="{{ SITE_NAME }}">
     <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
-    <link rel="canonical" href="{% block canonical %}{{ request.build_absolute_uri }}{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}{{ CANONICAL_URL }}{% endblock %}">
 
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:site_name" content="{{ SITE_NAME }}">
@@ -22,7 +22,8 @@
     <meta property="og:description"
           content="{% block og_description %}Знаходь музичні рекомендації до кожного розділу улюбленої книги.{% endblock %}">
     <meta property="og:image"
-          content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
+          content="
+                  {% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:url" content="{{ request.build_absolute_uri }}">
@@ -34,7 +35,8 @@
     <meta name="twitter:description"
           content="{% block twitter_description %}Знаходь музику до кожного розділу улюбленої книги — разом зі спільнотою читачів.{% endblock %}">
     <meta name="twitter:image"
-          content="{% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
+          content="
+                  {% block twitter_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
 
     <script type="application/ld+json">
         {

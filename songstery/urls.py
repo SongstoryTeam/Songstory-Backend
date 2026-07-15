@@ -8,13 +8,13 @@ from django.contrib.auth import views as auth_views
 from django.views.generic.base import RedirectView
 
 from core import views as core_views
-from core.sitemaps import BookSitemap, ChapterSitemap
-
+from core.sitemaps import StaticViewSitemap, BookSitemap, ChapterSitemap
 handler404 = "core.views.page_not_found"
 handler500 = "core.views.server_error"
 handler429 = "core.views.too_many_requests"
 
 sitemaps = {
+    "static": StaticViewSitemap,
     "books": BookSitemap,
     "chapters": ChapterSitemap,
 }

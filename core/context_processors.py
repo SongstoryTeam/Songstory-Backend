@@ -4,6 +4,8 @@ from django.conf import settings
 def site(request):
     return {
         "SITE_NAME": settings.SITE_NAME,
+        "SITE_DOMAIN": settings.SITE_DOMAIN,
+        "CANONICAL_URL": f"https://{settings.SITE_DOMAIN}{request.path}",
         "PLAUSIBLE_DOMAIN": getattr(settings, "PLAUSIBLE_DOMAIN", ""),
         "GOOGLE_SITE_VERIFICATION": getattr(settings, "GOOGLE_SITE_VERIFICATION", ""),
     }

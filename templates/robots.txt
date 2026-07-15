@@ -9,4 +9,4 @@ Disallow: /author/apply/
 Allow: /book/
 Allow: /playlist/
 
-Sitemap: {{ request.scheme }}://{{ request.get_host }}/sitemap.xml
+Sitemap: https://{{ SITE_DOMAIN }}/sitemap.xml

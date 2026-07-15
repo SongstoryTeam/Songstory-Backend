@@ -5,6 +5,7 @@ pip install -r requirements.txt
 
 python manage.py collectstatic --no-input
 python manage.py migrate
+python manage.py sync_site
 
 python manage.py shell << 'PYEOF'
 from django.contrib.auth import get_user_model
