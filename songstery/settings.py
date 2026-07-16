@@ -235,3 +235,18 @@ LOGGING = {
 }
 
 PLAUSIBLE_DOMAIN = env("PLAUSIBLE_DOMAIN", default="")
+
+SENTRY_DSN = env("SENTRY_DSN", default="")
+
+if SENTRY_DSN and not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration(), RedisIntegration()],
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+    )
