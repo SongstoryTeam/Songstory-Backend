@@ -200,4 +200,53 @@ EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@songstory.com")
 ADMIN_EMAIL = env("ADMIN_EMAIL", default="")
 
+ADMINS = [("Admin", ADMIN_EMAIL)] if ADMIN_EMAIL else []
+MANAGERS = ADMINS
+
+DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "[{asctime}] {levelname} {name}: {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": DJANGO_LOG_LEVEL,
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
 PLAUSIBLE_DOMAIN = env("PLAUSIBLE_DOMAIN", default="")
+
+SENTRY_DSN = env("SENTRY_DSN", default="")
+
+if SENTRY_DSN and not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration(), RedisIntegration()],
+        traces_sample_rate=0.1,
+        send_default_pii=False,
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+    )
