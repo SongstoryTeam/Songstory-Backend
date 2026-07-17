@@ -5,3 +5,9 @@ class DefaultCursorPagination(CursorPagination):
     page_size = 20
     ordering = "-created_at"
     cursor_query_param = "cursor"
+
+
+class NotificationCursorPagination(CursorPagination):
+    page_size = 20
+    ordering = "-created_at"
+    cursor_query_param = "cursor"

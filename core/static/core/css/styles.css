@@ -4,9 +4,15 @@
 @import './components/alerts.css';
 @import './components/pagination.css';
 @import './components/cards.css';
+@import './components/book-card.css';
 @import './components/forms.css';
 @import './components/comments.css';
 @import './components/badges.css';
 @import './components/author-picks.css';
 @import './components/social-auth.css';
+@import './components/loading-states.css';
+@import './components/player.css';
+@import './components/rating.css';
+@import './components/sort-bar.css';
+@import './components/youtube-search.css';
 @import './author.css';

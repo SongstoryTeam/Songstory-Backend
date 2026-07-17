@@ -29,8 +29,17 @@ class ChapterMusicView(generics.ListCreateAPIView):
     serializer_class = MusicRecommendationSerializer
 
     def get_queryset(self):
+        chapter = generics.get_object_or_404(Chapter, pk=self.kwargs["chapter_id"])
+        user = self.request.user
+        is_privileged = user.is_authenticated and (
+            user == chapter.book.creator or user.is_staff
+        )
+        if not chapter.is_approved and not is_privileged:
+            from django.http import Http404
+            raise Http404
+
         return MusicRecommendation.objects.filter(
-            chapter_id=self.kwargs["chapter_id"]
+            chapter_id=chapter.pk
         ).select_related("user").order_by("-likes_count", "-created_at")
 
     def get_permissions(self):
@@ -69,7 +78,7 @@ class AddBulkChaptersView(APIView):
         uk = Language.objects.filter(code="uk").first()
         if uk:
             ChapterTranslation.objects.bulk_create([
-                ChapterTranslation(chapter=ch, language=uk, title=f"Chapter {start_num + i}")
+                ChapterTranslation(chapter=ch, language=uk, title=f"Розділ {start_num + i}")
                 for i, ch in enumerate(chapters)
             ])
 

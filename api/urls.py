@@ -2,10 +2,12 @@ from django.urls import path
 
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from api.v1.views.auth import LoginView, MeView, RegisterView
+from api.v1.views.auth import LoginView, LogoutView, MeView, RegisterView
 from api.v1.views.books import (
     BookListView,
     BookDetailView,
+    BookCreateView,
+    BookUpdateView,
     BookChaptersView,
     BookTopMusicView,
     BookPlaylistsView,
@@ -26,13 +28,18 @@ from api.v1.views.playlists import (
     PlaylistAddTrackView,
 )
 from api.v1.views.comments import CommentCreateView, CommentDeleteView
-from api.v1.views.social import (
-    AuthorProfileView,
-    FollowUserView,
-    NotificationListView,
-    NotificationMarkReadView,
-    NotificationMarkAllReadView,
+from api.v1.views.author import AuthorDetailView, AuthorFollowView
+from api.v1.views.verification import AuthorVerificationView
+from api.v1.views.search import MusicSearchView, BookSearchView
+from api.v1.views.profile import (
+    ProfileMeView,
+    ProfileSavedView,
+    ProfilePlaylistsView,
+    ProfileRecommendationsView,
+    ProfileNotificationsView,
+    ProfileNotificationsReadView,
 )
+from api.v1.views.social import NotificationMarkReadView
 from api.v1.views.youtube import YouTubeSearchView
 
 urlpatterns = [
@@ -40,11 +47,14 @@ urlpatterns = [
     path("auth/token/", LoginView.as_view(), name="api_token_obtain"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="api_token_refresh"),
     path("auth/register/", RegisterView.as_view(), name="api_register"),
+    path("auth/logout/", LogoutView.as_view(), name="api_logout"),
     path("auth/me/", MeView.as_view(), name="api_me"),
 
     # ── Books ─────────────────────────────────────────────────────────────
     path("books/", BookListView.as_view(), name="api_books_list"),
+    path("books/create/", BookCreateView.as_view(), name="api_book_create"),
     path("books/<str:slug>/", BookDetailView.as_view(), name="api_book_detail"),
+    path("books/<str:slug>/edit/", BookUpdateView.as_view(), name="api_book_update"),
     path("books/<int:pk>/chapters/", BookChaptersView.as_view(), name="api_book_chapters"),
     path("books/<int:pk>/top-music/", BookTopMusicView.as_view(), name="api_book_top_music"),
     path("books/<int:pk>/playlists/", BookPlaylistsView.as_view(), name="api_book_playlists"),
@@ -74,14 +84,33 @@ urlpatterns = [
     path("comments/add/", CommentCreateView.as_view(), name="api_comment_add"),
     path("comments/<int:pk>/delete/", CommentDeleteView.as_view(), name="api_comment_delete"),
 
-    # ── Social ────────────────────────────────────────────────────────────
-    path("author/<int:pk>/", AuthorProfileView.as_view(), name="api_author_profile"),
-    path("user/<int:pk>/follow/", FollowUserView.as_view(), name="api_follow_user"),
+    # ── Authors ───────────────────────────────────────────────────────────
+    path("authors/<slug:slug>/", AuthorDetailView.as_view(), name="api_author_detail"),
+    path("authors/<slug:slug>/follow/", AuthorFollowView.as_view(), name="api_author_follow"),
 
-    # ── Notifications ─────────────────────────────────────────────────────
-    path("notifications/", NotificationListView.as_view(), name="api_notifications"),
-    path("notifications/<int:pk>/read/", NotificationMarkReadView.as_view(), name="api_notification_read"),
-    path("notifications/read-all/", NotificationMarkAllReadView.as_view(), name="api_notifications_read_all"),
+    # ── Author verification ──────────────────────────────────────────────
+    path("author-verification/", AuthorVerificationView.as_view(), name="api_author_verification"),
+
+    # ── Search ────────────────────────────────────────────────────────────
+    path("search/music/", MusicSearchView.as_view(), name="api_search_music"),
+    path("search/books/", BookSearchView.as_view(), name="api_search_books"),
+
+    # ── Profile ───────────────────────────────────────────────────────────
+    path("profile/me/", ProfileMeView.as_view(), name="api_profile_me"),
+    path("profile/saved/", ProfileSavedView.as_view(), name="api_profile_saved"),
+    path("profile/playlists/", ProfilePlaylistsView.as_view(), name="api_profile_playlists"),
+    path("profile/recommendations/", ProfileRecommendationsView.as_view(), name="api_profile_recommendations"),
+    path("profile/notifications/", ProfileNotificationsView.as_view(), name="api_profile_notifications"),
+    path(
+        "profile/notifications/read/",
+        ProfileNotificationsReadView.as_view(),
+        name="api_profile_notifications_read_all",
+    ),
+    path(
+        "profile/notifications/<int:pk>/read/",
+        NotificationMarkReadView.as_view(),
+        name="api_profile_notification_read",
+    ),
 
     # ── Utilities ─────────────────────────────────────────────────────────
     path("youtube-search/", YouTubeSearchView.as_view(), name="api_youtube_search"),
