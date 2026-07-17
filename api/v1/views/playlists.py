@@ -1,4 +1,5 @@
 from django.db.models import F
+from django.http import Http404
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -15,9 +16,16 @@ class PlaylistDetailView(generics.RetrieveAPIView):
     def get_object(self):
         lookup = self.kwargs.get("slug")
         try:
-            return Playlist.objects.get(slug=lookup)
+            playlist = Playlist.objects.get(slug=lookup)
         except Playlist.DoesNotExist:
-            return generics.get_object_or_404(Playlist, pk=lookup)
+            playlist = generics.get_object_or_404(Playlist, pk=lookup)
+
+        user = self.request.user
+        is_owner_or_staff = user.is_authenticated and (user == playlist.creator or user.is_staff)
+        if not playlist.is_public and not is_owner_or_staff:
+            raise Http404
+
+        return playlist
 
 
 class PlaylistCreateView(generics.CreateAPIView):
