@@ -18,20 +18,21 @@ class AuthorDetailView(APIView):
         serializer = AuthorSerializer(author, context={"request": request})
         data = serializer.data
 
+        book_with_author = (
+            author.books.filter(verified_author__isnull=False)
+            .select_related("verified_author")
+            .first()
+        )
+        target = book_with_author.verified_author if book_with_author else None
+
         if request.user.is_authenticated:
-            book_with_author = (
-                author.books.filter(verified_author__isnull=False)
-                .select_related("verified_author")
-                .first()
-            )
-            target = book_with_author.verified_author if book_with_author else None
             data["is_following"] = (
                 Follow.objects.filter(follower=request.user, following=target).exists()
                 if target
                 else False
             )
 
-        data["followers_count"] = 0
+        data["followers_count"] = target.followers.count() if target else 0
         return Response(data)
 
 

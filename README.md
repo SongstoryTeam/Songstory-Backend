@@ -71,31 +71,43 @@ API: http://127.0.0.1:8000/api/v1/
 
 ## API (Етап 3)
 
-Базовий префікс: `/api/v1/`
+Базовий префікс: `/api/`
 
 | Розділ | Ендпоінти |
 |---|---|
-| Книги | `GET/POST /books/`, `GET/PATCH /books/{slug}/`, `chapters/`, `playlists/`, `music/`, `save/`, `rate/` |
-| Розділи | `GET /chapters/{id}/`, `POST /chapters/{id}/music/` |
+| Авторизація | `POST /auth/register/`, `POST /auth/token/` (login), `POST /auth/token/refresh/`, `POST /auth/logout/`, `GET /auth/me/` |
+| Книги | `GET /books/`, `POST /books/create/`, `GET /books/{slug}/`, `PATCH /books/{slug}/edit/`, `GET /books/{pk}/chapters/`, `playlists/`, `top-music/`, `POST save/`, `rate/` |
+| Розділи | `GET /books/{book_id}/chapters/{num}/`, `GET/POST /chapters/{id}/music/`, `POST /books/{id}/chapters/bulk/` |
 | Музика | `POST /music/{id}/like/`, `DELETE /music/{id}/` |
-| Плейлісти | `GET /playlists/{slug}/`, `like/`, `tracks/` |
-| Автори | `GET /authors/{slug}/`, `follow/` |
-| Пошук | `GET /search/music/?q=`, `GET /search/books/?q=` |
-| Коментарі | `POST /comments/`, `DELETE /comments/{id}/` |
+| Плейлісти | `POST /playlists/`, `GET /playlists/{slug}/`, `POST like/`, `tracks/` |
+| Автори | `GET /authors/{slug}/`, `POST follow/` |
+| Пошук | `GET /search/music/?q=` (Spotify), `GET /search/books/?q=` (Open Library) |
+| Коментарі | `POST /comments/add/`, `DELETE /comments/{id}/delete/` |
 | Верифікація | `POST /author-verification/` |
-| Авторизація | `POST /auth/register/`, `login/`, `refresh/`, `logout/` |
-| Профіль | `GET/PATCH /profile/me/`, `saved/`, `playlists/`, `recommendations/`, `notifications/` |
+| Профіль | `GET/PATCH /profile/me/`, `GET /saved/`, `playlists/`, `recommendations/`, `notifications/`, `POST notifications/read/` |
 
 Авторизація через JWT: `Authorization: Bearer <access_token>`.
 Мова відповіді: `?lang=uk` або `?lang=en`.
 
+> Точні шляхи й імена — в `api/urls.py`, це джерело правди.
+
 ## Поточний статус розробки
 
 - Каталог книг, розділи, музичні рекомендації, плейлісти
-- Авторизація, профілі, верифікація авторів
+- Модерація книг/розділів (Етап 0), rate limiting, валідація cover_url
+- Переклади для Book/Chapter/Genre/Author (BookTranslation/ChapterTranslation/…)
+- Авторизація (JWT + Google OAuth через allauth), профілі, верифікація авторів
 - Система коментарів, лайків, нотифікацій
-- REST API з JWT, фільтрацією, cursor-пагінацією
+- REST API з JWT, фільтрацією, cursor-пагінацією — **весь список вище реально підключений і покритий тестами** (`core/tests.py`)
 - Інтеграція з Spotify та Open Library
+
+### Відомий технічний борг (не зроблено в цьому проході)
+
+- **camelCase vs snake_case**: серіалайзери `books.py`/`music.py` віддають camelCase (`coverUrl`, `chaptersCount`), а `author.py`/`profile.py`/`notification.py` — snake_case. Треба вибрати одну конвенцію і привести все до неї.
+- **Рік-фільтр книг** (`year_from`/`year_to` через django-filter) був у покинутому `BookViewSet`, але не перенесений у живий `BookListView` — зараз фільтрації по року немає.
+- **i18n URL-префікси** (`/uk/`, `/en/`, `LocaleMiddleware`, `i18n_patterns`) — модель `Language` є, префіксів немає.
+- **Cloudinary** для аватарів/медіа не підключено — досі локальний `ImageField`.
+- `core/static/core/css/components/extras.css` — порожній файл, можна видалити.
 
 ## Автор
 

@@ -5,7 +5,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import Book, BookRating, Chapter, MusicRecommendation, Playlist, SavedBook
+from core.models import Book, BookRating, Chapter, Language, MusicRecommendation, Playlist, SavedBook
+from core.models.book import BookTranslation, ChapterTranslation
+from core.utils.slugs import generate_unique_slug
+from api.v1.filters.permissions import IsOwnerOrStaff
+from api.v1.serializers.book import BookCreateSerializer
 from api.v1.serializers.books import (
     BookListSerializer,
     ChapterSerializer,
@@ -77,6 +81,52 @@ class BookDetailView(generics.RetrieveAPIView):
             self.request.session[session_key] = True
 
         return book
+
+
+class BookCreateView(generics.CreateAPIView):
+    serializer_class = BookCreateSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer: BookCreateSerializer) -> None:
+        title = serializer.validated_data.get("title", "")
+        description = serializer.validated_data.get("description", "")
+        slug = generate_unique_slug(Book, title)
+        book: Book = serializer.save(creator=self.request.user, slug=slug)
+
+        uk = Language.objects.filter(code="uk").first()
+        if uk:
+            BookTranslation.objects.create(
+                book=book, language=uk, title=title, description=description,
+            )
+            chapter = Chapter.objects.create(book=book, number=1, is_approved=True)
+            ChapterTranslation.objects.create(chapter=chapter, language=uk, title="Розділ 1")
+
+
+class BookUpdateView(generics.UpdateAPIView):
+    serializer_class = BookCreateSerializer
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrStaff]
+    lookup_field = "slug"
+    queryset = Book.objects.all()
+
+    def perform_update(self, serializer: BookCreateSerializer) -> None:
+        has_title = "title" in serializer.validated_data
+        has_description = "description" in serializer.validated_data
+        new_title = serializer.validated_data.get("title")
+        new_description = serializer.validated_data.get("description")
+
+        book: Book = serializer.save()
+
+        if not (has_title or has_description):
+            return
+        uk = Language.objects.filter(code="uk").first()
+        if not uk:
+            return
+        translation, _ = BookTranslation.objects.get_or_create(book=book, language=uk)
+        if has_title:
+            translation.title = new_title
+        if has_description:
+            translation.description = new_description
+        translation.save()
 
 
 class BookChaptersView(generics.ListAPIView):

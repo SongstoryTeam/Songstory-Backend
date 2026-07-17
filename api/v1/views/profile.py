@@ -5,7 +5,7 @@ from rest_framework.views import APIView
 
 from core.models import MusicRecommendation, Notification, Playlist, SavedBook
 from api.v1.filters.pagination import NotificationCursorPagination
-from api.v1.serializers.book import BookListSerializer
+from api.v1.serializers.books import BookListSerializer
 from api.v1.serializers.music import MusicRecommendationSerializer, PlaylistSerializer
 from api.v1.serializers.notification import NotificationSerializer
 from api.v1.serializers.user import UserSerializer, UserUpdateSerializer
