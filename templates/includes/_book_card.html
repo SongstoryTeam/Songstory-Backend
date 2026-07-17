@@ -1,19 +1,20 @@
 {% load static %}
+{% load core_extras %}
 <a href="{% url 'core:book_detail' book.id %}" class="book-card" data-category="{{ book.genre }}">
     <div class="book-card__spine-wrap">
         <div class="book-card__cover">
             {% with cover=book.get_cover %}
                 {% if cover %}
-                    <img src="{{ cover }}" alt="{{ book.title }}" loading="lazy"
-                         onerror="this.parentElement.innerHTML='<div class=\'book-card__no-cover\'>{{ book.title|truncatechars:30 }}</div>'">
+                    <img src="{{ cover }}" alt="{{ book|localized_title }}" loading="lazy"
+                         onerror="this.parentElement.innerHTML='<div class=\'book-card__no-cover\'>{{ book|localized_title|truncatechars:30 }}</div>'">
                 {% else %}
-                    <div class="book-card__no-cover">{{ book.title|truncatechars:40 }}</div>
+                    <div class="book-card__no-cover">{{ book|localized_title|truncatechars:40 }}</div>
                 {% endif %}
             {% endwith %}
         </div>
     </div>
     <div class="book-card__meta">
-        <div class="book-card__title">{{ book.title }}</div>
+        <div class="book-card__title">{{ book|localized_title }}</div>
         <div class="book-card__author">{{ book.author }}</div>
     </div>
 </a>

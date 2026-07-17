@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}Профіль — {{ SITE_NAME }}{% endblock %}
 {% block nav_library %}active{% endblock %}
@@ -63,16 +64,16 @@
                                 <div class="book-card__cover">
                                     {% with cover=saved.book.get_cover %}
                                         {% if cover %}
-                                            <img src="{{ cover }}" alt="{{ saved.book.title }}" loading="lazy"
-                                                 onerror="this.parentElement.innerHTML='<div class=\'book-card__no-cover\'>{{ saved.book.title|truncatechars:30 }}</div>'">
+                                            <img src="{{ cover }}" alt="{{ saved.book|localized_title }}" loading="lazy"
+                                                 onerror="this.parentElement.innerHTML='<div class=\'book-card__no-cover\'>{{ saved.book|localized_title|truncatechars:30 }}</div>'">
                                         {% else %}
-                                            <div class="book-card__no-cover">{{ saved.book.title|truncatechars:40 }}</div>
+                                            <div class="book-card__no-cover">{{ saved.book|localized_title|truncatechars:40 }}</div>
                                         {% endif %}
                                     {% endwith %}
                                 </div>
                             </div>
                             <div class="book-card__meta">
-                                <div class="book-card__title">{{ saved.book.title }}</div>
+                                <div class="book-card__title">{{ saved.book|localized_title }}</div>
                                 <div class="book-card__author">{{ saved.book.author }}</div>
                             </div>
                         </a>
@@ -94,7 +95,7 @@
                     <a href="{% url 'core:playlist_detail' playlist.id %}" class="list-item">
                         <div>
                             <div class="list-item__title">{{ playlist.title }}</div>
-                            <div class="list-item__sub">{{ playlist.book.title }}</div>
+                            <div class="list-item__sub">{{ playlist.book|localized_title }}</div>
                         </div>
                         <div class="list-item__stat">
                             <i data-lucide="heart" style="width:12px;height:12px;"></i>
@@ -118,7 +119,7 @@
                         <div>
                             <div class="list-item__title">{{ music.track_title }}</div>
                             <div class="list-item__sub">
-                                {{ music.artist }} · {{ music.chapter.book.title }} — Розд. {{ music.chapter.number }}
+                                {{ music.artist }} · {{ music.chapter.book|localized_title }} — Розд. {{ music.chapter.number }}
                             </div>
                         </div>
                         <div class="list-item__stat">

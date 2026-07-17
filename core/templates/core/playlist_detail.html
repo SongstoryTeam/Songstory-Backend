@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}{{ playlist.title }} — {{ SITE_NAME }}{% endblock %}
 {% block nav_playlists %}active{% endblock %}
@@ -15,7 +16,7 @@
         <nav class="breadcrumbs">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' playlist.book.id %}">{{ playlist.book.title }}</a>
+            <a href="{% url 'core:book_detail' playlist.book.id %}">{{ playlist.book|localized_title }}</a>
             <span class="breadcrumbs__sep">/</span>
             <span>{{ playlist.title }}</span>
         </nav>

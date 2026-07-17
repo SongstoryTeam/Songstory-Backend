@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}Додати розділи — {{ SITE_NAME }}{% endblock %}
 
@@ -8,14 +9,14 @@
         <nav class="breadcrumbs">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' book.id %}">{{ book.title }}</a>
+            <a href="{% url 'core:book_detail' book.id %}">{{ book|localized_title }}</a>
             <span class="breadcrumbs__sep">/</span>
             <span>Додати розділи</span>
         </nav>
 
         <div class="form-box">
             <div class="form-box__title">Додати розділи</div>
-            <p class="form-box__subtitle">До книги "{{ book.title }}"</p>
+            <p class="form-box__subtitle">До книги "{{ book|localized_title }}"</p>
 
             {% if not user.is_staff and user != book.creator %}
                 <div class="alert alert--warning mb-16">

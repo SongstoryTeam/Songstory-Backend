@@ -1,21 +1,22 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
-{% block title %}{{ book.title }} — {{ book.author }} | Музичні рекомендації — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Музичні рекомендації до книги "{{ book.title }}" (
+{% block title %}{{ book|localized_title }} — {{ book.author }} | Музичні рекомендації — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Музичні рекомендації до книги "{{ book|localized_title }}" (
     {{ book.author }}{% if book.year %}, {{ book.year }}{% endif %}). {{ book.chapters.count }} розділів з треками від
     спільноти читачів.{% endblock %}
-{% block meta_keywords %}музика до {{ book.title }}, саундтрек {{ book.title }}, {{ book.author }} музика, музичні
+{% block meta_keywords %}музика до {{ book|localized_title }}, саундтрек {{ book|localized_title }}, {{ book.author }} музика, музичні
     рекомендації {{ book.genre }}{% endblock %}
 {% block og_type %}book{% endblock %}
-{% block og_title %}{{ book.title }} — {{ book.author }} | {{ SITE_NAME }}{% endblock %}
+{% block og_title %}{{ book|localized_title }} — {{ book.author }} | {{ SITE_NAME }}{% endblock %}
 {% block og_description %}
-    {{ book.description|truncatechars:200|default:"Музичні рекомендації до кожного розділу книги від спільноти читачів." }}{% endblock %}
+    {{ book|localized_description|truncatechars:200|default:"Музичні рекомендації до кожного розділу книги від спільноти читачів." }}{% endblock %}
 {% block og_image %}{% if book.get_cover %}{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}{% else %}
     {{ block.super }}{% endif %}{% endblock %}
-{% block twitter_title %}{{ book.title }} — {{ book.author }}{% endblock %}
+{% block twitter_title %}{{ book|localized_title }} — {{ book.author }}{% endblock %}
 {% block twitter_description %}
-    {{ book.description|truncatechars:200|default:"Музичні рекомендації до кожного розділу." }}{% endblock %}
+    {{ book|localized_description|truncatechars:200|default:"Музичні рекомендації до кожного розділу." }}{% endblock %}
 {% block twitter_image %}{% if book.get_cover %}{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}
 {% else %}{{ block.super }}{% endif %}{% endblock %}
 {% block canonical %}{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' book.pk %}{% endblock %}
@@ -25,14 +26,14 @@
         {
           "@context": "https://schema.org",
           "@type": "Book",
-          "name": "{{ book.title|escapejs }}",
+          "name": "{{ book|localized_title|escapejs }}",
           "author": {
             "@type": "Person",
             "name": "{{ book.author|escapejs }}"
           },
           {% if book.year %}"datePublished": "{{ book.year }}",{% endif %}
           {% if book.genre %}"genre": "{{ book.genre|escapejs }}",{% endif %}
-          {% if book.description %}"description": "{{ book.description|truncatechars:300|escapejs }}",{% endif %}
+          {% if book|localized_description %}"description": "{{ book|localized_description|truncatechars:300|escapejs }}",{% endif %}
           {% if book.get_cover %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}",{% endif %}
           "url": "{{ request.build_absolute_uri }}",
           "numberOfPages": {{ chapters|length }},
@@ -60,7 +61,7 @@
             {
               "@type": "ListItem",
               "position": 2,
-              "name": "{{ book.title|escapejs }}",
+              "name": "{{ book|localized_title|escapejs }}",
               "item": "{{ request.build_absolute_uri }}"
             }
           ]
@@ -79,7 +80,7 @@
         <nav class="breadcrumbs" aria-label="Навігація">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep" aria-hidden="true">/</span>
-            <span aria-current="page">{{ book.title }}</span>
+            <span aria-current="page">{{ book|localized_title }}</span>
         </nav>
 
         <div class="book-hero">
@@ -87,11 +88,11 @@
                 <div class="book-hero__cover">
                     {% with cover=book.get_cover %}
                         {% if cover %}
-                            <img src="{{ cover }}" alt="Обкладинка книги {{ book.title }} — {{ book.author }}"
-                                 onerror="this.parentElement.innerHTML='<div class=\'cover-placeholder\'>{{ book.title|truncatechars:50 }}</div>'"
+                            <img src="{{ cover }}" alt="Обкладинка книги {{ book|localized_title }} — {{ book.author }}"
+                                 onerror="this.parentElement.innerHTML='<div class=\'cover-placeholder\'>{{ book|localized_title|truncatechars:50 }}</div>'"
                                  loading="lazy" width="200" height="300">
                         {% else %}
-                            <div class="cover-placeholder">{{ book.title }}</div>
+                            <div class="cover-placeholder">{{ book|localized_title }}</div>
                         {% endif %}
                     {% endwith %}
                 </div>
@@ -102,7 +103,7 @@
                     <span class="book-hero__genre">{{ book.genre }}</span>
                 {% endif %}
 
-                <h1 class="book-hero__title">{{ book.title }}</h1>
+                <h1 class="book-hero__title">{{ book|localized_title }}</h1>
 
                 <p class="book-hero__author">
                     {% if book.verified_author %}
@@ -140,8 +141,8 @@
                     {% endif %}
                 </div>
 
-                {% if book.description %}
-                    <p class="book-hero__desc">{{ book.description }}</p>
+                {% if book|localized_description %}
+                    <p class="book-hero__desc">{{ book|localized_description }}</p>
                 {% endif %}
 
                 <div class="book-hero__actions">
@@ -207,13 +208,13 @@
                                 <span class="chapter-card__num">{{ chapter.number }}</span>
                                 <div class="chapter-card__info">
                                     <div class="chapter-card__title">
-                                        {{ chapter.title }}
+                                        {{ chapter|localized_title }}
                                         {% if not chapter.is_approved %}
                                             <span class="tag tag--danger" style="font-size:10px;margin-left:6px;">На розгляді</span>
                                         {% endif %}
                                     </div>
-                                    {% if chapter.mood_tags %}
-                                        <div class="chapter-card__desc italic text-accent">{{ chapter.mood_tags }}</div>
+                                    {% if chapter|localized_mood_tags %}
+                                        <div class="chapter-card__desc italic text-accent">{{ chapter|localized_mood_tags }}</div>
                                     {% elif chapter.description %}
                                         <div class="chapter-card__desc">{{ chapter.description|truncatewords:12 }}</div>
                                     {% endif %}

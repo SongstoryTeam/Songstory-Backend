@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}Створити плейліст — {{ SITE_NAME }}{% endblock %}
 {% block nav_playlists %}active{% endblock %}
@@ -9,14 +10,14 @@
         <nav class="breadcrumbs">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' book.id %}">{{ book.title }}</a>
+            <a href="{% url 'core:book_detail' book.id %}">{{ book|localized_title }}</a>
             <span class="breadcrumbs__sep">/</span>
             <span>Створити плейліст</span>
         </nav>
 
         <div class="form-box">
             <div class="form-box__title">Новий плейліст</div>
-            <p class="form-box__subtitle">До книги "{{ book.title }}"</p>
+            <p class="form-box__subtitle">До книги "{{ book|localized_title }}"</p>
 
             <form method="post">
                 {% csrf_token %}
@@ -37,7 +38,7 @@
                     <select name="chapter_id" id="chapter_id" class="form-select">
                         <option value="">Вся книга</option>
                         {% for chapter in chapters %}
-                            <option value="{{ chapter.id }}">Розділ {{ chapter.number }}: {{ chapter.title }}</option>
+                            <option value="{{ chapter.id }}">Розділ {{ chapter.number }}: {{ chapter|localized_title }}</option>
                         {% endfor %}
                     </select>
                 </div>
