@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}Додати музику — {{ SITE_NAME }}{% endblock %}
 
@@ -12,7 +13,7 @@
         <nav class="breadcrumbs">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' chapter.book.id %}">{{ chapter.book.title }}</a>
+            <a href="{% url 'core:book_detail' chapter.book.id %}">{{ chapter.book|localized_title }}</a>
             <span class="breadcrumbs__sep">/</span>
             <a href="{% url 'core:chapter_detail' chapter.book.id chapter.number %}">Розділ {{ chapter.number }}</a>
             <span class="breadcrumbs__sep">/</span>
@@ -21,7 +22,7 @@
 
         <div class="form-box">
             <div class="form-box__title">Додати рекомендацію</div>
-            <p class="form-box__subtitle">До "{{ chapter.title }}" — {{ chapter.book.title }}</p>
+            <p class="form-box__subtitle">До "{{ chapter|localized_title }}" — {{ chapter.book|localized_title }}</p>
 
             <form method="post">
                 {% csrf_token %}

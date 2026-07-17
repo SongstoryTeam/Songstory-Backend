@@ -1,15 +1,16 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
-{% block title %}{{ chapter.title }} — Розділ {{ chapter.number }} | {{ chapter.book.title }} —
+{% block title %}{{ chapter|localized_title }} — Розділ {{ chapter.number }} | {{ chapter.book|localized_title }} —
     {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Музичні рекомендації до розділу {{ chapter.number }} "{{ chapter.title }}" книги "
-    {{ chapter.book.title }}" ({{ chapter.book.author }}). {% if chapter.mood_tags %}Настрій: {{ chapter.mood_tags }}.
+{% block meta_description %}Музичні рекомендації до розділу {{ chapter.number }} "{{ chapter|localized_title }}" книги "
+    {{ chapter.book|localized_title }}" ({{ chapter.book.author }}). {% if chapter|localized_mood_tags %}Настрій: {{ chapter|localized_mood_tags }}.
 {% endif %} Треки від спільноти читачів.{% endblock %}
-{% block meta_keywords %}музика до розділу {{ chapter.number }} {{ chapter.book.title }}, {{ chapter.book.author }}
+{% block meta_keywords %}музика до розділу {{ chapter.number }} {{ chapter.book|localized_title }}, {{ chapter.book.author }}
     саундтрек, треки під читання{% endblock %}
-{% block og_title %}{{ chapter.title }} — {{ chapter.book.title }} | {{ SITE_NAME }}{% endblock %}
-{% block og_description %}Музичні рекомендації до розділу {{ chapter.number }} книги "{{ chapter.book.title }}
+{% block og_title %}{{ chapter|localized_title }} — {{ chapter.book|localized_title }} | {{ SITE_NAME }}{% endblock %}
+{% block og_description %}Музичні рекомендації до розділу {{ chapter.number }} книги "{{ chapter.book|localized_title }}
     ".{% endblock %}
 {% block canonical %}{{ request.scheme }}://{{ request.get_host }}
     {% url 'core:chapter_detail' chapter.book.pk chapter.number %}{% endblock %}
@@ -29,13 +30,13 @@
             {
               "@type": "ListItem",
               "position": 2,
-              "name": "{{ chapter.book.title|escapejs }}",
+              "name": "{{ chapter.book|localized_title|escapejs }}",
               "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' chapter.book.pk %}"
             },
             {
               "@type": "ListItem",
               "position": 3,
-              "name": "Розділ {{ chapter.number }}: {{ chapter.title|escapejs }}",
+              "name": "Розділ {{ chapter.number }}: {{ chapter|localized_title|escapejs }}",
               "item": "{{ request.build_absolute_uri }}"
             }
           ]
@@ -47,8 +48,8 @@
                 {
                   "@context": "https://schema.org",
                   "@type": "ItemList",
-                  "name": "Музика до розділу {{ chapter.number }} — {{ chapter.title|escapejs }}",
-                  "description": "Музичні рекомендації до розділу {{ chapter.number }} книги {{ chapter.book.title|escapejs }}",
+                  "name": "Музика до розділу {{ chapter.number }} — {{ chapter|localized_title|escapejs }}",
+                  "description": "Музичні рекомендації до розділу {{ chapter.number }} книги {{ chapter.book|localized_title|escapejs }}",
                   "numberOfItems": {{ other_music|length|add:author_count }},
                   "itemListElement": [
                 {% for music in author_music %}
@@ -94,21 +95,21 @@
         <nav class="breadcrumbs" aria-label="Навігація">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep" aria-hidden="true">/</span>
-            <a href="{% url 'core:book_detail' chapter.book.id %}">{{ chapter.book.title }}</a>
+            <a href="{% url 'core:book_detail' chapter.book.id %}">{{ chapter.book|localized_title }}</a>
             <span class="breadcrumbs__sep" aria-hidden="true">/</span>
             <span aria-current="page">Розділ {{ chapter.number }}</span>
         </nav>
 
         <div class="chapter-header">
             <div class="chapter-header__num">Розділ {{ chapter.number }}</div>
-            <h1 class="chapter-header__title">{{ chapter.title }}</h1>
+            <h1 class="chapter-header__title">{{ chapter|localized_title }}</h1>
             {% if chapter.description %}
                 <p class="chapter-header__desc">{{ chapter.description }}</p>
             {% endif %}
-            {% if chapter.mood_tags %}
+            {% if chapter|localized_mood_tags %}
                 <span class="chapter-header__mood">
                     <i data-lucide="music" style="width:12px;height:12px;"></i>
-                    {{ chapter.mood_tags }}
+                    {{ chapter|localized_mood_tags }}
                 </span>
             {% endif %}
         </div>
