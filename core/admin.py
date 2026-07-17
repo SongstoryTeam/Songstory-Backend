@@ -169,18 +169,18 @@ class AuthorVerificationAdmin(admin.ModelAdmin):
 
     @admin.action(description="Approve selected")
     def approve_selected(self, request, queryset):
-        count = sum(
-            1 for v in queryset.filter(status=AuthorVerification.STATUS_PENDING)
-            if not v.approve(admin_user=request.user) or True
-        )
+        pending = queryset.filter(status=AuthorVerification.STATUS_PENDING)
+        count = pending.count()
+        for verification in pending:
+            verification.approve(admin_user=request.user)
         self.message_user(request, f"{count} application(s) approved.")
 
     @admin.action(description="Reject selected")
     def reject_selected(self, request, queryset):
-        count = sum(
-            1 for v in queryset.filter(status=AuthorVerification.STATUS_PENDING)
-            if not v.reject(admin_user=request.user, note="Rejected via bulk action.") or True
-        )
+        pending = queryset.filter(status=AuthorVerification.STATUS_PENDING)
+        count = pending.count()
+        for verification in pending:
+            verification.reject(admin_user=request.user, note="Rejected via bulk action.")
         self.message_user(request, f"{count} application(s) rejected.")
 
 
