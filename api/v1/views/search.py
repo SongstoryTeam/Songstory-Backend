@@ -5,11 +5,13 @@ from rest_framework.views import APIView
 
 from api.v1.services.open_library import open_library_client
 from api.v1.services.spotify import SpotifyError, spotify_client
+from core.rate_limit import search_limit
 
 
 class MusicSearchView(APIView):
     permission_classes = (AllowAny,)
 
+    @search_limit
     def get(self, request: Request) -> Response:
         query = request.query_params.get("q", "").strip()
         if len(query) < 2:
@@ -38,6 +40,7 @@ class MusicSearchView(APIView):
 class BookSearchView(APIView):
     permission_classes = (AllowAny,)
 
+    @search_limit
     def get(self, request: Request) -> Response:
         query = request.query_params.get("q", "").strip()
         if len(query) < 2:
