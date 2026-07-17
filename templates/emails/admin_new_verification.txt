@@ -1,7 +1,8 @@
+{% load core_extras %}
 Нова заявка на верифікацію автора.
 
 Користувач: {{ verification.user.username }} ({{ verification.user.email }})
-Книга: {{ verification.book.title }}
+Книга: {{ verification.book|localized_title }}
 Дата подачі: {{ verification.submitted_at|date:"d.m.Y H:i" }}
 
 Переглянути в адмін-панелі:

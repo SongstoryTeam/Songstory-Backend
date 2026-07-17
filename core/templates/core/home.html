@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}
     {% if search_query %}
@@ -53,7 +54,7 @@
                   "position": {{ forloop.counter }},
                   "item": {
                     "@type": "Book",
-                    "name": "{{ book.title|escapejs }}",
+                    "name": "{{ book|localized_title|escapejs }}",
                     "author": { "@type": "Person", "name": "{{ book.author|escapejs }}" },
                     "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' book.pk %}"
                   }
@@ -201,7 +202,7 @@
                         </div>
                         <div class="music-rank__body">
                             <div class="music-rank__title">{{ music.track_title }}</div>
-                            <div class="music-rank__sub">{{ music.artist }} · {{ music.chapter.book.title }}</div>
+                            <div class="music-rank__sub">{{ music.artist }} · {{ music.chapter.book|localized_title }}</div>
                         </div>
                         <div class="music-rank__likes">
                             <i data-lucide="heart" style="width:13px;height:13px;"></i>

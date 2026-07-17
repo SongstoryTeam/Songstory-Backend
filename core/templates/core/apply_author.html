@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load core_extras %}
 
 {% block title %}Верифікація автора — {{ SITE_NAME }}{% endblock %}
 
@@ -8,7 +9,7 @@
         <nav class="breadcrumbs">
             <a href="{% url 'core:home' %}">Каталог</a>
             <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' book.id %}">{{ book.title }}</a>
+            <a href="{% url 'core:book_detail' book.id %}">{{ book|localized_title }}</a>
             <span class="breadcrumbs__sep">/</span>
             <span>Верифікація автора</span>
         </nav>
@@ -16,7 +17,7 @@
         <div class="form-box">
             <div class="form-box__title">Підтвердити авторство</div>
             <p class="form-box__subtitle">
-                Верифікуйте, що ви є автором книги <strong>{{ book.title }}</strong>.
+                Верифікуйте, що ви є автором книги <strong>{{ book|localized_title }}</strong>.
                 Документи перевіряються командою впродовж 3–5 робочих днів.
             </p>
 
