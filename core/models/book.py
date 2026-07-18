@@ -1,3 +1,4 @@
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Avg
@@ -41,7 +42,6 @@ class Book(models.Model):
         related_name="books",
         verbose_name="Author",
     )
-    author_legacy = models.CharField(max_length=255, blank=True, verbose_name="Author (legacy)")
     genre = models.ForeignKey(
         "Genre",
         on_delete=models.SET_NULL,
@@ -50,7 +50,6 @@ class Book(models.Model):
         related_name="books",
         verbose_name="Genre",
     )
-    genre_legacy = models.CharField(max_length=100, blank=True, verbose_name="Genre (legacy)")
     slug = models.SlugField(unique=True, blank=True)
     year = models.IntegerField(verbose_name="Year")
     cover_image = models.ImageField(
@@ -102,12 +101,12 @@ class Book(models.Model):
     def get_author_name(self, lang: str = "uk") -> str:
         if self.author_id:
             return self.author.get_name(lang)
-        return self.author_legacy
+        return ""
 
     def get_genre_name(self, lang: str = "uk") -> str:
         if self.genre_id:
             return self.genre.get_name(lang)
-        return self.genre_legacy
+        return ""
 
     def get_cover(self) -> str | None:
         if self.cover_image:

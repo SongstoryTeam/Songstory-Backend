@@ -1,3 +1,4 @@
+
 import json
 import urllib.parse
 import urllib.request
@@ -122,14 +123,12 @@ class HomeView(TemplateView):
             books_qs = books_qs.filter(
                 Q(translations__title__icontains=search_query)
                 | Q(author__translations__name__icontains=search_query)
-                | Q(author_legacy__icontains=search_query)
                 | Q(genre__translations__name__icontains=search_query)
-                | Q(genre_legacy__icontains=search_query)
             ).distinct()
 
         if active_genre:
             books_qs = books_qs.filter(
-                Q(genre__translations__name__iexact=active_genre) | Q(genre_legacy__iexact=active_genre)
+                Q(genre__translations__name__iexact=active_genre)
             ).distinct()
 
         sort_field = _SORT_MAP.get(current_sort, "-created_at")
@@ -148,15 +147,9 @@ class HomeView(TemplateView):
         page_obj = paginator.get_page(self.request.GET.get("page"))
 
         genres = sorted(set(
-            list(
-                Book.published.exclude(genre__isnull=True)
-                .values_list("genre__translations__name", flat=True)
-                .exclude(genre__translations__name=None)
-            ) + list(
-                Book.published.filter(genre__isnull=True)
-                .exclude(genre_legacy="")
-                .values_list("genre_legacy", flat=True)
-            )
+            Book.published.exclude(genre__isnull=True)
+            .values_list("genre__translations__name", flat=True)
+            .exclude(genre__translations__name=None)
         ))
 
         context.update({

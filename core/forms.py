@@ -1,3 +1,4 @@
+
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -13,6 +14,7 @@ from .models import (
     Playlist,
     PlaylistTrack,
 )
+from .utils.catalog import get_or_create_author, get_or_create_genre
 from .validators import validate_image_url
 
 
@@ -35,10 +37,12 @@ class BookForm(StyledFormMixin, forms.ModelForm):
         widget=forms.Textarea(attrs={"rows": 4, "class": "form-textarea"}),
         required=False,
     )
+    author_name = forms.CharField(max_length=255, label="Author")
+    genre_name = forms.CharField(max_length=100, label="Genre", required=False)
 
     class Meta:
         model = Book
-        fields = ["author", "year", "genre", "cover_image", "cover_url"]
+        fields = ["year", "cover_image", "cover_url"]
         widgets = {"cover_url": forms.URLInput(attrs={"placeholder": "https://..."})}
 
     def __init__(self, *args, **kwargs):
@@ -48,6 +52,10 @@ class BookForm(StyledFormMixin, forms.ModelForm):
             if translation:
                 self.fields["title"].initial = translation.title
                 self.fields["description"].initial = translation.description
+            if self.instance.author_id:
+                self.fields["author_name"].initial = self.instance.author.get_name()
+            if self.instance.genre_id:
+                self.fields["genre_name"].initial = self.instance.genre.get_name()
 
     def clean_cover_url(self):
         url = self.cleaned_data.get("cover_url", "")
@@ -56,9 +64,17 @@ class BookForm(StyledFormMixin, forms.ModelForm):
         return url
 
     def save(self, commit=True):
-        book = super().save(commit=commit)
+        book = super().save(commit=False)
+        language = Language.objects.filter(is_active=True).first()
+
+        author_name = self.cleaned_data.get("author_name", "").strip()
+        book.author = get_or_create_author(author_name, language) if author_name else None
+
+        genre_name = self.cleaned_data.get("genre_name", "").strip()
+        book.genre = get_or_create_genre(genre_name, language) if genre_name else None
+
         if commit:
-            language = Language.objects.filter(is_active=True).first()
+            book.save()
             if language:
                 BookTranslation.objects.update_or_create(
                     book=book,

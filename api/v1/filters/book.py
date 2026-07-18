@@ -1,3 +1,4 @@
+
 import django_filters
 
 from core.models import Book, Genre
@@ -14,14 +15,11 @@ class BookFilter(django_filters.FilterSet):
         fields: list[str] = []
 
     def filter_genre(self, queryset, name, value):
-        return queryset.filter(
-            genre__translations__name__iexact=value
-        ).distinct() | queryset.filter(genre_legacy__iexact=value)
+        return queryset.filter(genre__translations__name__iexact=value).distinct()
 
     def filter_search(self, queryset, name, value):
         from django.db.models import Q
         return queryset.filter(
             Q(translations__title__icontains=value)
             | Q(author__translations__name__icontains=value)
-            | Q(author_legacy__icontains=value)
         ).distinct()

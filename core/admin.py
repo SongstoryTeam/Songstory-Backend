@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 
 from .models import (
@@ -83,7 +84,7 @@ class AuthorAdmin(admin.ModelAdmin):
 class BookAdmin(admin.ModelAdmin):
     list_display = ["get_title_uk", "author", "genre", "year", "is_approved", "verified_author", "views_count", "created_at"]
     list_filter = ["is_approved", "genre", "year"]
-    search_fields = ["translations__title", "author_legacy", "author__translations__name"]
+    search_fields = ["translations__title", "author__translations__name"]
     raw_id_fields = ["creator", "verified_author", "author", "genre", "canonical_book"]
     actions = ["approve_books", "reject_books"]
     inlines = [BookTranslationInline, ChapterInline]

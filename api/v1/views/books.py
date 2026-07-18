@@ -1,3 +1,4 @@
+
 from django.db.models import F, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, permissions, filters as drf_filters
@@ -41,14 +42,12 @@ class BookListView(generics.ListAPIView):
             qs = qs.filter(
                 Q(translations__title__icontains=search)
                 | Q(author__translations__name__icontains=search)
-                | Q(author_legacy__icontains=search)
                 | Q(genre__translations__name__icontains=search)
-                | Q(genre_legacy__icontains=search)
             ).distinct()
 
         if genre:
             qs = qs.filter(
-                Q(genre__translations__name__iexact=genre) | Q(genre_legacy__iexact=genre)
+                Q(genre__translations__name__iexact=genre)
             ).distinct()
 
         sort_field = _SORT_MAP.get(sort, "-created_at")
