@@ -47,3 +47,5 @@ Thumbs.db
 # mypy / ruff
 .mypy_cache/
 .ruff_cache/
+
+repomix-output.xml
