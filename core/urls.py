@@ -19,7 +19,7 @@ urlpatterns = [
     path("book/<int:book_id>/add-chapters/", views.add_chapters, name="add_chapters"),
     path("book/<int:book_id>/create-playlist/", views.create_playlist, name="create_playlist"),
     path("book/<slug:slug>/", views.BookDetailView.as_view(), name="book_detail_slug"),
-
+    path("book/import/", views.import_book, name="import_book"),
     path("chapter/<int:chapter_id>/add-music/", views.add_music_recommendation, name="add_music"),
     path("music/<int:music_id>/like/", views.like_music, name="like_music"),
     path("music/<int:music_id>/delete/", views.delete_music, name="delete_music"),

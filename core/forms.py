@@ -1,4 +1,3 @@
-
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
@@ -65,6 +64,7 @@ class BookForm(StyledFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         book = super().save(commit=False)
+        book.open_library_id = None
         language = Language.objects.filter(is_active=True).first()
 
         author_name = self.cleaned_data.get("author_name", "").strip()

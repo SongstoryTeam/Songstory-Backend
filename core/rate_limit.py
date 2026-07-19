@@ -44,7 +44,9 @@ def rate_limit(key: str, rate: str, method: str = "POST", block: bool = True):
                 return decorated(request, *rest, **kwargs)
             except Ratelimited:
                 return _handle_ratelimited(request, is_ajax)
+
         return wrapped
+
     return decorator
 
 
@@ -54,3 +56,4 @@ add_music_limit = rate_limit(key="user_or_ip:id", rate="20/h")
 signup_limit = rate_limit(key="ip", rate="5/h")
 youtube_search_limit = rate_limit(key="ip", rate="60/m", method="GET")
 search_limit = rate_limit(key="ip", rate="60/m", method="GET")
+book_import_limit = rate_limit(key="user_or_ip:id", rate="20/h")

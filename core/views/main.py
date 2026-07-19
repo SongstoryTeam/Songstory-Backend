@@ -1,4 +1,3 @@
-
 import json
 import urllib.parse
 import urllib.request
@@ -15,7 +14,8 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.views.generic import DetailView, TemplateView
 from django.views.static import serve
-
+from api.v1.services.book_import import import_book_from_open_library
+from core.rate_limit import book_import_limit
 from core.forms import (
     AuthorVerificationForm,
     BookForm,
@@ -510,6 +510,34 @@ def create_book(request):
 
 
 @login_required
+@book_import_limit
+def import_book(request):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    ol_id = request.POST.get("open_library_id", "").strip()
+    if not ol_id:
+        return JsonResponse({"error": "open_library_id is required"}, status=400)
+
+    try:
+        book, created = import_book_from_open_library(
+            open_library_id=ol_id,
+            title=request.POST.get("title", ""),
+            author=request.POST.get("author", ""),
+            year=request.POST.get("year", ""),
+            isbn=request.POST.get("isbn", ""),
+            cover_url=request.POST.get("cover_url", ""),
+            description=request.POST.get("description", ""),
+            creator=request.user,
+        )
+    except ValueError:
+        return JsonResponse({"error": "title is required"}, status=400)
+
+    messages.success(request, "Книгу додано до каталогу." if created else "Ця книга вже є в каталозі.")
+    return JsonResponse({"url": book.get_absolute_url() if hasattr(book, "get_absolute_url") else f"/book/{book.pk}/"})
+
+
+@login_required
 def save_book(request, book_id: int):
     book = get_object_or_404(Book, id=book_id)
     saved, created = SavedBook.objects.get_or_create(user=request.user, book=book)
@@ -694,6 +722,7 @@ def profile(request):
             user=request.user
         ).select_related("chapter__book"),
     })
+
 
 class AboutView(TemplateView):
     template_name = "core/about.html"

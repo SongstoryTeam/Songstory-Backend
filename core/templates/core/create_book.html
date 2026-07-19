@@ -13,23 +13,30 @@
 
         <div class="form-box">
             <div class="form-box__title">Нова книга</div>
-            <p class="form-box__subtitle">Додайте книгу до каталогу {{ SITE_NAME }}</p>
+            <p class="form-box__subtitle">Знайдіть книгу — вона додасться в каталог автоматично</p>
 
+            <div class="form-group">
+                <label for="book-search-input">Назва книги</label>
+                <input type="text" id="book-search-input" class="form-input" placeholder="Почніть вводити назву..."
+                       autocomplete="off">
+                <div id="book-search-results" class="book-search-results"></div>
+            </div>
+
+            <button type="button" id="show-manual-form" class="btn btn-ghost">Не знайшли книгу? Додати вручну</button>
+        </div>
+
+        <div class="form-box" id="manual-form-box" style="display:none;">
+            <div class="form-box__title">Додати вручну</div>
             <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
-                        {% if field.errors %}
-                            <span class="form-error">{{ field.errors.0 }}</span>
-                        {% endif %}
-                        {% if field.help_text %}
-                            <small>{{ field.help_text }}</small>
-                        {% endif %}
+                        {% if field.errors %}<span class="form-error">{{ field.errors.0 }}</span>{% endif %}
+                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
                     </div>
                 {% endfor %}
-
                 <div class="form-actions">
                     <button type="submit" class="btn btn-accent">Додати книгу</button>
                     <a href="{% url 'core:home' %}" class="btn btn-ghost">Скасувати</a>
@@ -37,4 +44,8 @@
             </form>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'core/js/book_search.js' %}"></script>
 {% endblock %}
