@@ -5,31 +5,94 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/components/social-auth.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/components/auth-wizard.css' %}">
 {% endblock %}
 
 {% block content %}
-    <div class="form-wrap">
-        <div class="form-box">
+    <div class="form-wrap form-wrap--wizard">
+        <div class="form-box auth-wizard" data-wizard data-check-url="{% url 'signup_check' %}">
             <div class="form-box__title">Приєднатись до {{ SITE_NAME }}</div>
             <p class="form-box__subtitle">Створіть безкоштовний акаунт і починайте ділитись музикою</p>
 
-            <form method="post">
+            <ol class="wizard-progress" role="list" aria-label="Кроки реєстрації">
+                {% for step in form.steps_with_fields %}
+                    <li class="wizard-progress__step{% if forloop.first %} is-active{% endif %}"
+                        data-progress-step="{{ forloop.counter0 }}">
+                        <span class="wizard-progress__marker">
+                            <i data-lucide="{{ step.icon }}" class="wizard-progress__icon"></i>
+                            <i data-lucide="check" class="wizard-progress__icon wizard-progress__icon--done"></i>
+                        </span>
+                        <span class="wizard-progress__label">{{ step.title }}</span>
+                    </li>
+                {% endfor %}
+            </ol>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert--error mb-16">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <form method="post" novalidate data-wizard-form>
                 {% csrf_token %}
-                {% for field in form %}
-                    <div class="form-group">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <span class="form-error">{{ field.errors.0 }}</span>
-                        {% endif %}
-                        {% if field.help_text %}
-                            <small>{{ field.help_text }}</small>
-                        {% endif %}
-                    </div>
+
+                {% for step in form.steps_with_fields %}
+                    <fieldset class="wizard-step" data-wizard-step="{{ forloop.counter0 }}"
+                               {% if not forloop.first %}data-wizard-hidden{% endif %}>
+                        <legend class="wizard-step__heading">
+                            <span class="wizard-step__eyebrow">Крок {{ forloop.counter }} з {{ form.STEPS|length }}</span>
+                            <span class="wizard-step__title">{{ step.title }}</span>
+                            <span class="wizard-step__description">{{ step.description }}</span>
+                        </legend>
+
+                        {% for field in step.bound_fields %}
+                            <div class="form-group">
+                                <label for="{{ field.id_for_label }}">
+                                    {{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}
+                                </label>
+
+                                {% if field.name == 'password1' or field.name == 'password2' %}
+                                    <div class="password-field">
+                                        {{ field }}
+                                        <button type="button" class="password-field__toggle" data-password-toggle
+                                                aria-label="Показати пароль">
+                                            <i data-lucide="eye" class="password-field__icon password-field__icon--show"></i>
+                                            <i data-lucide="eye-off" class="password-field__icon password-field__icon--hide"></i>
+                                        </button>
+                                    </div>
+                                    {% if field.name == 'password1' %}
+                                        <div class="password-strength" data-password-strength>
+                                            <div class="password-strength__bar"><span></span></div>
+                                            <span class="password-strength__label"></span>
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    {{ field }}
+                                {% endif %}
+
+                                {% if field.name == 'username' or field.name == 'email' %}
+                                    <span class="field-feedback" data-field-feedback aria-live="polite"></span>
+                                {% endif %}
+
+                                {% if field.errors %}
+                                    <span class="form-error">{{ field.errors.0 }}</span>
+                                {% endif %}
+                                {% if field.help_text %}
+                                    <small>{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </fieldset>
                 {% endfor %}
 
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-accent">Створити акаунт</button>
+                <div class="wizard-nav" data-wizard-nav>
+                    <button type="button" class="btn btn-ghost" data-wizard-back data-wizard-hidden>
+                        <i data-lucide="arrow-left"></i> Назад
+                    </button>
+                    <button type="button" class="btn btn-accent" data-wizard-next>
+                        Далі <i data-lucide="arrow-right"></i>
+                    </button>
+                    <button type="submit" class="btn btn-accent" data-wizard-submit>
+                        Створити акаунт
+                    </button>
                 </div>
             </form>
 
@@ -41,4 +104,8 @@
             </p>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'core/js/signup-wizard.js' %}" defer></script>
 {% endblock %}

@@ -64,7 +64,6 @@ class BookForm(StyledFormMixin, forms.ModelForm):
 
     def save(self, commit=True):
         book = super().save(commit=False)
-        book.open_library_id = None
         language = Language.objects.filter(is_active=True).first()
 
         author_name = self.cleaned_data.get("author_name", "").strip()
@@ -88,19 +87,97 @@ class BookForm(StyledFormMixin, forms.ModelForm):
 
 
 class SignUpForm(StyledFormMixin, UserCreationForm):
+    """
+    Multi-step signup form. `STEPS` is the single source of truth for how the
+    registration wizard is laid out — the template and the JS that drives the
+    stepper both read it through `steps_with_fields()` instead of hardcoding
+    field groupings anywhere else.
+    """
+
+    STEPS = (
+        {
+            "id": "account",
+            "title": "Обліковий запис",
+            "description": "Ім'я користувача та пошта, під якими вас впізнаватимуть",
+            "icon": "user-round",
+            "fields": ("username", "email"),
+        },
+        {
+            "id": "profile",
+            "title": "Про вас",
+            "description": "Необов'язково, можна заповнити пізніше в профілі",
+            "icon": "id-card",
+            "fields": ("first_name", "last_name", "phone"),
+        },
+        {
+            "id": "security",
+            "title": "Захист акаунту",
+            "description": "Пароль довжиною від 8 символів",
+            "icon": "shield-check",
+            "fields": ("password1", "password2"),
+        },
+    )
+
+    username = forms.CharField(
+        min_length=3,
+        max_length=150,
+        help_text="Тільки латинські літери, цифри та символи ./+/-/_",
+        widget=forms.TextInput(attrs={
+            "placeholder": "cool_reader_42",
+            "autocomplete": "username",
+            "autofocus": "autofocus",
+            "data-check": "username",
+        }),
+    )
     email = forms.EmailField(
         required=True,
-        widget=forms.EmailInput(attrs={"placeholder": "example@mail.com"}),
+        widget=forms.EmailInput(attrs={
+            "placeholder": "example@mail.com",
+            "autocomplete": "email",
+            "data-check": "email",
+        }),
+    )
+    first_name = forms.CharField(
+        required=False,
+        max_length=150,
+        label="Ім'я",
+        widget=forms.TextInput(attrs={"placeholder": "Олена", "autocomplete": "given-name"}),
+    )
+    last_name = forms.CharField(
+        required=False,
+        max_length=150,
+        label="Прізвище",
+        widget=forms.TextInput(attrs={"placeholder": "Коваленко", "autocomplete": "family-name"}),
     )
     phone = forms.CharField(
         required=False,
         max_length=20,
-        widget=forms.TextInput(attrs={"placeholder": "+380..."}),
+        label="Телефон",
+        widget=forms.TextInput(attrs={"placeholder": "+380 XX XXX XX XX", "autocomplete": "tel"}),
     )
 
     class Meta:
         model = User
         fields = ("username", "email", "first_name", "last_name", "phone")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].label = "Пароль"
+        self.fields["password1"].widget.attrs.update({
+            "placeholder": "Мінімум 8 символів",
+            "autocomplete": "new-password",
+            "data-role": "password",
+        })
+        self.fields["password2"].label = "Повторіть пароль"
+        self.fields["password2"].widget.attrs.update({
+            "placeholder": "Введіть пароль ще раз",
+            "autocomplete": "new-password",
+            "data-role": "password-confirm",
+        })
+
+    def steps_with_fields(self):
+        for step in self.STEPS:
+            yield {**step, "bound_fields": [self[name] for name in step["fields"]]}
 
     def save(self, commit=True):
         user = super().save(commit=False)
