@@ -3,9 +3,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api.v1.services.open_library import open_library_client
+from api.v1.services.google_books import GoogleBook, google_books_client
+from api.v1.services.open_library import OpenLibraryBook, open_library_client
 from api.v1.services.spotify import SpotifyError, spotify_client
 from core.rate_limit import search_limit
+
+GOOGLE_BOOKS_ID_PREFIX = "gbooks:"
+BOOK_SEARCH_RESULT_LIMIT = 10
 
 
 class MusicSearchView(APIView):
@@ -46,17 +50,35 @@ class BookSearchView(APIView):
         if len(query) < 2:
             return Response({"results": []})
 
-        books = open_library_client.search(query, limit=10)
         results = [
-            {
-                "open_library_id": b.open_library_id,
-                "title": b.title,
-                "author": b.author,
-                "year": b.year,
-                "isbn": b.isbn,
-                "description": b.description,
-                "cover_url": b.cover_url,
-            }
-            for b in books
-        ]
-        return Response({"results": results})
+                      self._serialize_google_book(book)
+                      for book in google_books_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
+                  ] + [
+                      self._serialize_open_library_book(book)
+                      for book in open_library_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
+                  ]
+        return Response({"results": results[:BOOK_SEARCH_RESULT_LIMIT]})
+
+    @staticmethod
+    def _serialize_open_library_book(book: OpenLibraryBook) -> dict:
+        return {
+            "open_library_id": book.open_library_id,
+            "title": book.title,
+            "author": book.author,
+            "year": book.year,
+            "isbn": book.isbn,
+            "description": book.description,
+            "cover_url": book.cover_url,
+        }
+
+    @staticmethod
+    def _serialize_google_book(book: GoogleBook) -> dict:
+        return {
+            "open_library_id": f"{GOOGLE_BOOKS_ID_PREFIX}{book.external_id}",
+            "title": book.title,
+            "author": book.author,
+            "year": book.year,
+            "isbn": book.isbn,
+            "description": book.description,
+            "cover_url": book.cover_url,
+        }

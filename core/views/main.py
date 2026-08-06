@@ -43,6 +43,7 @@ from core.models import (
     SavedBook,
 )
 from core.notifications import notify_admin_new_verification
+from api.v1.services.book_import import import_book_from_open_library
 from core.rate_limit import (
     add_music_limit,
     comments_limit,
@@ -530,6 +531,49 @@ def create_book(request):
     else:
         form = BookForm()
     return render(request, "core/create_book.html", {"form": form})
+
+
+@login_required
+def import_book(request):
+    """
+    AJAX counterpart to `create_book`: takes an Open Library search result
+    picked in `book_search.js` and gets-or-creates the matching Book via the
+    shared `import_book_from_open_library` service. Returns JSON instead of
+    a redirect since it's called with fetch(), not a form submit.
+    """
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+
+    open_library_id = request.POST.get("open_library_id", "").strip()
+    title = request.POST.get("title", "").strip()
+
+    if not open_library_id or not title:
+        return JsonResponse(
+            {"error": "Не вдалось визначити книгу для імпорту."}, status=400
+        )
+
+    try:
+        book, created = import_book_from_open_library(
+            open_library_id=open_library_id,
+            title=title,
+            author=request.POST.get("author", ""),
+            year=request.POST.get("year", ""),
+            isbn=request.POST.get("isbn", ""),
+            cover_url=request.POST.get("cover_url", ""),
+            description=request.POST.get("description", ""),
+            creator=request.user,
+        )
+    except ValueError:
+        return JsonResponse(
+            {"error": "Не вдалось визначити книгу для імпорту."}, status=400
+        )
+
+    if created:
+        messages.success(request, "Книгу додано в каталог.")
+    else:
+        messages.info(request, "Ця книга вже є в каталозі.")
+
+    return JsonResponse({"url": book.get_absolute_url()}, status=201 if created else 200)
 
 
 @login_required

@@ -11,6 +11,7 @@ from .main import (  # noqa: F401
     add_comment,
     delete_comment,
     create_book,
+    import_book,
     save_book,
     add_chapters,
     add_music_recommendation,

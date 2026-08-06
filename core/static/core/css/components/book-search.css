@@ -1,0 +1,86 @@
+.book-search {
+    position: relative;
+}
+
+.book-search-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    z-index: 50;
+    overflow: hidden;
+}
+
+.book-search-results:empty {
+    display: none;
+}
+
+.book-search-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--clr-border);
+    transition: background var(--transition), opacity var(--transition);
+}
+
+.book-search-result:last-child {
+    border-bottom: none;
+}
+
+.book-search-result:hover {
+    background: var(--clr-bg);
+}
+
+.book-search-result--loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.book-search-result img {
+    width: 40px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    object-fit: cover;
+}
+
+.book-search-result__no-cover {
+    width: 40px;
+    height: 60px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+    background: var(--clr-shelf);
+}
+
+.book-search-result__body {
+    min-width: 0;
+}
+
+.book-search-result__title {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--clr-ink);
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.book-search-result__author {
+    font-size: var(--text-xs);
+    color: var(--clr-muted);
+    margin-top: 2px;
+}
+
+.book-search-empty {
+    padding: 14px;
+    font-size: var(--text-sm);
+    color: var(--clr-muted);
+    text-align: center;
+}
