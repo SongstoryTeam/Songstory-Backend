@@ -22,6 +22,7 @@ from .main import (  # noqa: F401
     like_playlist,
     profile,
     signup,
+    check_signup_field,
     robots_txt,
     page_not_found,
     server_error,
