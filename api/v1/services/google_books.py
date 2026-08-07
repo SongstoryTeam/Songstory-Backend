@@ -26,6 +26,7 @@ class GoogleBook:
     isbn: str
     description: str
     cover_url: str
+    language: str
 
 
 class GoogleBooksClient:
@@ -88,6 +89,7 @@ class GoogleBooksClient:
             isbn=isbn,
             description=info.get("description", ""),
             cover_url=cover_url.replace("http://", "https://"),
+            language=info.get("language", ""),
         )
 
 

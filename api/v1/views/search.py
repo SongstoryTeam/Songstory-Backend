@@ -51,12 +51,12 @@ class BookSearchView(APIView):
             return Response({"results": []})
 
         results = [
-                      self._serialize_google_book(book)
-                      for book in google_books_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
-                  ] + [
-                      self._serialize_open_library_book(book)
-                      for book in open_library_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
-                  ]
+            self._serialize_google_book(book)
+            for book in google_books_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
+        ] + [
+            self._serialize_open_library_book(book)
+            for book in open_library_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
+        ]
         return Response({"results": results[:BOOK_SEARCH_RESULT_LIMIT]})
 
     @staticmethod
@@ -69,6 +69,9 @@ class BookSearchView(APIView):
             "isbn": book.isbn,
             "description": book.description,
             "cover_url": book.cover_url,
+            # Open Library doesn't reliably expose edition language at
+            # work level — treat as unconfirmed rather than guess.
+            "language": "",
         }
 
     @staticmethod
@@ -81,4 +84,5 @@ class BookSearchView(APIView):
             "isbn": book.isbn,
             "description": book.description,
             "cover_url": book.cover_url,
+            "language": book.language,
         }

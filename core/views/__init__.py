@@ -1,3 +1,4 @@
+from .books import BookImportView  # noqa: F401
 from .main import (  # noqa: F401
     HomeView,
     BookDetailView,
@@ -11,7 +12,6 @@ from .main import (  # noqa: F401
     add_comment,
     delete_comment,
     create_book,
-    import_book,
     save_book,
     add_chapters,
     add_music_recommendation,
@@ -22,7 +22,6 @@ from .main import (  # noqa: F401
     like_playlist,
     profile,
     signup,
-    check_signup_field,
     robots_txt,
     page_not_found,
     server_error,

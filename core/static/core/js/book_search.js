@@ -2,6 +2,7 @@ const SEARCH_MIN_LENGTH = 2;
 const SEARCH_DEBOUNCE_MS = 400;
 const SEARCH_ENDPOINT = '/api/search/books/';
 const IMPORT_ENDPOINT = '/book/import/';
+const CONFIRMED_LANGUAGE = 'uk';
 
 const searchInput = document.getElementById('book-search-input');
 const resultsBox = document.getElementById('book-search-results');
@@ -9,10 +10,7 @@ const manualFormToggle = document.getElementById('show-manual-form');
 const manualFormBox = document.getElementById('manual-form-box');
 
 if (manualFormToggle && manualFormBox) {
-    manualFormToggle.addEventListener('click', () => {
-        const isHidden = manualFormBox.style.display === 'none';
-        manualFormBox.style.display = isHidden ? 'block' : 'none';
-    });
+    manualFormToggle.addEventListener('click', () => showManualForm());
 }
 
 if (searchInput && resultsBox) {
@@ -66,13 +64,14 @@ function renderResults(results) {
                     <div class="book-search-result__title">${escapeHtml(book.title)}</div>
                     <div class="book-search-result__author">${renderSubtitle(book)}</div>
                 </div>
+                ${renderLanguageBadge(book)}
             </div>
         `)
         .join('');
 
     resultsBox.querySelectorAll('.book-search-result').forEach((element) => {
         const book = results[Number(element.dataset.index)];
-        element.addEventListener('click', () => importBook(element, book));
+        element.addEventListener('click', () => selectResult(element, book));
     });
 }
 
@@ -86,6 +85,25 @@ function renderCover(book) {
 function renderSubtitle(book) {
     const author = escapeHtml(book.author || '');
     return book.year ? `${author} · ${book.year}` : author;
+}
+
+function renderLanguageBadge(book) {
+    if (isConfirmedUkrainian(book)) {
+        return '';
+    }
+    return '<span class="book-search-result__badge">потребує перекладу</span>';
+}
+
+function isConfirmedUkrainian(book) {
+    return book.language === CONFIRMED_LANGUAGE;
+}
+
+function selectResult(element, book) {
+    if (isConfirmedUkrainian(book)) {
+        importBook(element, book);
+    } else {
+        prefillManualForm(book);
+    }
 }
 
 async function importBook(element, book) {
@@ -108,6 +126,7 @@ async function importBook(element, book) {
                 isbn: book.isbn || '',
                 cover_url: book.cover_url || '',
                 description: book.description || '',
+                language: book.language,
             }),
         });
 
@@ -120,6 +139,31 @@ async function importBook(element, book) {
         console.error('Book import failed:', error);
         setResultsLocked(false);
         element.classList.remove('book-search-result--loading');
+    }
+}
+
+function prefillManualForm(book) {
+    setFieldValue('id_title', book.title);
+    setFieldValue('id_author_name', book.author);
+    setFieldValue('id_year', book.year);
+    setFieldValue('id_cover_url', book.cover_url);
+
+    resultsBox.innerHTML = '';
+    searchInput.value = '';
+    showManualForm();
+    document.getElementById('id_title')?.focus();
+}
+
+function setFieldValue(id, value) {
+    const field = document.getElementById(id);
+    if (field && value) {
+        field.value = value;
+    }
+}
+
+function showManualForm() {
+    if (manualFormBox) {
+        manualFormBox.style.display = 'block';
     }
 }
 
