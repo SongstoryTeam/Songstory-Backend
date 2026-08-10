@@ -32,3 +32,16 @@ def localized_mood_tags(chapter):
 def localized_name(obj):
     """Translated name for any object exposing get_name(lang) (Author, Genre)."""
     return obj.get_name(_active_language())
+
+
+_SEARCH_SOURCE_LABELS = {
+    "catalog": "У каталозі Songstery",
+    "google_books": "Google Books",
+    "open_library": "Open Library",
+}
+
+
+@register.filter
+def source_label(source_code):
+    """Human-readable label for a SearchResult.source value."""
+    return _SEARCH_SOURCE_LABELS.get(source_code, source_code)

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if search_query %}Результати пошуку «{{ search_query }}» — {{ SITE_NAME }}
+    {% else %}Пошук книг — {{ SITE_NAME }}{% endif %}
+{% endblock %}
+
+{% block meta_description %}
+    {% if search_query %}Результати пошуку «{{ search_query }}» на {{ SITE_NAME }}: книги з каталогу та з відкритих книжкових баз.
+    {% else %}Знайдіть книгу в каталозі {{ SITE_NAME }} або серед відкритих книжкових баз.{% endif %}
+{% endblock %}
+
+{% block meta_robots %}noindex, follow{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'core/css/pages/search.css' %}">
+{% endblock %}
+
+{% block content %}
+    <section class="section-wrap">
+        <div class="section-head">
+            <h1 class="section-head__title">
+                {% if search_query %}Результати пошуку «{{ search_query }}»{% else %}Пошук книг{% endif %}
+            </h1>
+            {% if search_query %}
+                <span class="search-results__count">Кількість результатів: {{ results_count }}</span>
+            {% endif %}
+        </div>
+
+        {% if not search_query %}
+            <div class="empty-state">
+                <div class="empty-state__icon"><i data-lucide="search" style="width:24px;height:24px;"></i></div>
+                <div class="empty-state__title">Введіть назву книги або автора</div>
+                <p class="empty-state__text">
+                    Скористайтесь пошуком у верхній панелі, щоб знайти книгу в каталозі
+                    або серед відкритих книжкових баз.
+                </p>
+            </div>
+        {% elif results %}
+            <div class="search-results-grid">
+                {% for result in results %}
+                    {% include 'includes/_search_result_card.html' with result=result %}
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon"><i data-lucide="book-x" style="width:24px;height:24px;"></i></div>
+                <div class="empty-state__title">Нічого не знайдено</div>
+                <p class="empty-state__text">
+                    Спробуйте інший заголовок або автора. Наразі пошук охоплює лише книги українською мовою.
+                </p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+    {% if user.is_authenticated %}
+        <script src="{% static 'core/js/search_results.js' %}"></script>
+    {% endif %}
+{% endblock %}

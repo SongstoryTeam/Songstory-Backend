@@ -11,6 +11,7 @@ app_name = "core"
 
 urlpatterns = [
     path("", views.HomeView.as_view(), name="home"),
+    path("search/", views.SearchResultsView.as_view(), name="search"),
     path("book/create/", views.create_book, name="create_book"),
     path("book/import/", views.BookImportView.as_view(), name="import_book"),
     path("book/<int:pk>/", views.BookDetailView.as_view(), name="book_detail"),

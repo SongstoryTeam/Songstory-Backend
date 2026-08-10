@@ -1,0 +1,116 @@
+.search-results__count {
+    font-size: var(--text-sm);
+    color: var(--clr-muted);
+}
+
+.search-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.search-result-card {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-md);
+    transition: box-shadow var(--transition), transform var(--transition);
+}
+
+.search-result-card:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.search-result-card__cover {
+    width: 64px;
+    flex-shrink: 0;
+    aspect-ratio: 2 / 3;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--clr-shelf);
+}
+
+.search-result-card__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.search-result-card__no-cover {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #E8E0D5, #D4C9BC);
+    font-family: var(--ff-display);
+    font-size: 11px;
+    color: var(--clr-muted);
+    text-align: center;
+    padding: 6px;
+    line-height: 1.3;
+}
+
+.search-result-card__body {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.search-result-card__title {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--clr-ink);
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.search-result-card__author {
+    font-size: var(--text-xs);
+    color: var(--clr-muted);
+    margin-top: 3px;
+}
+
+.search-result-card__desc {
+    font-size: 12.5px;
+    color: var(--clr-muted);
+    margin-top: 8px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.search-result-card__footer {
+    margin-top: auto;
+    padding-top: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.search-result-card__source {
+    font-size: 11px;
+    color: var(--clr-muted);
+    white-space: nowrap;
+}
+
+.spin-icon {
+    animation: spin 1s linear infinite;
+}
+
+@media (max-width: 560px) {
+    .search-results-grid {
+        grid-template-columns: 1fr;
+    }
+}

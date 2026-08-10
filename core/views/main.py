@@ -44,6 +44,7 @@ from core.models import (
 )
 from core.notifications import notify_admin_new_verification
 from api.v1.services.book_import import import_book_from_open_library
+from api.v1.services.catalog_search import RESULTS_PAGE_LIMIT, search_books
 from core.rate_limit import (
     add_music_limit,
     comments_limit,
@@ -136,19 +137,11 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        search_query = self.request.GET.get("search", "").strip()
         active_genre = self.request.GET.get("genre", "").strip()
         current_sort = self.request.GET.get("sort", "newest")
         user = self.request.user
 
         books_qs = Book.published.all() if not (user.is_authenticated and user.is_staff) else Book.objects.all()
-
-        if search_query:
-            books_qs = books_qs.filter(
-                Q(translations__title__icontains=search_query)
-                | Q(author__translations__name__icontains=search_query)
-                | Q(genre__translations__name__icontains=search_query)
-            ).distinct()
 
         if active_genre:
             books_qs = books_qs.filter(
@@ -161,11 +154,7 @@ class HomeView(TemplateView):
         else:
             books_qs = books_qs.order_by(sort_field)
 
-        section_title = (
-            f'Results: "{search_query}"' if search_query
-            else active_genre if active_genre
-            else "All books"
-        )
+        section_title = active_genre or "Усі книги"
 
         paginator = Paginator(books_qs, 8)
         page_obj = paginator.get_page(self.request.GET.get("page"))
@@ -179,7 +168,6 @@ class HomeView(TemplateView):
         context.update({
             "db_books": page_obj,
             "page_obj": page_obj,
-            "search_query": search_query,
             "active_genre": active_genre,
             "current_sort": current_sort,
             "sort_options": _SORT_OPTIONS,
@@ -188,6 +176,26 @@ class HomeView(TemplateView):
             "top_music_db": MusicRecommendation.objects.select_related(
                 "user", "chapter__book"
             ).order_by("-likes_count")[:6],
+        })
+        return context
+
+
+class SearchResultsView(TemplateView):
+    """Dedicated search results page. Unlike the home catalog grid, this
+    always reflects live results from `search_books` — the local catalog
+    plus Ukrainian-language matches pulled from external book catalogs."""
+
+    template_name = "core/search_results.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        query = self.request.GET.get("q", "").strip()
+        results = search_books(query, limit=RESULTS_PAGE_LIMIT, user=self.request.user) if query else []
+
+        context.update({
+            "search_query": query,
+            "results": results,
+            "results_count": len(results),
         })
         return context
 

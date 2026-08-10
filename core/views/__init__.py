@@ -1,6 +1,7 @@
 from .books import BookImportView  # noqa: F401
 from .main import (  # noqa: F401
     HomeView,
+    SearchResultsView,
     BookDetailView,
     ChapterDetailView,
     PlaylistDetailView,

@@ -14,6 +14,11 @@ _SEARCH_CACHE_PREFIX = "openlibrary:search:"
 _API_BASE = "https://openlibrary.org"
 _COVERS_BASE = "https://covers.openlibrary.org/b"
 
+# Open Library's search index uses ISO 639-2/B codes, not the ISO 639-1
+# codes our Language model stores, so callers pass the codes they know and
+# the client maps them itself.
+_LANGUAGE_QUERY_CODES = {"uk": "ukr"}
+
 
 @dataclass(frozen=True)
 class OpenLibraryBook:
@@ -24,20 +29,26 @@ class OpenLibraryBook:
     isbn: str
     description: str
     cover_url: str
+    language: str = ""
     editions: list[str] = field(default_factory=list)
 
 
 class OpenLibraryClient:
-    def search(self, query: str, limit: int = 10) -> list[OpenLibraryBook]:
-        cache_key = f"{_SEARCH_CACHE_PREFIX}{query.lower()}:{limit}"
+    def search(self, query: str, limit: int = 10, language: str | None = None) -> list[OpenLibraryBook]:
+        cache_key = f"{_SEARCH_CACHE_PREFIX}{query.lower()}:{limit}:{language or ''}"
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
 
+        search_query = query
+        language_code = _LANGUAGE_QUERY_CODES.get(language or "")
+        if language_code:
+            search_query = f"{query} language:{language_code}"
+
         params = urllib.parse.urlencode({
-            "q": query,
+            "q": search_query,
             "limit": str(limit),
-            "fields": "key,title,author_name,first_publish_year,isbn,description,cover_i,edition_key",
+            "fields": "key,title,author_name,first_publish_year,isbn,description,cover_i,edition_key,language",
         })
         url = f"{_API_BASE}/search.json?{params}"
 
@@ -97,8 +108,21 @@ class OpenLibraryClient:
             isbn=isbn_list[0] if isbn_list else "",
             description=self._extract_description(doc.get("description", "")),
             cover_url=self._cover_url(doc.get("cover_i")),
+            language=self._resolve_language(doc.get("language", [])),
             editions=doc.get("edition_key", [])[:5],
         )
+
+    @staticmethod
+    def _resolve_language(edition_language_codes: list[str]) -> str:
+        """Map Open Library's ISO 639-2/B edition language codes back to
+        the ISO 639-1 codes used elsewhere in the catalog. Only languages
+        we can confidently recognise are returned; anything else is left
+        unconfirmed rather than guessed."""
+        codes_by_iso1 = {code: iso1 for iso1, code in _LANGUAGE_QUERY_CODES.items()}
+        for code in edition_language_codes:
+            if code in codes_by_iso1:
+                return codes_by_iso1[code]
+        return ""
 
     def _parse_work(self, ol_id: str, data: dict[str, Any]) -> OpenLibraryBook:
         covers = data.get("covers", [])

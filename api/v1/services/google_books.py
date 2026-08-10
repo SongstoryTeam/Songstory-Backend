@@ -30,13 +30,13 @@ class GoogleBook:
 
 
 class GoogleBooksClient:
-    def search(self, query: str, limit: int = 10) -> list[GoogleBook]:
-        cache_key = f"{SEARCH_CACHE_PREFIX}{query.lower()}:{limit}"
+    def search(self, query: str, limit: int = 10, language: str | None = None) -> list[GoogleBook]:
+        cache_key = f"{SEARCH_CACHE_PREFIX}{query.lower()}:{limit}:{language or ''}"
         cached = cache.get(cache_key)
         if cached is not None:
             return cached
 
-        data = self._fetch(query, limit)
+        data = self._fetch(query, limit, language)
         books = [
             book
             for item in data.get("items", [])
@@ -46,8 +46,13 @@ class GoogleBooksClient:
         cache.set(cache_key, books, SEARCH_CACHE_TTL)
         return books
 
-    def _fetch(self, query: str, limit: int) -> dict[str, Any]:
+    def _fetch(self, query: str, limit: int, language: str | None) -> dict[str, Any]:
         params = {"q": query, "maxResults": str(limit)}
+        if language:
+            # Google Books accepts a two-letter ISO 639-1 code here, which
+            # is exactly what our Language.code values already use.
+            params["langRestrict"] = language
+
         api_key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "")
         if api_key:
             params["key"] = api_key

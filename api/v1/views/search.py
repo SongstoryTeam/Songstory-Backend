@@ -1,14 +1,22 @@
+from dataclasses import asdict
+
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api.v1.services.catalog_search import (
+    GOOGLE_BOOKS_ID_PREFIX,
+    QUICK_SEARCH_LIMIT,
+    RESULTS_PAGE_LIMIT,
+    SEARCH_LANGUAGE,
+    search_books,
+)
 from api.v1.services.google_books import GoogleBook, google_books_client
 from api.v1.services.open_library import OpenLibraryBook, open_library_client
 from api.v1.services.spotify import SpotifyError, spotify_client
 from core.rate_limit import search_limit
 
-GOOGLE_BOOKS_ID_PREFIX = "gbooks:"
 BOOK_SEARCH_RESULT_LIMIT = 10
 
 
@@ -52,10 +60,10 @@ class BookSearchView(APIView):
 
         results = [
             self._serialize_google_book(book)
-            for book in google_books_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
+            for book in google_books_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT, language=SEARCH_LANGUAGE)
         ] + [
             self._serialize_open_library_book(book)
-            for book in open_library_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT)
+            for book in open_library_client.search(query, limit=BOOK_SEARCH_RESULT_LIMIT, language=SEARCH_LANGUAGE)
         ]
         return Response({"results": results[:BOOK_SEARCH_RESULT_LIMIT]})
 
@@ -69,9 +77,7 @@ class BookSearchView(APIView):
             "isbn": book.isbn,
             "description": book.description,
             "cover_url": book.cover_url,
-            # Open Library doesn't reliably expose edition language at
-            # work level — treat as unconfirmed rather than guess.
-            "language": "",
+            "language": book.language,
         }
 
     @staticmethod
@@ -86,3 +92,26 @@ class BookSearchView(APIView):
             "cover_url": book.cover_url,
             "language": book.language,
         }
+
+
+class BookDiscoverView(APIView):
+    """Site-wide book search combining the local catalog with Ukrainian
+    results from external book catalogs. Backs both the header's live
+    dropdown and the dedicated search results page."""
+
+    permission_classes = (AllowAny,)
+
+    @search_limit
+    def get(self, request: Request) -> Response:
+        query = request.query_params.get("q", "").strip()
+        limit = self._parse_limit(request.query_params.get("limit"))
+        results = search_books(query, limit=limit, user=request.user)
+        return Response({"query": query, "results": [asdict(result) for result in results]})
+
+    @staticmethod
+    def _parse_limit(raw_limit: str | None) -> int:
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            return QUICK_SEARCH_LIMIT
+        return max(1, min(limit, RESULTS_PAGE_LIMIT))

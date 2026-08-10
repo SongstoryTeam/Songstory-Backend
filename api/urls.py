@@ -30,7 +30,7 @@ from api.v1.views.playlists import (
 from api.v1.views.comments import CommentCreateView, CommentDeleteView
 from api.v1.views.author import AuthorDetailView, AuthorFollowView
 from api.v1.views.verification import AuthorVerificationView
-from api.v1.views.search import MusicSearchView, BookSearchView
+from api.v1.views.search import MusicSearchView, BookSearchView, BookDiscoverView
 from api.v1.views.profile import (
     ProfileMeView,
     ProfileSavedView,
@@ -94,6 +94,7 @@ urlpatterns = [
     # ── Search ────────────────────────────────────────────────────────────
     path("search/music/", MusicSearchView.as_view(), name="api_search_music"),
     path("search/books/", BookSearchView.as_view(), name="api_search_books"),
+    path("search/discover/", BookDiscoverView.as_view(), name="api_search_discover"),
 
     # ── Profile ───────────────────────────────────────────────────────────
     path("profile/me/", ProfileMeView.as_view(), name="api_profile_me"),

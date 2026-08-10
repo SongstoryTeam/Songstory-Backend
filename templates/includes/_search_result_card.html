@@ -1,0 +1,46 @@
+{% load core_extras %}
+<article class="search-result-card">
+    <div class="search-result-card__cover">
+        {% if result.cover_url %}
+            <img src="{{ result.cover_url }}" alt="{{ result.title }}" loading="lazy"
+                 onerror="this.parentElement.innerHTML='<div class=\'search-result-card__no-cover\'>{{ result.title|truncatechars:30|escapejs }}</div>'">
+        {% else %}
+            <div class="search-result-card__no-cover">{{ result.title|truncatechars:30 }}</div>
+        {% endif %}
+    </div>
+
+    <div class="search-result-card__body">
+        <div class="search-result-card__title">{{ result.title }}</div>
+        <div class="search-result-card__author">
+            {{ result.author|default:"Автор невідомий" }}{% if result.year %} · {{ result.year }}{% endif %}
+        </div>
+
+        {% if result.description %}
+            <p class="search-result-card__desc">{{ result.description|truncatechars:140 }}</p>
+        {% endif %}
+
+        <div class="search-result-card__footer">
+            {% if result.in_catalog %}
+                <a href="{{ result.url }}" class="btn btn-accent btn-sm">
+                    <i data-lucide="book-open" style="width:13px;height:13px;"></i> Переглянути
+                </a>
+            {% elif user.is_authenticated %}
+                <button type="button" class="btn btn-ghost btn-sm" data-import-book
+                        data-open-library-id="{{ result.external_id }}"
+                        data-title="{{ result.title }}"
+                        data-author="{{ result.author }}"
+                        data-year="{{ result.year|default_if_none:'' }}"
+                        data-isbn="{{ result.isbn }}"
+                        data-cover-url="{{ result.cover_url }}"
+                        data-description="{{ result.description }}">
+                    <i data-lucide="plus" style="width:13px;height:13px;"></i> Додати в каталог
+                </button>
+            {% else %}
+                <a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}" class="btn btn-ghost btn-sm">
+                    <i data-lucide="log-in" style="width:13px;height:13px;"></i> Увійти, щоб додати
+                </a>
+            {% endif %}
+            <span class="search-result-card__source">{{ result.source|source_label }}</span>
+        </div>
+    </div>
+</article>
