@@ -1,5 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
+@view-transition {
+  navigation: auto;
+}
+
 :root {
   --clr-bg:        #F7F4EF;
   --clr-surface:   #FFFFFF;
@@ -34,6 +38,7 @@
   --shadow-lg: 0 12px 32px rgba(26,22,18,.13), 0 4px 10px rgba(26,22,18,.07);
 
   --nav-w: 240px;
+  --nav-w-collapsed: 76px;
 
   --ease: cubic-bezier(.4, 0, .2, 1);
   --duration: 200ms;

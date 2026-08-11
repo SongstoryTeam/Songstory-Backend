@@ -8,8 +8,11 @@
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-x: hidden;
   overflow-y: auto;
   z-index: 100;
+  transition: width var(--transition);
+  view-transition-name: app-sidebar;
 }
 
 .main-content {
@@ -21,12 +24,53 @@
 
 main { flex: 1; }
 
+#main-content {
+  view-transition-name: app-main;
+}
+
+.topbar {
+  view-transition-name: app-topbar;
+}
+
 .sidebar__logo {
-  padding: 28px 24px 20px;
+  padding: 20px 16px 20px 24px;
   border-bottom: 1px solid var(--clr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sidebar__logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sidebar__logo-mark {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--clr-accent-lt);
+  color: var(--clr-accent);
+  font-family: var(--ff-display);
+  font-weight: 600;
+  font-size: var(--text-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar__logo-text {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .sidebar__logo .logo-word {
+  display: block;
   font-family: var(--ff-display);
   font-size: var(--text-xl);
   font-weight: 600;
@@ -42,12 +86,32 @@ main { flex: 1; }
   margin-top: 2px;
 }
 
+.sidebar__collapse-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.sidebar__collapse-btn:hover {
+  background: var(--clr-accent-lt);
+  color: var(--clr-accent);
+}
+
+.sidebar__collapse-icon--expand { display: none; }
+
 .sidebar__nav {
   padding: 20px 12px;
   flex: 1;
 }
 
 .sidebar__section-label {
+  display: block;
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 1px;
@@ -55,9 +119,11 @@ main { flex: 1; }
   color: var(--clr-muted);
   padding: 0 12px;
   margin: 16px 0 6px;
+  white-space: nowrap;
 }
 
 .nav-link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -68,7 +134,30 @@ main { flex: 1; }
   transition: background var(--transition), color var(--transition);
 }
 
-.nav-link svg { flex-shrink: 0; opacity: .8; }
+.nav-link__icon { flex-shrink: 0; opacity: .8; }
+
+.nav-link__label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-link__badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--clr-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
 .nav-link:hover,
 .nav-link.active {
@@ -93,7 +182,13 @@ main { flex: 1; }
   transition: background var(--transition);
 }
 
-.sidebar__user:hover { background: var(--clr-bg); }
+.sidebar__user:hover,
+.sidebar__user.active { background: var(--clr-bg); }
+
+.sidebar__user-text {
+  min-width: 0;
+  overflow: hidden;
+}
 
 .user-avatar {
   width: 32px;
@@ -121,6 +216,70 @@ main { flex: 1; }
 .user-role {
   font-size: 11px;
   color: var(--clr-muted);
+}
+
+.sidebar__footer .btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar__footer .btn__label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Desktop collapse rail — icon-only sidebar, remembered across visits.
+   Scoped to non-mobile widths so it never fights the mobile drawer rules
+   further down, which have their own layout for .sidebar. */
+@media (min-width: 901px) {
+  html.sidebar-collapsed .sidebar { width: var(--nav-w-collapsed); }
+
+  html.sidebar-collapsed .sidebar__logo { justify-content: center; padding-inline: 0; }
+  html.sidebar-collapsed .sidebar__logo-text,
+  html.sidebar-collapsed .sidebar__collapse-btn,
+  html.sidebar-collapsed .sidebar__section-label,
+  html.sidebar-collapsed .nav-link__label,
+  html.sidebar-collapsed .nav-link__badge,
+  html.sidebar-collapsed .sidebar__user-text,
+  html.sidebar-collapsed .btn__label {
+    display: none;
+  }
+
+  html.sidebar-collapsed .sidebar:hover .sidebar__collapse-btn {
+    display: flex;
+  }
+
+  html.sidebar-collapsed .nav-link,
+  html.sidebar-collapsed .sidebar__user,
+  html.sidebar-collapsed .sidebar__footer .btn {
+    justify-content: center;
+  }
+
+  html.sidebar-collapsed .sidebar__collapse-icon--collapse { display: none; }
+  html.sidebar-collapsed .sidebar__collapse-icon--expand { display: block; }
+
+  html.sidebar-collapsed .nav-link:hover::after,
+  html.sidebar-collapsed .sidebar__user:hover::after,
+  html.sidebar-collapsed .sidebar__footer .btn:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--clr-ink);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+    z-index: 200;
+    pointer-events: none;
+  }
+
+  html.sidebar-collapsed .sidebar__footer .btn { position: relative; }
 }
 
 .topbar {
@@ -172,6 +331,31 @@ main { flex: 1; }
 
 .topbar__actions { display: flex; align-items: center; gap: 12px; }
 
+.topbar__notify {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  color: var(--clr-muted);
+  transition: background var(--transition), color var(--transition);
+}
+
+.topbar__notify:hover { background: var(--clr-accent-lt); color: var(--clr-accent); }
+
+.topbar__notify-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--clr-accent);
+  border: 2px solid var(--clr-surface);
+}
+
 .sidebar-toggle {
   display: none;
   align-items: center;
@@ -185,12 +369,13 @@ main { flex: 1; }
 }
 
 #sidebarOverlay {
-  display: none;
   position: fixed;
   inset: 0;
   background: rgba(26, 22, 18, .4);
   z-index: 99;
 }
+
+#sidebarOverlay[hidden] { display: none; }
 
 footer { background: var(--clr-surface); border-top: 1px solid var(--clr-border); margin-top: auto; }
 
@@ -251,4 +436,26 @@ footer { background: var(--clr-surface); border-top: 1px solid var(--clr-border)
 
 @media (max-width: 600px) {
   .topbar__search { width: 200px; }
+}
+
+/* Cross-document view transitions: the sidebar and topbar are named so the
+   browser keeps them visually static between page loads while the main
+   content cross-fades — the closest an MPA gets to an SPA's persistent
+   shell, with zero JS routing. Unsupported browsers just get a normal
+   navigation. */
+@media (prefers-reduced-motion: no-preference) {
+  @supports (view-transition-name: none) {
+    ::view-transition-old(app-main),
+    ::view-transition-new(app-main) {
+      animation-duration: 160ms;
+    }
+
+    ::view-transition-old(app-sidebar),
+    ::view-transition-new(app-sidebar),
+    ::view-transition-old(app-topbar),
+    ::view-transition-new(app-topbar) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+  }
 }

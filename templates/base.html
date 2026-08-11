@@ -91,6 +91,20 @@
 </head>
 <body>
 
+<script>
+    // Applied synchronously, before the sidebar is painted, so a collapsed
+    // rail never flashes open on load. Kept inline and tiny on purpose.
+    (function () {
+        try {
+            if (localStorage.getItem('songstery:sidebar-collapsed') === '1') {
+                document.documentElement.classList.add('sidebar-collapsed');
+            }
+        } catch (error) {
+            /* localStorage unavailable (private mode, blocked storage) — ignore */
+        }
+    })();
+</script>
+
 {% include 'includes/_sidebar.html' %}
 
 <div class="main-content">
@@ -104,9 +118,10 @@
     {% include 'includes/_footer.html' %}
 </div>
 
-<div id="sidebarOverlay"></div>
+<div id="sidebarOverlay" hidden></div>
 
-<script src="{% static 'core/js/main.js' %}"></script>
+<script src="{% static 'core/js/modules/sidebar.js' %}" defer></script>
+<script src="{% static 'core/js/modules/profile-tabs.js' %}" defer></script>
 <script src="{% static 'core/js/forms.js' %}"></script>
 <script src="{% static 'core/js/site_search.js' %}" defer></script>
 <script>

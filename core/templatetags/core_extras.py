@@ -45,3 +45,21 @@ _SEARCH_SOURCE_LABELS = {
 def source_label(source_code):
     """Human-readable label for a SearchResult.source value."""
     return _SEARCH_SOURCE_LABELS.get(source_code, source_code)
+
+
+@register.simple_tag(takes_context=True)
+def nav_active(context, *url_names):
+    """Return "active" when the current view matches one of the given
+    (optionally namespaced) URL names, e.g. {% nav_active 'core:home' %}.
+
+    Centralises navigation highlighting in one place instead of every
+    template overriding a dedicated block, so adding or reordering
+    sidebar/topbar links never requires touching page templates.
+    """
+    request = context.get("request")
+    match = getattr(request, "resolver_match", None)
+    if not match:
+        return ""
+
+    current = f"{match.namespace}:{match.url_name}" if match.namespace else match.url_name
+    return "active" if current in url_names else ""

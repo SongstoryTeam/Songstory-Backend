@@ -1,5 +1,5 @@
 <header class="topbar">
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню" aria-controls="sidebar" aria-expanded="false">
         <i data-lucide="menu" size="20"></i>
     </button>
 
@@ -23,6 +23,12 @@
 
     <div class="topbar__actions">
         {% if user.is_authenticated %}
+            <a href="{% url 'core:notifications' %}" class="topbar__notify" aria-label="Сповіщення">
+                <i data-lucide="bell" size="18"></i>
+                {% if unread_notifications %}
+                    <span class="topbar__notify-dot"></span>
+                {% endif %}
+            </a>
             <a href="{% url 'core:create_book' %}" class="btn btn-accent btn-sm">
                 <i data-lucide="plus" size="16"></i> Додати книгу
             </a>

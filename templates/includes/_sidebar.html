@@ -1,49 +1,84 @@
+{% load core_extras %}
 <aside class="sidebar" id="sidebar">
     <div class="sidebar__logo">
-        <a href="{% url 'core:home' %}">
-            <span class="logo-word">{{ SITE_NAME }}</span>
-            <div class="logo-tagline">Книги та музика</div>
+        <a href="{% url 'core:home' %}" class="sidebar__logo-link">
+            <span class="sidebar__logo-mark">{{ SITE_NAME|slice:":1" }}</span>
+            <span class="sidebar__logo-text">
+                <span class="logo-word">{{ SITE_NAME }}</span>
+                <span class="logo-tagline">Книги та музика</span>
+            </span>
         </a>
+        <button type="button" class="sidebar__collapse-btn" id="sidebarCollapseToggle"
+                aria-controls="sidebar" aria-expanded="true" aria-label="Згорнути бічну панель">
+            <i data-lucide="panel-left-close" size="16" class="sidebar__collapse-icon sidebar__collapse-icon--collapse"></i>
+            <i data-lucide="panel-left-open" size="16" class="sidebar__collapse-icon sidebar__collapse-icon--expand"></i>
+        </button>
     </div>
 
     <nav class="sidebar__nav">
         <span class="sidebar__section-label">Огляд</span>
-        <a href="{% url 'core:home' %}" class="nav-link {% block nav_discover %}{% endblock %}">
-            <i data-lucide="compass" size="18"></i> Каталог
+        <a href="{% url 'core:home' %}" class="nav-link {% nav_active 'core:home' %}" data-tooltip="Каталог">
+            <i data-lucide="compass" size="18" class="nav-link__icon"></i>
+            <span class="nav-link__label">Каталог</span>
         </a>
-        <a href="{% url 'core:home' %}#catalog" class="nav-link {% block nav_catalog %}{% endblock %}">
-            <i data-lucide="book-open" size="18"></i> Книги
+        <a href="{% url 'core:search' %}" class="nav-link {% nav_active 'core:search' %}" data-tooltip="Пошук">
+            <i data-lucide="search" size="18" class="nav-link__icon"></i>
+            <span class="nav-link__label">Пошук</span>
+        </a>
+        <a href="{% url 'core:about' %}" class="nav-link {% nav_active 'core:about' %}" data-tooltip="Про проєкт">
+            <i data-lucide="info" size="18" class="nav-link__icon"></i>
+            <span class="nav-link__label">Про проєкт</span>
         </a>
 
         {% if user.is_authenticated %}
             <span class="sidebar__section-label">Мій простір</span>
-            <a href="{% url 'core:profile' %}" class="nav-link {% block nav_library %}{% endblock %}">
-                <i data-lucide="library" size="18"></i> Бібліотека
+            <a href="{% url 'core:profile' %}#tab-saved" class="nav-link" data-profile-tab="saved" data-tooltip="Бібліотека">
+                <i data-lucide="library" size="18" class="nav-link__icon"></i>
+                <span class="nav-link__label">Бібліотека</span>
             </a>
-            <a href="{% url 'core:profile' %}" class="nav-link {% block nav_playlists %}{% endblock %}">
-                <i data-lucide="music" size="18"></i> Плейлісти
+            <a href="{% url 'core:profile' %}#tab-playlists" class="nav-link" data-profile-tab="playlists" data-tooltip="Плейлісти">
+                <i data-lucide="music" size="18" class="nav-link__icon"></i>
+                <span class="nav-link__label">Плейлісти</span>
+            </a>
+            <a href="{% url 'core:profile' %}#tab-music" class="nav-link" data-profile-tab="music" data-tooltip="Рекомендації">
+                <i data-lucide="disc-3" size="18" class="nav-link__icon"></i>
+                <span class="nav-link__label">Рекомендації</span>
+            </a>
+            <a href="{% url 'core:notifications' %}" class="nav-link {% nav_active 'core:notifications' %}" data-tooltip="Сповіщення">
+                <i data-lucide="bell" size="18" class="nav-link__icon"></i>
+                <span class="nav-link__label">Сповіщення</span>
+                {% if unread_notifications %}
+                    <span class="nav-link__badge">{{ unread_notifications }}</span>
+                {% endif %}
             </a>
         {% endif %}
     </nav>
 
     <div class="sidebar__footer">
         {% if user.is_authenticated %}
-            <a href="{% url 'core:profile' %}" class="sidebar__user">
+            <a href="{% url 'core:profile' %}" class="sidebar__user {% nav_active 'core:profile' %}" data-tooltip="{{ user.username }}">
                 <div class="user-avatar">{{ user.username|first|upper }}</div>
-                <div>
+                <div class="sidebar__user-text">
                     <div class="user-name">{{ user.username }}</div>
                     <div class="user-role">Учасник</div>
                 </div>
             </a>
             <form action="{% url 'logout' %}" method="post" class="mt-8">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-ghost btn-sm w-full justify-center">
-                    Вийти
+                <button type="submit" class="btn btn-ghost btn-sm w-full justify-center" data-tooltip="Вийти">
+                    <i data-lucide="log-out" size="16" class="btn__icon"></i>
+                    <span class="btn__label">Вийти</span>
                 </button>
             </form>
         {% else %}
-            <a href="{% url 'login' %}" class="btn btn-accent btn-sm w-full justify-center">Увійти</a>
-            <a href="{% url 'signup' %}" class="btn btn-ghost btn-sm w-full justify-center mt-8">Реєстрація</a>
+            <a href="{% url 'login' %}" class="btn btn-accent btn-sm w-full justify-center" data-tooltip="Увійти">
+                <i data-lucide="log-in" size="16" class="btn__icon"></i>
+                <span class="btn__label">Увійти</span>
+            </a>
+            <a href="{% url 'signup' %}" class="btn btn-ghost btn-sm w-full justify-center mt-8" data-tooltip="Реєстрація">
+                <i data-lucide="user-plus" size="16" class="btn__icon"></i>
+                <span class="btn__label">Реєстрація</span>
+            </a>
         {% endif %}
     </div>
 </aside>

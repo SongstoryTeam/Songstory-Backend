@@ -3,7 +3,6 @@
 {% load core_extras %}
 
 {% block title %}Профіль — {{ SITE_NAME }}{% endblock %}
-{% block nav_library %}active{% endblock %}
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/pages/profile.css' %}">
@@ -138,8 +137,4 @@
         </div>
 
     </div>
-{% endblock %}
-
-{% block extra_js %}
-    <script src="{% static 'core/js/profile.js' %}"></script>
 {% endblock %}
