@@ -36,22 +36,27 @@ class GoogleBooksClient:
         if cached is not None:
             return cached
 
-        data = self._fetch(query, limit, language)
+        # Google's own langRestrict filters server-side and is well known
+        # to drop legitimate matches whose volume metadata simply has no
+        # language set. We fetch a wider unrestricted pool instead and
+        # only exclude volumes explicitly tagged with a different language.
+        raw_limit = min(limit * 3, 40) if language else limit
+        data = self._fetch(query, raw_limit)
         books = [
             book
             for item in data.get("items", [])
             if (book := self._parse_item(item)) is not None
         ]
 
+        if language:
+            books = [book for book in books if not book.language or book.language == language]
+        books = books[:limit]
+
         cache.set(cache_key, books, SEARCH_CACHE_TTL)
         return books
 
-    def _fetch(self, query: str, limit: int, language: str | None) -> dict[str, Any]:
+    def _fetch(self, query: str, limit: int) -> dict[str, Any]:
         params = {"q": query, "maxResults": str(limit)}
-        if language:
-            # Google Books accepts a two-letter ISO 639-1 code here, which
-            # is exactly what our Language.code values already use.
-            params["langRestrict"] = language
 
         api_key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "")
         if api_key:

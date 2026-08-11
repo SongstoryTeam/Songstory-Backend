@@ -76,10 +76,7 @@ def _search_catalog(query: str, limit: int, user: AbstractBaseUser | AnonymousUs
         books_qs = Book.objects.all()
 
     books_qs = (
-        books_qs.filter(
-            Q(translations__title__icontains=query)
-            | Q(author__translations__name__icontains=query)
-        )
+        books_qs.filter(_catalog_query_filter(query))
         .select_related("author")
         .distinct()[:limit]
     )
@@ -167,6 +164,21 @@ def _to_search_result(book: GoogleBook | OpenLibraryBook) -> SearchResult:
         in_catalog=False,
         url=None,
     )
+
+
+def _catalog_query_filter(query: str) -> Q:
+    """Match if every word in the query shows up somewhere in the title or
+    the author's name — not necessarily in the same order or the same
+    field. A strict whole-phrase substring match previously failed on
+    anything typed in a different word order than the title itself."""
+    words = [word for word in query.split() if word]
+    if not words:
+        return Q(pk__in=[])
+
+    combined = Q()
+    for word in words:
+        combined &= Q(translations__title__icontains=word) | Q(author__translations__name__icontains=word)
+    return combined
 
 
 def _normalize_title(title: str) -> str:

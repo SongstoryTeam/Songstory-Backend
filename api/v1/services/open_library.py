@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -18,6 +19,16 @@ _COVERS_BASE = "https://covers.openlibrary.org/b"
 # codes our Language model stores, so callers pass the codes they know and
 # the client maps them itself.
 _LANGUAGE_QUERY_CODES = {"uk": "ukr"}
+
+# Descriptions on Open Library are community-edited and often carry
+# editorial notes ("Preceded by [Title] (https://openlibrary.org/...)")
+# that read as broken text once the source markup is stripped away. These
+# patterns strip that noise so only the actual synopsis is shown.
+_SERIES_NOTE_RE = re.compile(
+    r"\b(preceded by|followed by|preceeded by)\b.*$",
+    re.IGNORECASE | re.DOTALL,
+)
+_BARE_URL_RE = re.compile(r"https?://\S+")
 
 
 @dataclass(frozen=True)
@@ -40,14 +51,16 @@ class OpenLibraryClient:
         if cached is not None:
             return cached
 
-        search_query = query
-        language_code = _LANGUAGE_QUERY_CODES.get(language or "")
-        if language_code:
-            search_query = f"{query} language:{language_code}"
+        # Open Library's own `language:` query filter is unreliable for
+        # recall — most editions simply have no language metadata at all,
+        # so a hard filter silently drops legitimate matches. Instead we
+        # fetch a wider pool and only exclude editions that are explicitly
+        # tagged with a *different* language further down.
+        raw_limit = min(limit * 3, 40) if language else limit
 
         params = urllib.parse.urlencode({
-            "q": search_query,
-            "limit": str(limit),
+            "q": query,
+            "limit": str(raw_limit),
             "fields": "key,title,author_name,first_publish_year,isbn,description,cover_i,edition_key,language",
         })
         url = f"{_API_BASE}/search.json?{params}"
@@ -64,6 +77,13 @@ class OpenLibraryClient:
             for doc in data.get("docs", [])
             if (book := self._parse_doc(doc)) is not None
         ]
+
+        if language:
+            # Opt-out, not opt-in: only drop editions explicitly tagged
+            # with a *different* language. An unconfirmed language is kept
+            # rather than treated as a mismatch.
+            books = [book for book in books if not book.language or book.language == language]
+        books = books[:limit]
 
         cache.set(cache_key, books, _SEARCH_TTL)
         return books
@@ -87,11 +107,14 @@ class OpenLibraryClient:
 
     @staticmethod
     def _extract_description(value: Any) -> str:
-        if isinstance(value, str):
-            return value
         if isinstance(value, dict):
-            return value.get("value", "")
-        return ""
+            value = value.get("value", "")
+        if not isinstance(value, str):
+            return ""
+
+        text = _SERIES_NOTE_RE.split(value)[0]
+        text = _BARE_URL_RE.sub("", text)
+        return text.strip()
 
     def _parse_doc(self, doc: dict[str, Any]) -> OpenLibraryBook | None:
         key = doc.get("key", "")

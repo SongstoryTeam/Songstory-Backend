@@ -1,7 +1,7 @@
 (function () {
     const SEARCH_ENDPOINT = '/api/search/discover/';
-    const SEARCH_MIN_LENGTH = 2;
-    const SEARCH_DEBOUNCE_MS = 150;
+    const SEARCH_MIN_LENGTH = 3;
+    const SEARCH_DEBOUNCE_MS = 220;
     const QUICK_RESULT_LIMIT = 6;
     const PANEL_CLOSE_DELAY_MS = 150;
     const SKELETON_ROW_COUNT = 3;
@@ -19,6 +19,7 @@
     let activeController = null;
     let activeIndex = -1;
     let hasResults = false;
+    let renderedQuery = '';
 
     function refreshIcons() {
         if (window.lucide) window.lucide.createIcons();
@@ -43,6 +44,20 @@
         hidingTimer = window.setTimeout(() => {
             panel.hidden = true;
         }, PANEL_CLOSE_DELAY_MS);
+    }
+
+    function resetPanelState() {
+        window.clearTimeout(debounceTimer);
+        window.clearTimeout(hidingTimer);
+        if (activeController) activeController.abort();
+        panel.removeAttribute('data-open');
+        panel.hidden = true;
+        listbox.innerHTML = '';
+        input.setAttribute('aria-expanded', 'false');
+        input.removeAttribute('aria-activedescendant');
+        activeIndex = -1;
+        hasResults = false;
+        renderedQuery = '';
     }
 
     function renderSkeleton() {
@@ -78,6 +93,7 @@
     function renderResults(query, results) {
         activeIndex = -1;
         hasResults = results.length > 0;
+        renderedQuery = query;
 
         if (!results.length) {
             renderState(`Нічого не знайдено для «${query}»`, '');
@@ -179,7 +195,11 @@
     });
 
     input.addEventListener('focus', () => {
-        if (hasResults && input.value.trim().length >= SEARCH_MIN_LENGTH) {
+        // Only restore the panel if it still reflects the field's current
+        // value — otherwise it's a stale render from an earlier query and
+        // must not be shown (this previously caused a visible overlap bug
+        // after re-focusing the field or returning via browser history).
+        if (hasResults && input.value.trim() === renderedQuery) {
             openPanel();
         }
     });
@@ -210,6 +230,16 @@
 
     document.addEventListener('click', (event) => {
         if (!form.contains(event.target)) closePanel();
+    });
+
+    // Back/forward-cache restores the DOM exactly as it was left, without
+    // re-running this script. If the panel was open at that moment, it
+    // would otherwise reappear over the (possibly different) page content
+    // the next time the field is focused. Force a clean slate on restore.
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            resetPanelState();
+        }
     });
 
     function escapeHtml(value) {
