@@ -1,3 +1,8 @@
+/* Offset by the sidebar width so the bar never sits under the rail.
+   The collapsed-rail and off-canvas-drawer counterparts of this offset
+   live in layout.css (html.sidebar-collapsed override, and the
+   @media (max-width: 900px) override below) since they're about the
+   sidebar's states, not the player's. */
 .sticky-player {
     position: fixed;
     bottom: 0;
@@ -9,7 +14,7 @@
     display: flex;
     flex-direction: column;
     transition: transform 250ms cubic-bezier(.4, 0, .2, 1),
-                opacity   250ms cubic-bezier(.4, 0, .2, 1);
+    opacity 250ms cubic-bezier(.4, 0, .2, 1);
 }
 
 .player--hidden {
@@ -130,11 +135,22 @@
     border: none;
 }
 
-.player__embed--spotify { height: 152px; }
-.player__embed--spotify iframe { height: 152px; }
+.player__embed--spotify {
+    height: 152px;
+}
 
-.player__embed--soundcloud { height: 166px; background: #1C1917; }
-.player__embed--soundcloud iframe { height: 166px; }
+.player__embed--spotify iframe {
+    height: 152px;
+}
+
+.player__embed--soundcloud {
+    height: 166px;
+    background: #1C1917;
+}
+
+.player__embed--soundcloud iframe {
+    height: 166px;
+}
 
 .player__embed--youtube {
     height: 80px;
@@ -175,7 +191,11 @@
     flex-shrink: 0;
 }
 
-.yt-preview__icon { width: 18px; height: 18px; margin-left: 2px; }
+.yt-preview__icon {
+    width: 18px;
+    height: 18px;
+    margin-left: 2px;
+}
 
 .yt-preview__link {
     position: relative;
@@ -190,12 +210,18 @@
     transition: opacity var(--transition);
 }
 
-.yt-preview__link:hover { opacity: 1; }
+.yt-preview__link:hover {
+    opacity: 1;
+}
 
 @media (max-width: 900px) {
-    .sticky-player { left: 0; }
+    .sticky-player {
+        left: 0;
+    }
 }
 
 @media (max-width: 600px) {
-    .player__platform { display: none; }
+    .player__platform {
+        display: none;
+    }
 }

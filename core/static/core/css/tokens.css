@@ -1,86 +1,100 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap');
 
 @view-transition {
-  navigation: auto;
+    navigation: auto;
 }
 
 :root {
-  --clr-bg:        #F7F4EF;
-  --clr-surface:   #FFFFFF;
-  --clr-border:    #E2DDD6;
-  --clr-shelf:     #C8BFB0;
-  --clr-ink:       #1A1612;
-  --clr-muted:     #7A7167;
-  --clr-accent:    #C4622D;
-  --clr-accent-lt: #F2E8E0;
-  --clr-accent-dk: #B3561F;
-  --clr-green:     #3A6B4A;
-  --clr-danger:    #C0392B;
-  --clr-danger-lt: #FDF1F0;
+    --clr-bg: #F7F4EF;
+    --clr-surface: #FFFFFF;
+    --clr-border: #E2DDD6;
+    --clr-shelf: #C8BFB0;
+    --clr-ink: #1A1612;
+    --clr-muted: #7A7167;
+    --clr-accent: #C4622D;
+    --clr-accent-lt: #F2E8E0;
+    --clr-accent-dk: #B3561F;
+    --clr-green: #3A6B4A;
+    --clr-danger: #C0392B;
+    --clr-danger-lt: #FDF1F0;
 
-  --ff-display: 'Playfair Display', Georgia, serif;
-  --ff-body:    'DM Sans', system-ui, sans-serif;
+    --ff-display: 'Playfair Display', Georgia, serif;
+    --ff-body: 'DM Sans', system-ui, sans-serif;
 
-  --text-xs:   12px;
-  --text-sm:   13px;
-  --text-base: 15px;
-  --text-md:   16px;
-  --text-lg:   18px;
-  --text-xl:   22px;
-  --text-2xl:  26px;
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-base: 15px;
+    --text-md: 16px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 26px;
 
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
+    --radius-sm: 6px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
 
-  --shadow-sm: 0 1px 3px rgba(26,22,18,.07), 0 1px 2px rgba(26,22,18,.05);
-  --shadow-md: 0 4px 12px rgba(26,22,18,.10), 0 2px 4px rgba(26,22,18,.06);
-  --shadow-lg: 0 12px 32px rgba(26,22,18,.13), 0 4px 10px rgba(26,22,18,.07);
+    --shadow-sm: 0 1px 3px rgba(26, 22, 18, .07), 0 1px 2px rgba(26, 22, 18, .05);
+    --shadow-md: 0 4px 12px rgba(26, 22, 18, .10), 0 2px 4px rgba(26, 22, 18, .06);
+    --shadow-lg: 0 12px 32px rgba(26, 22, 18, .13), 0 4px 10px rgba(26, 22, 18, .07);
 
-  --nav-w: 240px;
-  --nav-w-collapsed: 76px;
+    --nav-w: 240px;
+    --nav-w-collapsed: 76px;
+    /* Width of the off-canvas drawer on mobile. Kept separate from --nav-w
+       because layout.css deliberately zeroes --nav-w itself inside the mobile
+       media query (it doubles as the offset for fixed elements like the
+       sticky player bar, which must sit flush left once the sidebar is
+       off-canvas) — reusing it here would collapse the drawer to 0 width too. */
+    --nav-w-drawer: 240px;
 
-  --ease: cubic-bezier(.4, 0, .2, 1);
-  --duration: 200ms;
-  --transition: var(--duration) var(--ease);
+    /* Width below which the sidebar switches from a persistent rail to an
+       off-canvas drawer. `@media` conditions can't consume custom properties,
+       so layout.css repeats this literal value in its own media queries —
+       this token is still the canonical definition; sidebar-init.js reads it
+       at runtime so the JS side never drifts from it. Keep all three in sync
+       if this ever changes. */
+    --bp-sidebar-drawer: 900px;
+
+    --ease: cubic-bezier(.4, 0, .2, 1);
+    --duration: 200ms;
+    --transition: var(--duration) var(--ease);
 }
 
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 html {
-  scroll-behavior: smooth;
+    scroll-behavior: smooth;
 }
 
 body {
-  font-family: var(--ff-body);
-  font-size: var(--text-base);
-  line-height: 1.6;
-  color: var(--clr-ink);
-  background: var(--clr-bg);
-  display: flex;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
+    font-family: var(--ff-body);
+    font-size: var(--text-base);
+    line-height: 1.6;
+    color: var(--clr-ink);
+    background: var(--clr-bg);
+    display: flex;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
 }
 
 img {
-  display: block;
-  max-width: 100%;
+    display: block;
+    max-width: 100%;
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: inherit;
+    text-decoration: none;
 }
 
 button {
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
+    font: inherit;
+    cursor: pointer;
+    border: none;
+    background: none;
 }

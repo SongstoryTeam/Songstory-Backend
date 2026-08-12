@@ -1,441 +1,536 @@
 .sidebar {
-  width: var(--nav-w);
-  flex-shrink: 0;
-  background: var(--clr-surface);
-  border-right: 1px solid var(--clr-border);
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: auto;
-  z-index: 100;
-  transition: width var(--transition);
-  view-transition-name: app-sidebar;
+    width: var(--nav-w);
+    flex-shrink: 0;
+    background: var(--clr-surface);
+    border-right: 1px solid var(--clr-border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    z-index: 100;
+    transition: width var(--transition);
+    view-transition-name: app-sidebar;
 }
 
 .main-content {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
-main { flex: 1; }
+main {
+    flex: 1;
+}
 
 #main-content {
-  view-transition-name: app-main;
+    view-transition-name: app-main;
 }
 
 .topbar {
-  view-transition-name: app-topbar;
+    view-transition-name: app-topbar;
 }
 
 .sidebar__logo {
-  padding: 20px 16px 20px 24px;
-  border-bottom: 1px solid var(--clr-border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+    padding: 20px 16px 20px 24px;
+    border-bottom: 1px solid var(--clr-border);
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 .sidebar__logo-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
 }
 
 .sidebar__logo-mark {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-sm);
-  background: var(--clr-accent-lt);
-  color: var(--clr-accent);
-  font-family: var(--ff-display);
-  font-weight: 600;
-  font-size: var(--text-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-sm);
+    background: var(--clr-accent-lt);
+    color: var(--clr-accent);
+    font-family: var(--ff-display);
+    font-weight: 600;
+    font-size: var(--text-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .sidebar__logo-text {
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Both lines of the logo must clip to a single line with an ellipsis
+   rather than wrap — set overflow/white-space/ellipsis directly on each
+   line box, not just on the shared parent, so it holds regardless of how
+   narrow the sidebar gets. */
+.sidebar__logo .logo-word,
+.sidebar__logo .logo-tagline {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .sidebar__logo .logo-word {
-  display: block;
-  font-family: var(--ff-display);
-  font-size: var(--text-xl);
-  font-weight: 600;
-  color: var(--clr-ink);
-  letter-spacing: -.3px;
+    font-family: var(--ff-display);
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--clr-ink);
+    letter-spacing: -.3px;
 }
 
 .sidebar__logo .logo-tagline {
-  font-size: 11px;
-  color: var(--clr-muted);
-  letter-spacing: .5px;
-  text-transform: uppercase;
-  margin-top: 2px;
+    font-size: 11px;
+    color: var(--clr-muted);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-top: 2px;
 }
 
 .sidebar__collapse-btn {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  color: var(--clr-muted);
-  transition: background var(--transition), color var(--transition);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    color: var(--clr-muted);
+    transition: background var(--transition), color var(--transition);
 }
 
 .sidebar__collapse-btn:hover {
-  background: var(--clr-accent-lt);
-  color: var(--clr-accent);
+    background: var(--clr-accent-lt);
+    color: var(--clr-accent);
 }
 
-.sidebar__collapse-icon--expand { display: none; }
+.sidebar__collapse-icon {
+    display: block;
+}
 
 .sidebar__nav {
-  padding: 20px 12px;
-  flex: 1;
+    padding: 20px 12px;
+    flex: 1;
 }
 
 .sidebar__section-label {
-  display: block;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: var(--clr-muted);
-  padding: 0 12px;
-  margin: 16px 0 6px;
-  white-space: nowrap;
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--clr-muted);
+    padding: 0 12px;
+    margin: 16px 0 6px;
+    white-space: nowrap;
 }
 
 .nav-link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: var(--radius-sm);
-  color: var(--clr-muted);
-  font-size: var(--text-sm);
-  transition: background var(--transition), color var(--transition);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    color: var(--clr-muted);
+    font-size: var(--text-sm);
+    transition: background var(--transition), color var(--transition);
 }
 
-.nav-link__icon { flex-shrink: 0; opacity: .8; }
+.nav-link__icon {
+    flex-shrink: 0;
+    opacity: .8;
+}
 
 .nav-link__label {
-  flex: 1;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .nav-link__badge {
-  flex-shrink: 0;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
-  background: var(--clr-accent);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    flex-shrink: 0;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--clr-accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-link:hover,
 .nav-link.active {
-  background: var(--clr-accent-lt);
-  color: var(--clr-accent);
+    background: var(--clr-accent-lt);
+    color: var(--clr-accent);
 }
 
-.nav-link.active { font-weight: 500; }
+.nav-link.active {
+    font-weight: 500;
+}
 
 .sidebar__footer {
-  padding: 16px 12px;
-  border-top: 1px solid var(--clr-border);
+    padding: 16px 12px;
+    border-top: 1px solid var(--clr-border);
 }
 
 .sidebar__user {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: background var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background var(--transition);
 }
 
 .sidebar__user:hover,
-.sidebar__user.active { background: var(--clr-bg); }
+.sidebar__user.active {
+    background: var(--clr-bg);
+}
 
 .sidebar__user-text {
-  min-width: 0;
-  overflow: hidden;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--clr-accent);
-  color: #fff;
-  font-size: var(--text-sm);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--clr-accent);
+    color: #fff;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .user-name {
-  font-size: var(--text-sm);
-  font-weight: 500;
-  color: var(--clr-ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--clr-ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .user-role {
-  font-size: 11px;
-  color: var(--clr-muted);
+    font-size: 11px;
+    color: var(--clr-muted);
 }
 
 .sidebar__footer .btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .sidebar__footer .btn__label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* The collapsed rail is icon-only, so keyboard focus is often the only way
+   to tell which control is active — give every interactive sidebar element
+   an explicit ring instead of depending on a browser default that some
+   component reset elsewhere might strip. */
+.sidebar a:focus-visible,
+.sidebar button:focus-visible {
+    outline: 2px solid var(--clr-accent);
+    outline-offset: 2px;
 }
 
 /* Desktop collapse rail — icon-only sidebar, remembered across visits.
    Scoped to non-mobile widths so it never fights the mobile drawer rules
-   further down, which have their own layout for .sidebar. */
+   further down, which have their own layout for .sidebar.
+   Breakpoint mirrors --bp-sidebar-drawer in tokens.css — see the comment
+   there for why this can't just reference the custom property. */
 @media (min-width: 901px) {
-  html.sidebar-collapsed .sidebar { width: var(--nav-w-collapsed); }
+    html.sidebar-collapsed .sidebar {
+        width: var(--nav-w-collapsed);
+    }
 
-  html.sidebar-collapsed .sidebar__logo { justify-content: center; padding-inline: 0; }
-  html.sidebar-collapsed .sidebar__logo-text,
-  html.sidebar-collapsed .sidebar__collapse-btn,
-  html.sidebar-collapsed .sidebar__section-label,
-  html.sidebar-collapsed .nav-link__label,
-  html.sidebar-collapsed .nav-link__badge,
-  html.sidebar-collapsed .sidebar__user-text,
-  html.sidebar-collapsed .btn__label {
-    display: none;
-  }
+    html.sidebar-collapsed .sidebar__logo {
+        justify-content: center;
+        padding-inline: 0;
+    }
 
-  html.sidebar-collapsed .sidebar:hover .sidebar__collapse-btn {
-    display: flex;
-  }
+    html.sidebar-collapsed .sidebar__logo-text,
+    html.sidebar-collapsed .sidebar__section-label,
+    html.sidebar-collapsed .nav-link__label,
+    html.sidebar-collapsed .nav-link__badge,
+    html.sidebar-collapsed .sidebar__user-text,
+    html.sidebar-collapsed .btn__label {
+        display: none;
+    }
 
-  html.sidebar-collapsed .nav-link,
-  html.sidebar-collapsed .sidebar__user,
-  html.sidebar-collapsed .sidebar__footer .btn {
-    justify-content: center;
-  }
+    /* The collapse button itself stays visible and reachable at all times —
+       it must never be the one thing you can't get back without a reload. */
+    html.sidebar-collapsed .nav-link,
+    html.sidebar-collapsed .sidebar__user,
+    html.sidebar-collapsed .sidebar__footer .btn {
+        justify-content: center;
+        position: relative;
+    }
 
-  html.sidebar-collapsed .sidebar__collapse-icon--collapse { display: none; }
-  html.sidebar-collapsed .sidebar__collapse-icon--expand { display: block; }
+    /* Icon-only elements lose their text label, so anything carrying a
+       data-tooltip attribute grows one back on hover or keyboard focus. One
+       rule covers nav links, the user card, and footer buttons alike, so a
+       future addition only needs the attribute, not a new selector here. */
+    html.sidebar-collapsed [data-tooltip]:hover::after,
+    html.sidebar-collapsed [data-tooltip]:focus-visible::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: calc(100% + 10px);
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--clr-ink);
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: var(--radius-sm);
+        font-size: var(--text-xs);
+        white-space: nowrap;
+        box-shadow: var(--shadow-lg);
+        z-index: 200;
+        pointer-events: none;
+    }
 
-  html.sidebar-collapsed .nav-link:hover::after,
-  html.sidebar-collapsed .sidebar__user:hover::after,
-  html.sidebar-collapsed .sidebar__footer .btn:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    left: calc(100% + 10px);
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--clr-ink);
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: var(--radius-sm);
-    font-size: var(--text-xs);
-    white-space: nowrap;
-    box-shadow: var(--shadow-lg);
-    z-index: 200;
-    pointer-events: none;
-  }
-
-  html.sidebar-collapsed .sidebar__footer .btn { position: relative; }
+    /* The sticky player bar (components/player.css) is offset by the
+       sidebar's width so it never sits underneath the rail; it needs the
+       same offset the rail collapses to, or it leaves a dead gap. */
+    html.sidebar-collapsed .sticky-player {
+        left: var(--nav-w-collapsed);
+    }
 }
 
 .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 50;
-  background: rgba(247, 244, 239, .92);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--clr-border);
-  padding: 0 36px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(247, 244, 239, .92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--clr-border);
+    padding: 0 36px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .topbar__search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--clr-surface);
-  border: 1px solid var(--clr-border);
-  border-radius: 100px;
-  padding: 0 16px;
-  height: 38px;
-  width: 280px;
-  transition: border-color var(--transition), box-shadow var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: 100px;
+    padding: 0 16px;
+    height: 38px;
+    width: 280px;
+    transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .topbar__search:focus-within {
-  border-color: var(--clr-accent);
-  box-shadow: 0 0 0 3px rgba(196, 98, 45, .12);
+    border-color: var(--clr-accent);
+    box-shadow: 0 0 0 3px rgba(196, 98, 45, .12);
 }
 
-.topbar__search svg { color: var(--clr-muted); flex-shrink: 0; }
+.topbar__search svg {
+    color: var(--clr-muted);
+    flex-shrink: 0;
+}
 
 .topbar__search input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font: inherit;
-  font-size: var(--text-sm);
-  color: var(--clr-ink);
-  width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--clr-ink);
+    width: 100%;
 }
 
-.topbar__search input::placeholder { color: var(--clr-muted); }
+.topbar__search input::placeholder {
+    color: var(--clr-muted);
+}
 
-.topbar__actions { display: flex; align-items: center; gap: 12px; }
+.topbar__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
 
 .topbar__notify {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  color: var(--clr-muted);
-  transition: background var(--transition), color var(--transition);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    color: var(--clr-muted);
+    transition: background var(--transition), color var(--transition);
 }
 
-.topbar__notify:hover { background: var(--clr-accent-lt); color: var(--clr-accent); }
+.topbar__notify:hover {
+    background: var(--clr-accent-lt);
+    color: var(--clr-accent);
+}
 
 .topbar__notify-dot {
-  position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--clr-accent);
-  border: 2px solid var(--clr-surface);
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--clr-accent);
+    border: 2px solid var(--clr-surface);
 }
 
 .sidebar-toggle {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--clr-border);
-  color: var(--clr-ink);
-  background: var(--clr-surface);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--clr-border);
+    color: var(--clr-ink);
+    background: var(--clr-surface);
 }
 
 #sidebarOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(26, 22, 18, .4);
-  z-index: 99;
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 22, 18, .4);
+    z-index: 99;
 }
 
-#sidebarOverlay[hidden] { display: none; }
+#sidebarOverlay[hidden] {
+    display: none;
+}
 
-footer { background: var(--clr-surface); border-top: 1px solid var(--clr-border); margin-top: auto; }
+footer {
+    background: var(--clr-surface);
+    border-top: 1px solid var(--clr-border);
+    margin-top: auto;
+}
 
 .footer-content {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 40px;
-  padding: 60px 36px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    padding: 60px 36px;
 }
 
 .footer-section h3 {
-  font-family: var(--ff-display);
-  font-size: var(--text-lg);
-  margin-bottom: 20px;
-  color: var(--clr-ink);
+    font-family: var(--ff-display);
+    font-size: var(--text-lg);
+    margin-bottom: 20px;
+    color: var(--clr-ink);
 }
 
 .footer-section a,
 .footer-section p {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--clr-muted);
-  margin-bottom: 12px;
-  font-size: var(--text-sm);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--clr-muted);
+    margin-bottom: 12px;
+    font-size: var(--text-sm);
 }
 
-.social-links { display: flex; gap: 15px; margin-top: 20px; }
+.social-links {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
 
 .copyright {
-  text-align: center;
-  padding: 24px;
-  border-top: 1px solid var(--clr-border);
-  color: var(--clr-muted);
-  font-size: var(--text-sm);
+    text-align: center;
+    padding: 24px;
+    border-top: 1px solid var(--clr-border);
+    color: var(--clr-muted);
+    font-size: var(--text-sm);
 }
 
-.content-pad    { padding: 36px; }
-.content-pad-sm { padding: 24px 36px; }
-.section-divider { border: none; border-top: 1px solid var(--clr-border); margin: 36px 0; }
+.content-pad {
+    padding: 36px;
+}
 
+.content-pad-sm {
+    padding: 24px 36px;
+}
+
+.section-divider {
+    border: none;
+    border-top: 1px solid var(--clr-border);
+    margin: 36px 0;
+}
+
+/* Off-canvas drawer — mirrors --bp-sidebar-drawer in tokens.css (see the
+   comment there; @media conditions can't read custom properties). */
 @media (max-width: 900px) {
-  :root { --nav-w: 0px; }
+    :root {
+        --nav-w: 0px;
+    }
 
-  .sidebar {
-    position: fixed;
-    left: -240px;
-    width: 240px;
-    transition: left var(--transition);
-  }
+    .sidebar {
+        position: fixed;
+        left: calc(-1 * var(--nav-w-drawer));
+        width: var(--nav-w-drawer);
+        transition: left var(--transition);
+    }
 
-  .sidebar.open { left: 0; }
-  .sidebar-toggle { display: flex; }
-  .topbar { padding: 0 20px; }
-  .content-pad    { padding: 20px; }
-  .content-pad-sm { padding: 16px 20px; }
+    .sidebar.open {
+        left: 0;
+    }
+
+    .sidebar-toggle {
+        display: flex;
+    }
+
+    .topbar {
+        padding: 0 20px;
+    }
+
+    .content-pad {
+        padding: 20px;
+    }
+
+    .content-pad-sm {
+        padding: 16px 20px;
+    }
 }
 
 @media (max-width: 600px) {
-  .topbar__search { width: 200px; }
+    .topbar__search {
+        width: 200px;
+    }
 }
 
 /* Cross-document view transitions: the sidebar and topbar are named so the
@@ -444,18 +539,18 @@ footer { background: var(--clr-surface); border-top: 1px solid var(--clr-border)
    shell, with zero JS routing. Unsupported browsers just get a normal
    navigation. */
 @media (prefers-reduced-motion: no-preference) {
-  @supports (view-transition-name: none) {
-    ::view-transition-old(app-main),
-    ::view-transition-new(app-main) {
-      animation-duration: 160ms;
-    }
+    @supports (view-transition-name: none) {
+        ::view-transition-old(app-main),
+        ::view-transition-new(app-main) {
+            animation-duration: 160ms;
+        }
 
-    ::view-transition-old(app-sidebar),
-    ::view-transition-new(app-sidebar),
-    ::view-transition-old(app-topbar),
-    ::view-transition-new(app-topbar) {
-      animation: none;
-      mix-blend-mode: normal;
+        ::view-transition-old(app-sidebar),
+        ::view-transition-new(app-sidebar),
+        ::view-transition-old(app-topbar),
+        ::view-transition-new(app-topbar) {
+            animation: none;
+            mix-blend-mode: normal;
+        }
     }
-  }
 }
