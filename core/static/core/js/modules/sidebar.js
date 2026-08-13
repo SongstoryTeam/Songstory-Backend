@@ -20,8 +20,6 @@ const SidebarNav = (() => {
     const overlay = document.getElementById('sidebarOverlay');
     const mobileToggle = document.getElementById('sidebarToggle');
     const collapseToggle = document.getElementById('sidebarCollapseToggle');
-    const collapseIcon = collapseToggle?.querySelector('[data-icon="collapse"]');
-    const expandIcon = collapseToggle?.querySelector('[data-icon="expand"]');
 
     function isMobile() {
         return window.matchMedia(`(max-width: ${drawerBreakpoint()})`).matches;
@@ -30,6 +28,10 @@ const SidebarNav = (() => {
     function openDrawer() {
         sidebar.classList.add('open');
         overlay.hidden = false;
+        // Let the browser paint `hidden = false` first, then trigger the
+        // opacity transition on the next frame — flipping both in the same
+        // tick would skip the fade-in entirely.
+        requestAnimationFrame(() => overlay.classList.add('is-visible'));
         document.body.style.overflow = 'hidden';
         mobileToggle?.setAttribute('aria-expanded', 'true');
         sidebar.querySelector('.nav-link')?.focus();
@@ -38,9 +40,16 @@ const SidebarNav = (() => {
     function closeDrawer({restoreFocus = false} = {}) {
         if (!sidebar.classList.contains('open')) return;
         sidebar.classList.remove('open');
-        overlay.hidden = true;
+        overlay.classList.remove('is-visible');
         document.body.style.overflow = '';
         mobileToggle?.setAttribute('aria-expanded', 'false');
+        // Wait for the transform/opacity transitions to finish before
+        // actually removing the overlay from the layout, otherwise it
+        // disappears mid-animation and the close reads as an abrupt jump
+        // rather than a slide.
+        window.setTimeout(() => {
+            if (!sidebar.classList.contains('open')) overlay.hidden = true;
+        }, 220);
         if (restoreFocus) mobileToggle?.focus();
     }
 
@@ -59,12 +68,6 @@ const SidebarNav = (() => {
             'aria-label',
             collapsed ? 'Розгорнути бічну панель' : 'Згорнути бічну панель',
         );
-        // Native `hidden` rather than a CSS class: the correct icon shows
-        // even if a stylesheet fails to load, and it stays in sync across
-        // the lucide.createIcons() swap from <i> to <svg> because lucide
-        // copies every attribute — including `hidden` — onto the new node.
-        if (collapseIcon) collapseIcon.hidden = collapsed;
-        if (expandIcon) expandIcon.hidden = !collapsed;
         storage.set(collapsed ? '1' : '0');
     }
 

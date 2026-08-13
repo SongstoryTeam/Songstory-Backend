@@ -106,18 +106,32 @@ main {
     justify-content: center;
     width: 28px;
     height: 28px;
-    border-radius: var(--radius-sm);
+    border-radius: 50%;
+    border: 1px solid var(--clr-border);
+    background: var(--clr-surface);
     color: var(--clr-muted);
-    transition: background var(--transition), color var(--transition);
+    transition: background var(--transition), color var(--transition), border-color var(--transition);
 }
 
 .sidebar__collapse-btn:hover {
     background: var(--clr-accent-lt);
+    border-color: var(--clr-accent-lt);
     color: var(--clr-accent);
 }
 
+/* Single chevron that flips direction with the rail state — replaces the
+   old two-icon-with-`hidden` approach. That relied on `[hidden]` beating
+   `.sidebar__collapse-icon { display: block }` in the cascade, but author
+   rules always win over the UA default regardless of specificity, so both
+   icons rendered at once (the glitchy double-arrow glyph). A single icon
+   that rotates via a class has no such race to lose. */
 .sidebar__collapse-icon {
     display: block;
+    transition: transform var(--transition);
+}
+
+html.sidebar-collapsed .sidebar__collapse-icon {
+    transform: rotate(180deg);
 }
 
 .sidebar__nav {
@@ -428,6 +442,12 @@ main {
     inset: 0;
     background: rgba(26, 22, 18, .4);
     z-index: 99;
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+#sidebarOverlay.is-visible {
+    opacity: 1;
 }
 
 #sidebarOverlay[hidden] {
@@ -501,13 +521,17 @@ footer {
 
     .sidebar {
         position: fixed;
-        left: calc(-1 * var(--nav-w-drawer));
+        left: 0;
+        top: 0;
         width: var(--nav-w-drawer);
-        transition: left var(--transition);
+        transform: translateX(-100%);
+        transition: transform var(--transition);
+        will-change: transform;
+        box-shadow: var(--shadow-lg);
     }
 
     .sidebar.open {
-        left: 0;
+        transform: translateX(0);
     }
 
     .sidebar-toggle {
