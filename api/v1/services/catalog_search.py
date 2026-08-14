@@ -11,10 +11,13 @@ from core.models import Book
 
 from .google_books import GoogleBook, google_books_client
 from .open_library import OpenLibraryBook, open_library_client
+from .translation import needs_translation, translate_to_english
 
-# The catalog is Ukrainian-first for now, so every external lookup behind
-# the site-wide search is restricted to this language. Revisit once
-# multi-language browsing ships.
+# The catalog itself is Ukrainian-first (every Book has translated title
+# fields), so a same-language *edition* is always preferred when one
+# exists in the external catalogs too. It rarely does — see _search_external
+# for how a query that only matches an English edition is still surfaced,
+# instead of silently returning nothing.
 SEARCH_LANGUAGE = "uk"
 
 CATALOG_SOURCE = "catalog"
@@ -45,6 +48,13 @@ class SearchResult:
     in_catalog: bool
     url: str | None
     external_id: str | None = None
+    # True when this result was only found by translating the user's
+    # (Ukrainian) query to English before querying the external catalog —
+    # i.e. it's very likely an English edition, not a Ukrainian one, even
+    # though it's a genuine match for what the person typed. The template
+    # uses this to label the result honestly instead of implying it's a
+    # Ukrainian-language match.
+    matched_via_translation: bool = False
 
 
 def search_books(
@@ -53,8 +63,8 @@ def search_books(
     user: AbstractBaseUser | AnonymousUser | None = None,
 ) -> list[SearchResult]:
     """Search the local catalog first, then fill remaining slots with
-    Ukrainian-language results from external book catalogs, skipping
-    anything that clearly duplicates a catalog match by title."""
+    results from external book catalogs, skipping anything that clearly
+    duplicates a catalog match by title."""
     query = query.strip()
     if len(query) < MIN_QUERY_LENGTH:
         return []
@@ -99,9 +109,54 @@ def _search_catalog(query: str, limit: int, user: AbstractBaseUser | AnonymousUs
 
 
 def _search_external(query: str, limit: int, exclude_titles: set[str]) -> list[SearchResult]:
-    google_books = google_books_client.search(query, limit=limit, language=SEARCH_LANGUAGE)
-    open_library_books = open_library_client.search(query, limit=limit, language=SEARCH_LANGUAGE)
-    candidates = [_to_search_result(book) for book in (*google_books, *open_library_books)]
+    """External lookup against Google Books / Open Library, in two passes.
+
+    Pass 1 searches the query exactly as typed, restricted to
+    confirmed-or-unconfirmed Ukrainian editions (existing behaviour) — this
+    catches the rare case where a Ukrainian edition is indexed under its
+    Ukrainian title.
+
+    Pass 2 only runs if pass 1 didn't fill the slots *and* the query looks
+    Ukrainian (contains Cyrillic): the query is translated to English and
+    searched again, this time without a language restriction. This is what
+    actually finds a book when someone searches "Переслідування аделіни"
+    for a work that's only indexed as "Hunting Adeline" — previously that
+    query matched nothing at all, because Google Books/Open Library metadata
+    is overwhelmingly English and a literal Cyrillic query has nothing to
+    match against.
+
+    Pass-2 results are flagged with matched_via_translation so the template
+    can be upfront that they're a translated match, not a Ukrainian edition.
+    """
+    seen_titles = set(exclude_titles)
+
+    results = _run_external_pass(query, limit, seen_titles, language=SEARCH_LANGUAGE)
+    seen_titles.update(_normalize_title(result.title) for result in results)
+
+    remaining = limit - len(results)
+    if remaining > 0 and needs_translation(query):
+        translated = translate_to_english(query)
+        if translated and _normalize_title(translated) != _normalize_title(query):
+            translated_results = _run_external_pass(
+                translated, remaining, seen_titles, language=None, via_translation=True
+            )
+            results += translated_results
+
+    return results[:limit]
+
+
+def _run_external_pass(
+    query: str,
+    limit: int,
+    exclude_titles: set[str],
+    language: str | None,
+    via_translation: bool = False,
+) -> list[SearchResult]:
+    google_books = google_books_client.search(query, limit=limit, language=language)
+    open_library_books = open_library_client.search(query, limit=limit, language=language)
+    candidates = [
+        _to_search_result(book, via_translation) for book in (*google_books, *open_library_books)
+    ]
 
     catalogued_by_id = _lookup_catalogued(
         [result.external_id for result in candidates if result.external_id]
@@ -137,7 +192,7 @@ def _lookup_catalogued(external_ids: list[str]) -> dict[str, str]:
     )
 
 
-def _to_search_result(book: GoogleBook | OpenLibraryBook) -> SearchResult:
+def _to_search_result(book: GoogleBook | OpenLibraryBook, via_translation: bool = False) -> SearchResult:
     if isinstance(book, GoogleBook):
         return SearchResult(
             source=GOOGLE_BOOKS_SOURCE,
@@ -150,6 +205,7 @@ def _to_search_result(book: GoogleBook | OpenLibraryBook) -> SearchResult:
             isbn=book.isbn,
             in_catalog=False,
             url=None,
+            matched_via_translation=via_translation,
         )
 
     return SearchResult(
@@ -163,6 +219,7 @@ def _to_search_result(book: GoogleBook | OpenLibraryBook) -> SearchResult:
         isbn=book.isbn,
         in_catalog=False,
         url=None,
+        matched_via_translation=via_translation,
     )
 
 

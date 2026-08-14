@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -9,6 +10,8 @@ from typing import Any
 
 from django.conf import settings
 from django.core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 API_BASE = "https://www.googleapis.com/books/v1/volumes"
 REQUEST_TIMEOUT = 10
@@ -61,6 +64,16 @@ class GoogleBooksClient:
         api_key = getattr(settings, "GOOGLE_BOOKS_API_KEY", "")
         if api_key:
             params["key"] = api_key
+        else:
+            # Unauthenticated requests share Google's per-IP quota across
+            # every visitor of every app on that IP, which is small enough
+            # to get exhausted by normal traffic — search then silently
+            # returns nothing. Surface that misconfiguration loudly instead
+            # of letting it masquerade as "no results" forever.
+            logger.warning(
+                "GOOGLE_BOOKS_API_KEY is not configured — Google Books requests "
+                "are unauthenticated and subject to a very low shared quota."
+            )
 
         url = f"{API_BASE}?{urllib.parse.urlencode(params)}"
         request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
@@ -68,7 +81,11 @@ class GoogleBooksClient:
         try:
             with urllib.request.urlopen(request, timeout=REQUEST_TIMEOUT) as response:
                 return json.loads(response.read())
-        except (urllib.error.URLError, urllib.error.HTTPError):
+        except urllib.error.HTTPError as exc:
+            logger.warning("Google Books request failed for %r: HTTP %s", query, exc.code)
+            return {}
+        except (urllib.error.URLError, TimeoutError) as exc:
+            logger.warning("Google Books request failed for %r: %s", query, exc)
             return {}
 
     @staticmethod

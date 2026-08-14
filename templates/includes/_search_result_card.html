@@ -15,6 +15,12 @@
             {{ result.author|default:"Автор невідомий" }}{% if result.year %} · {{ result.year }}{% endif %}
         </div>
 
+        {% if result.matched_via_translation %}
+            <span class="tag tag--accent mt-4" style="align-self:flex-start;">
+                Знайдено за перекладом запиту
+            </span>
+        {% endif %}
+
         {% if result.description %}
             <p class="search-result-card__desc">{{ result.description|truncatechars:140 }}</p>
         {% endif %}

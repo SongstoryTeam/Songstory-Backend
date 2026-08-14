@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import urllib.error
 import urllib.parse
@@ -9,6 +10,8 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from django.core.cache import cache
+
+logger = logging.getLogger(__name__)
 
 _SEARCH_TTL = 60 * 60
 _SEARCH_CACHE_PREFIX = "openlibrary:search:"
@@ -69,7 +72,11 @@ class OpenLibraryClient:
             req = urllib.request.Request(url, headers={"User-Agent": "Songstery/1.0"})
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data: dict[str, Any] = json.loads(resp.read())
-        except (urllib.error.URLError, urllib.error.HTTPError):
+        except urllib.error.HTTPError as exc:
+            logger.warning("Open Library request failed for %r: HTTP %s", query, exc.code)
+            return []
+        except (urllib.error.URLError, TimeoutError) as exc:
+            logger.warning("Open Library request failed for %r: %s", query, exc)
             return []
 
         books = [
@@ -94,7 +101,11 @@ class OpenLibraryClient:
             req = urllib.request.Request(url, headers={"User-Agent": "Songstery/1.0"})
             with urllib.request.urlopen(req, timeout=10) as resp:
                 data: dict[str, Any] = json.loads(resp.read())
-        except (urllib.error.URLError, urllib.error.HTTPError):
+        except urllib.error.HTTPError as exc:
+            logger.warning("Open Library work lookup failed for %r: HTTP %s", open_library_id, exc.code)
+            return None
+        except (urllib.error.URLError, TimeoutError) as exc:
+            logger.warning("Open Library work lookup failed for %r: %s", open_library_id, exc)
             return None
 
         return self._parse_work(open_library_id, data)
