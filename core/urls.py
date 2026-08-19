@@ -3,6 +3,7 @@ from django.urls import path
 from core import views
 from core.views.notifications import (
     notification_list,
+    notification_feed,
     notification_mark_read,
     notification_mark_all_read,
 )
@@ -44,6 +45,7 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
 
     path("notifications/", notification_list, name="notifications"),
+    path("notifications/feed/", notification_feed, name="notifications_feed"),
     path("notifications/<int:pk>/read/", notification_mark_read, name="notification_read"),
     path("notifications/read-all/", notification_mark_all_read, name="notifications_read_all"),
 

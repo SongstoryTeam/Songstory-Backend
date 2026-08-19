@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Сповіщення — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+    <section class="section-wrap">
+        <div class="section-head">
+            <h1 class="section-head__title">Сповіщення</h1>
+            {% if notifications %}
+                <button type="button" class="btn btn-ghost btn-sm" data-notify-page-mark-all>
+                    Позначити всі прочитаними
+                </button>
+            {% endif %}
+        </div>
+
+        {% if notifications %}
+            <ul class="notify-page-list" data-notify-page-list>
+                {% for notification in notifications %}
+                    <li class="notify-page-item{% if not notification.is_read %} notify-page-item--unread{% endif %}"
+                        data-notify-page-item data-id="{{ notification.pk }}">
+                        {% if notification.get_absolute_url %}
+                            <a href="{{ notification.get_absolute_url }}" class="notify-page-item__link"
+                               data-notify-page-open data-id="{{ notification.pk }}">
+                        {% else %}
+                            <span class="notify-page-item__link">
+                        {% endif %}
+                            <span class="notify-page-item__dot" aria-hidden="true"></span>
+                            <span class="notify-page-item__body">
+                                <span class="notify-page-item__message">{{ notification.get_message }}</span>
+                                <span class="notify-page-item__meta">{{ notification.created_at|date:"d.m.Y, H:i" }}</span>
+                            </span>
+                        {% if notification.get_absolute_url %}
+                            </a>
+                        {% else %}
+                            </span>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {% if page_obj.has_other_pages %}
+                <nav class="pagination" aria-label="Пагінація">
+                    {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-ghost btn-sm" rel="prev">
+                            <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Назад
+                        </a>
+                    {% endif %}
+                    <span class="pagination__info">Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-ghost btn-sm" rel="next">
+                            Далі <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
+                        </a>
+                    {% endif %}
+                </nav>
+            {% endif %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state__icon"><i data-lucide="bell-off" style="width:24px;height:24px;"></i></div>
+                <div class="empty-state__title">Сповіщень поки немає</div>
+                <p class="empty-state__text">
+                    Тут з'являтимуться вподобання ваших треків, відповіді на коментарі
+                    та статус заявок на верифікацію автора.
+                </p>
+            </div>
+        {% endif %}
+    </section>
+{% endblock %}

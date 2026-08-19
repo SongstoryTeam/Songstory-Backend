@@ -23,12 +23,24 @@
 
     <div class="topbar__actions">
         {% if user.is_authenticated %}
-            <a href="{% url 'core:notifications' %}" class="topbar__notify" aria-label="Сповіщення">
-                <i data-lucide="bell" size="18"></i>
-                {% if unread_notifications %}
-                    <span class="topbar__notify-dot"></span>
-                {% endif %}
-            </a>
+            <div class="notify" data-notify>
+                <a href="{% url 'core:notifications' %}" class="topbar__notify" aria-label="Сповіщення"
+                   aria-haspopup="true" aria-expanded="false" data-notify-toggle>
+                    <i data-lucide="bell" size="18"></i>
+                    <span class="topbar__notify-dot" data-notify-dot {% if not unread_notifications %}hidden{% endif %}></span>
+                </a>
+
+                <div class="notify__panel" id="notify-panel" role="menu" data-notify-panel hidden>
+                    <div class="notify__panel-header">
+                        <span class="notify__panel-title">Сповіщення</span>
+                        <button type="button" class="notify__mark-all" data-notify-mark-all hidden>
+                            Позначити всі прочитаними
+                        </button>
+                    </div>
+                    <ul class="notify__list" data-notify-list></ul>
+                    <a href="{% url 'core:notifications' %}" class="notify__footer">Переглянути всі</a>
+                </div>
+            </div>
             <a href="{% url 'core:create_book' %}" class="btn btn-accent btn-sm">
                 <i data-lucide="plus" size="16"></i> Додати книгу
             </a>

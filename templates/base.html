@@ -117,6 +117,9 @@
 
 <script src="{% static 'core/js/modules/sidebar.js' %}" defer></script>
 <script src="{% static 'core/js/modules/profile-tabs.js' %}" defer></script>
+{% if user.is_authenticated %}
+    <script src="{% static 'core/js/modules/notifications.js' %}" defer></script>
+{% endif %}
 <script src="{% static 'core/js/forms.js' %}"></script>
 <script src="{% static 'core/js/site_search.js' %}" defer></script>
 <script>
