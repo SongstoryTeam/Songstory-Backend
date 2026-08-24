@@ -127,7 +127,7 @@
 
 .about-mission {
     background: var(--clr-ink);
-    color: #fff;
+    color: var(--clr-white);
     text-align: center;
 }
 
@@ -145,7 +145,7 @@
 
 .about-mission__statement em {
     font-style: italic;
-    color: #E8A87C;
+    color: var(--clr-highlight);
 }
 
 .values-grid {
@@ -229,7 +229,7 @@
     font-family: var(--ff-display);
     font-size: 22px;
     font-weight: 600;
-    color: #fff;
+    color: var(--clr-white);
 }
 
 .team-card__name {

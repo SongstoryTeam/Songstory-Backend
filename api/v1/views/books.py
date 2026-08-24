@@ -1,14 +1,14 @@
-
-from django.db.models import F, Q
+from django.db.models import F
+from django.http import Http404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import generics, permissions, filters as drf_filters
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import Book, BookRating, Chapter, Language, MusicRecommendation, Playlist, SavedBook
-from core.models.book import BookTranslation, ChapterTranslation
+from core.models import Book, BookRating, Language, MusicRecommendation, Playlist, SavedBook
+from core.models.book import BookTranslation
 from core.utils.slugs import generate_unique_slug
+from api.v1.filters.book import BookFilter
 from api.v1.filters.permissions import IsOwnerOrStaff
 from api.v1.serializers.book import BookCreateSerializer
 from api.v1.serializers.books import (
@@ -17,6 +17,7 @@ from api.v1.serializers.books import (
     MusicRecommendationSerializer,
     PlaylistSerializer,
 )
+from api.v1.services.book_creation import bootstrap_book_translation
 
 _SORT_MAP = {
     "newest": "-created_at",
@@ -28,28 +29,14 @@ _SORT_MAP = {
 
 class BookListView(generics.ListAPIView):
     serializer_class = BookListSerializer
-    filter_backends = [DjangoFilterBackend, drf_filters.SearchFilter]
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = BookFilter
 
     def get_queryset(self):
         user = self.request.user
         qs = Book.published.all() if not (user.is_authenticated and user.is_staff) else Book.objects.all()
 
-        search = self.request.query_params.get("search", "").strip()
-        genre = self.request.query_params.get("genre", "").strip()
         sort = self.request.query_params.get("sort", "newest")
-
-        if search:
-            qs = qs.filter(
-                Q(translations__title__icontains=search)
-                | Q(author__translations__name__icontains=search)
-                | Q(genre__translations__name__icontains=search)
-            ).distinct()
-
-        if genre:
-            qs = qs.filter(
-                Q(genre__translations__name__iexact=genre)
-            ).distinct()
-
         sort_field = _SORT_MAP.get(sort, "-created_at")
         if sort == "title":
             qs = qs.order_by(sort_field, "-created_at")
@@ -71,7 +58,6 @@ class BookDetailView(generics.RetrieveAPIView):
             book = generics.get_object_or_404(Book, pk=lookup)
 
         if not book.is_visible_to(self.request.user):
-            from django.http import Http404
             raise Http404
 
         session_key = f"viewed_book_{book.pk}"
@@ -91,14 +77,7 @@ class BookCreateView(generics.CreateAPIView):
         description = serializer.validated_data.get("description", "")
         slug = generate_unique_slug(Book, title)
         book: Book = serializer.save(creator=self.request.user, slug=slug)
-
-        uk = Language.objects.filter(code="uk").first()
-        if uk:
-            BookTranslation.objects.create(
-                book=book, language=uk, title=title, description=description,
-            )
-            chapter = Chapter.objects.create(book=book, number=1, is_approved=True)
-            ChapterTranslation.objects.create(chapter=chapter, language=uk, title="Розділ 1")
+        bootstrap_book_translation(book, title=title, description=description)
 
 
 class BookUpdateView(generics.UpdateAPIView):
@@ -117,10 +96,10 @@ class BookUpdateView(generics.UpdateAPIView):
 
         if not (has_title or has_description):
             return
-        uk = Language.objects.filter(code="uk").first()
-        if not uk:
+        language = Language.get_default()
+        if not language:
             return
-        translation, _ = BookTranslation.objects.get_or_create(book=book, language=uk)
+        translation, _ = BookTranslation.objects.get_or_create(book=book, language=language)
         if has_title:
             translation.title = new_title
         if has_description:

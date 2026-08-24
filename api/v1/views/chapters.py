@@ -1,11 +1,13 @@
 from django.db.models import F
+from django.http import Http404
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.models import Chapter, ChapterTranslation, Language, Like, MusicRecommendation
+from core.models import Book, Chapter, Like, MusicRecommendation
 from core.rate_limit import add_music_limit, likes_limit
 from api.v1.serializers.books import ChapterSerializer, MusicRecommendationSerializer
+from api.v1.services.book_creation import add_bulk_chapters
 
 
 class ChapterDetailView(generics.RetrieveAPIView):
@@ -20,7 +22,6 @@ class ChapterDetailView(generics.RetrieveAPIView):
             user == chapter.book.creator or user.is_staff
         )
         if not chapter.is_approved and not is_privileged:
-            from django.http import Http404
             raise Http404
         return chapter
 
@@ -35,7 +36,6 @@ class ChapterMusicView(generics.ListCreateAPIView):
             user == chapter.book.creator or user.is_staff
         )
         if not chapter.is_approved and not is_privileged:
-            from django.http import Http404
             raise Http404
 
         return MusicRecommendation.objects.filter(
@@ -56,8 +56,6 @@ class AddBulkChaptersView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, book_id: int):
-        from core.models import Book
-
         book = generics.get_object_or_404(Book, pk=book_id)
         try:
             count = int(request.data.get("number_of_chapters", 0))
@@ -66,21 +64,8 @@ class AddBulkChaptersView(APIView):
         if not 1 <= count <= 100:
             return Response({"error": "Invalid chapter count"}, status=400)
 
-        last_chapter = book.chapters.order_by("-number").first()
-        start_num = (last_chapter.number + 1) if last_chapter else 1
         is_owner = request.user == book.creator or request.user.is_staff
-
-        chapters = Chapter.objects.bulk_create([
-            Chapter(book=book, number=start_num + i, is_approved=is_owner)
-            for i in range(count)
-        ])
-
-        uk = Language.objects.filter(code="uk").first()
-        if uk:
-            ChapterTranslation.objects.bulk_create([
-                ChapterTranslation(chapter=ch, language=uk, title=f"Розділ {start_num + i}")
-                for i, ch in enumerate(chapters)
-            ])
+        chapters = add_bulk_chapters(book=book, count=count, is_owner=is_owner)
 
         serializer = ChapterSerializer(chapters, many=True, context={"request": request})
         return Response(serializer.data, status=201)

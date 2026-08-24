@@ -1,7 +1,7 @@
-
 import django_filters
 
 from core.models import Book, Genre
+from django.db.models import Q
 
 
 class BookFilter(django_filters.FilterSet):
@@ -18,8 +18,8 @@ class BookFilter(django_filters.FilterSet):
         return queryset.filter(genre__translations__name__iexact=value).distinct()
 
     def filter_search(self, queryset, name, value):
-        from django.db.models import Q
         return queryset.filter(
             Q(translations__title__icontains=value)
             | Q(author__translations__name__icontains=value)
+            | Q(genre__translations__name__icontains=value)
         ).distinct()

@@ -12,10 +12,10 @@
   border-left: 3px solid transparent;
 }
 
-.alert--success { background: #EFF9F4; border-color: #27AE60; color: #1E7A44; }
-.alert--error   { background: var(--clr-danger-lt); border-color: var(--clr-danger); color: #962D22; }
-.alert--info    { background: #EFF4FD; border-color: #2980B9; color: #1F6593; }
-.alert--warning { background: #FEF9EF; border-color: #E67E22; color: #B56217; }
+.alert--success { background: var(--clr-success-bg); border-color: var(--clr-success-border); color: var(--clr-success-text); }
+.alert--error   { background: var(--clr-danger-lt); border-color: var(--clr-danger); color: var(--clr-danger-dk); }
+.alert--info    { background: var(--clr-info-bg); border-color: var(--clr-info-border); color: var(--clr-info-text); }
+.alert--warning { background: var(--clr-warning-bg); border-color: var(--clr-warning-border); color: var(--clr-warning-text); }
 
 .empty-state {
   text-align: center;

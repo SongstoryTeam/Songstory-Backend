@@ -1,10 +1,10 @@
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Avg
 from django.urls import reverse
 
 from .language import Language
+from .mixins import TranslatableMixin
 
 
 class PublishedManager(models.Manager):
@@ -17,7 +17,7 @@ class ApprovedChapterManager(models.Manager):
         return super().get_queryset().filter(is_approved=True)
 
 
-class Book(models.Model):
+class Book(TranslatableMixin, models.Model):
     creator = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -84,19 +84,11 @@ class Book(models.Model):
     def __str__(self) -> str:
         return f"{self.get_title()} — {self.get_author_name()}"
 
-    def get_title(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation and translation.title:
-            return translation.title
-        fallback = self.translations.first()
-        return fallback.title if fallback else f"Book #{self.pk}"
+    def get_title(self, lang: str | None = None) -> str:
+        return self.get_translated_field("title", lang) or f"Book #{self.pk}"
 
-    def get_description(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation:
-            return translation.description
-        fallback = self.translations.first()
-        return fallback.description if fallback else ""
+    def get_description(self, lang: str | None = None) -> str:
+        return self.get_translated_field("description", lang)
 
     def get_author_name(self, lang: str = "uk") -> str:
         if self.author_id:
@@ -144,7 +136,7 @@ class BookTranslation(models.Model):
         return f"{self.title} [{self.language.code}]"
 
 
-class Chapter(models.Model):
+class Chapter(TranslatableMixin, models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="chapters")
     number = models.IntegerField(verbose_name="Number")
     is_approved = models.BooleanField(default=False, verbose_name="Approved")
@@ -160,26 +152,14 @@ class Chapter(models.Model):
     def __str__(self) -> str:
         return f"Ch.{self.number}: {self.get_title()}"
 
-    def get_title(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation and translation.title:
-            return translation.title
-        fallback = self.translations.first()
-        return fallback.title if fallback else f"Chapter {self.number}"
+    def get_title(self, lang: str | None = None) -> str:
+        return self.get_translated_field("title", lang) or f"Chapter {self.number}"
 
-    def get_description(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation:
-            return translation.description
-        fallback = self.translations.first()
-        return fallback.description if fallback else ""
+    def get_description(self, lang: str | None = None) -> str:
+        return self.get_translated_field("description", lang)
 
-    def get_mood_tags(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation:
-            return translation.mood_tags
-        fallback = self.translations.first()
-        return fallback.mood_tags if fallback else ""
+    def get_mood_tags(self, lang: str | None = None) -> str:
+        return self.get_translated_field("mood_tags", lang)
 
     def get_absolute_url(self) -> str:
         return reverse(

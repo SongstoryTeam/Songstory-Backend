@@ -16,7 +16,7 @@
 
 .star-btn:hover,
 .star-btn--active {
-    color: #E8A020;
+    color: var(--clr-star);
 }
 
 .star-btn:hover {

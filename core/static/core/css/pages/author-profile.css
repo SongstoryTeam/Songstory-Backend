@@ -19,7 +19,7 @@
     height: 72px;
     border-radius: 50%;
     background: var(--clr-accent);
-    color: #fff;
+    color: var(--clr-white);
     font-family: var(--ff-display);
     font-size: 28px;
     display: flex;

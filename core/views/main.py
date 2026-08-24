@@ -31,18 +31,16 @@ from core.models import (
     AuthorVerification,
     Book,
     BookRating,
-    BookTranslation,
     Chapter,
-    ChapterTranslation,
     Comment,
     Follow,
-    Language,
     Like,
     MusicRecommendation,
     Playlist,
     SavedBook,
 )
 from core.notifications import notify_admin_new_verification
+from api.v1.services.book_creation import add_bulk_chapters, bootstrap_book_translation
 from api.v1.services.book_import import import_book_from_open_library
 from api.v1.services.catalog_search import RESULTS_PAGE_LIMIT, search_books
 from core.rate_limit import (
@@ -68,10 +66,6 @@ _SORT_OPTIONS = [
     ("year", "By year"),
     ("title", "A–Z"),
 ]
-
-
-def _get_uk_language():
-    return Language.objects.filter(code="uk").first()
 
 
 def robots_txt(request):
@@ -521,18 +515,11 @@ def create_book(request):
             book.slug = generate_unique_slug(Book, form.cleaned_data.get("title", ""))
             book.save()
 
-            uk = _get_uk_language()
-            if uk:
-                BookTranslation.objects.create(
-                    book=book,
-                    language=uk,
-                    title=form.cleaned_data.get("title", ""),
-                    description=form.cleaned_data.get("description", ""),
-                )
-
-            chapter = Chapter.objects.create(book=book, number=1, is_approved=True)
-            if uk:
-                ChapterTranslation.objects.create(chapter=chapter, language=uk, title="Chapter 1")
+            bootstrap_book_translation(
+                book,
+                title=form.cleaned_data.get("title", ""),
+                description=form.cleaned_data.get("description", ""),
+            )
 
             messages.success(request, "Book added successfully. It will appear in the catalog once approved.")
             return redirect("core:book_detail", pk=book.pk)
@@ -599,26 +586,13 @@ def save_book(request, book_id: int):
 @login_required
 def add_chapters(request, book_id: int):
     book = get_object_or_404(Book, id=book_id)
-    uk = _get_uk_language()
 
     if request.method == "POST":
         form = BulkChaptersForm(request.POST)
         if form.is_valid():
             count = form.cleaned_data["number_of_chapters"]
-            last_chapter = book.chapters.order_by("-number").first()
-            start_num = (last_chapter.number + 1) if last_chapter else 1
             is_owner = request.user == book.creator or request.user.is_staff
-
-            chapters = Chapter.objects.bulk_create([
-                Chapter(book=book, number=start_num + i, is_approved=is_owner)
-                for i in range(count)
-            ])
-
-            if uk:
-                ChapterTranslation.objects.bulk_create([
-                    ChapterTranslation(chapter=ch, language=uk, title=f"Chapter {start_num + i}")
-                    for i, ch in enumerate(chapters)
-                ])
+            add_bulk_chapters(book=book, count=count, is_owner=is_owner)
 
             if is_owner:
                 messages.success(request, f"{count} chapters added.")

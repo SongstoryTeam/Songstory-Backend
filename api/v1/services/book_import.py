@@ -6,8 +6,8 @@ from django.db import IntegrityError, transaction
 from core.models import Book, BookTranslation, Chapter, ChapterTranslation, Language
 from core.utils.catalog import get_or_create_author
 from core.utils.slugs import generate_unique_slug
+from .book_creation import CHAPTER_TITLE_TEMPLATE
 
-FIRST_CHAPTER_TITLE = "Розділ 1"
 ISBN_MAX_LENGTH = 20
 
 
@@ -74,7 +74,7 @@ def import_book_from_open_library(
             ChapterTranslation.objects.create(
                 chapter=chapter,
                 language=language,
-                title=FIRST_CHAPTER_TITLE,
+                title=CHAPTER_TITLE_TEMPLATE.format(number=1),
             )
     except IntegrityError:
         return Book.objects.get(open_library_id=open_library_id), False

@@ -16,7 +16,7 @@
 
 .comment-card__text {
     font-size: var(--text-sm);
-    color: #4A4340;
+    color: var(--clr-text-secondary);
     line-height: 1.65;
     padding-left: 36px;
 }

@@ -1,9 +1,10 @@
 from django.db import models
 
 from .language import Language
+from .mixins import TranslatableMixin
 
 
-class Genre(models.Model):
+class Genre(TranslatableMixin, models.Model):
     slug = models.SlugField(unique=True)
 
     class Meta:
@@ -14,12 +15,8 @@ class Genre(models.Model):
     def __str__(self) -> str:
         return self.slug
 
-    def get_name(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation:
-            return translation.name
-        fallback = self.translations.first()
-        return fallback.name if fallback else self.slug
+    def get_name(self, lang: str | None = None) -> str:
+        return self.get_translated_field("name", lang) or self.slug
 
 
 class GenreTranslation(models.Model):

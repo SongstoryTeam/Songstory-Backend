@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #E8E0D5, #D4C9BC);
+  background: linear-gradient(145deg, var(--clr-placeholder-start), var(--clr-placeholder-end));
   font-family: var(--ff-display);
   font-size: var(--text-sm);
   color: var(--clr-muted);

@@ -1,9 +1,10 @@
 from rest_framework import serializers
 
 from core.models import Book, Chapter, MusicRecommendation, Playlist
+from .mixins import LangMixin
 
 
-class BookListSerializer(serializers.ModelSerializer):
+class BookListSerializer(LangMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     author = serializers.SerializerMethodField()
     genre = serializers.SerializerMethodField()
@@ -43,12 +44,8 @@ class BookListSerializer(serializers.ModelSerializer):
     def get_ratingsCount(self, obj: Book) -> int:
         return obj.ratings.count()
 
-    def _lang(self) -> str:
-        request = self.context.get("request")
-        return getattr(request, "LANGUAGE_CODE", "uk") if request else "uk"
 
-
-class ChapterSerializer(serializers.ModelSerializer):
+class ChapterSerializer(LangMixin, serializers.ModelSerializer):
     title = serializers.SerializerMethodField()
     description = serializers.SerializerMethodField()
     moodTags = serializers.SerializerMethodField()
@@ -70,10 +67,6 @@ class ChapterSerializer(serializers.ModelSerializer):
 
     def get_musicCount(self, obj: Chapter) -> int:
         return obj.music_recommendations.count()
-
-    def _lang(self) -> str:
-        request = self.context.get("request")
-        return getattr(request, "LANGUAGE_CODE", "uk") if request else "uk"
 
 
 class MusicRecommendationSerializer(serializers.ModelSerializer):

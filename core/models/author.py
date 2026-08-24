@@ -3,9 +3,10 @@ from django.db import models
 from django.utils import timezone
 
 from .language import Language
+from .mixins import TranslatableMixin
 
 
-class Author(models.Model):
+class Author(TranslatableMixin, models.Model):
     slug = models.SlugField(unique=True)
     photo_url = models.URLField(blank=True)
     birth_year = models.IntegerField(null=True, blank=True)
@@ -19,19 +20,11 @@ class Author(models.Model):
     def __str__(self) -> str:
         return self.get_name()
 
-    def get_name(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation:
-            return translation.name
-        fallback = self.translations.first()
-        return fallback.name if fallback else self.slug
+    def get_name(self, lang: str | None = None) -> str:
+        return self.get_translated_field("name", lang) or self.slug
 
-    def get_bio(self, lang: str = "uk") -> str:
-        translation = self.translations.filter(language__code=lang).first()
-        if translation:
-            return translation.bio
-        fallback = self.translations.first()
-        return fallback.bio if fallback else ""
+    def get_bio(self, lang: str | None = None) -> str:
+        return self.get_translated_field("bio", lang)
 
 
 class AuthorTranslation(models.Model):

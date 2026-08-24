@@ -78,7 +78,7 @@
 .wizard-progress__step.is-done .wizard-progress__marker {
   border-color: var(--clr-accent);
   background: var(--clr-accent);
-  color: #fff;
+  color: var(--clr-white);
 }
 
 .wizard-progress__step.is-done::before {
@@ -239,8 +239,8 @@
 }
 
 .password-strength__bar span[data-level="1"] { background: var(--clr-danger); }
-.password-strength__bar span[data-level="2"] { background: #E67E22; }
-.password-strength__bar span[data-level="3"] { background: #D4A017; }
+.password-strength__bar span[data-level="2"] { background: var(--clr-warning-border); }
+.password-strength__bar span[data-level="3"] { background: var(--clr-strength-fair); }
 .password-strength__bar span[data-level="4"] { background: var(--clr-green); }
 
 .password-strength__label {

@@ -91,7 +91,7 @@
   margin-right: 10px;
   background: var(--clr-ink);
   border: none;
-  color: #fff;
+  color: var(--clr-white);
   padding: 5px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;

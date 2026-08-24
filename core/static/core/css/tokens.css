@@ -17,6 +17,32 @@
     --clr-green: #3A6B4A;
     --clr-danger: #C0392B;
     --clr-danger-lt: #FDF1F0;
+    --clr-danger-dk: #962D22;
+
+    --clr-white: #FFFFFF;
+    --clr-ink-dk: #3A3228;
+    --clr-text-secondary: #4A4340;
+    --clr-dark-surface: #1C1917;
+    --clr-star: #E8A020;
+    --clr-highlight: #E8A87C;
+    --clr-accent-tint: #FEF0EB;
+
+    --clr-placeholder-start: #E8E0D5;
+    --clr-placeholder-end: #D4C9BC;
+    --clr-surface-warm-start: #FDF8F5;
+    --clr-surface-warm-end: #FAF3ED;
+    --clr-surface-subtle: #FFFBF9;
+
+    --clr-success-bg: #EFF9F4;
+    --clr-success-border: #27AE60;
+    --clr-success-text: #1E7A44;
+    --clr-info-bg: #EFF4FD;
+    --clr-info-border: #2980B9;
+    --clr-info-text: #1F6593;
+    --clr-warning-bg: #FEF9EF;
+    --clr-warning-border: #E67E22;
+    --clr-warning-text: #B56217;
+    --clr-strength-fair: #D4A017;
 
     --ff-display: 'Playfair Display', Georgia, serif;
     --ff-body: 'DM Sans', system-ui, sans-serif;

@@ -115,7 +115,7 @@
 
 .music-card__comment {
     font-size: 13.5px;
-    color: #4A4340;
+    color: var(--clr-text-secondary);
     line-height: 1.65;
     padding: 10px 14px;
     background: var(--clr-bg);
@@ -174,13 +174,13 @@
 
 .play-btn:hover {
     background: var(--clr-accent);
-    color: #fff;
+    color: var(--clr-white);
     transform: scale(1.08);
 }
 
 .play-btn--active {
     background: var(--clr-accent);
-    color: #fff;
+    color: var(--clr-white);
     border-color: var(--clr-accent-dk);
     box-shadow: 0 0 0 4px rgba(196, 98, 45, .18);
 }

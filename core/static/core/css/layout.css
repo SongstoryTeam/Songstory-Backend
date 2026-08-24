@@ -183,7 +183,7 @@ html.sidebar-collapsed .sidebar__collapse-icon {
     padding: 0 5px;
     border-radius: 999px;
     background: var(--clr-accent);
-    color: #fff;
+    color: var(--clr-white);
     font-size: 10px;
     font-weight: 600;
     display: flex;
@@ -231,7 +231,7 @@ html.sidebar-collapsed .sidebar__collapse-icon {
     height: 32px;
     border-radius: 50%;
     background: var(--clr-accent);
-    color: #fff;
+    color: var(--clr-white);
     font-size: var(--text-sm);
     font-weight: 500;
     display: flex;
@@ -321,7 +321,7 @@ html.sidebar-collapsed .sidebar__collapse-icon {
         top: 50%;
         transform: translateY(-50%);
         background: var(--clr-ink);
-        color: #fff;
+        color: var(--clr-white);
         padding: 6px 10px;
         border-radius: var(--radius-sm);
         font-size: var(--text-xs);

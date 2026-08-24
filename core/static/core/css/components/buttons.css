@@ -15,14 +15,14 @@
 
 .btn-primary {
   background: var(--clr-ink);
-  color: #fff;
+  color: var(--clr-white);
 }
 
-.btn-primary:hover { background: #3A3228; }
+.btn-primary:hover { background: var(--clr-ink-dk); }
 
 .btn-accent {
   background: var(--clr-accent);
-  color: #fff;
+  color: var(--clr-white);
   box-shadow: 0 2px 8px rgba(196, 98, 45, .3);
 }
 
@@ -75,7 +75,7 @@
 
 .like-btn:hover,
 .like-btn.liked {
-  background: #FEF0EB;
+  background: var(--clr-accent-tint);
   border-color: var(--clr-accent);
   color: var(--clr-accent);
 }
