@@ -1,211 +1,52 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load core_extras %}
-
-{% block title %}
-    {% if active_genre %}
-        Книги жанру {{ active_genre }} з музикою — {{ SITE_NAME }}
-    {% else %}
-        {{ SITE_NAME }} — Музичні рекомендації до книг | Саундтрек до кожного розділу
-    {% endif %}
-{% endblock %}
-
-{% block meta_description %}
-    {% if active_genre %}
-        Музичні рекомендації до книг жанру {{ active_genre }}. Треки від спільноти читачів до кожного розділу.
-    {% else %}
-        Знаходь музичні рекомендації до кожного розділу улюбленої книги. Спільнота підбирає треки, що передають настрій
-        — розділ за розділом. Безкоштовно.
-    {% endif %}
-{% endblock %}
-
-{% block meta_keywords %}музичні рекомендації до книг, музика під час читання, саундтрек до книги, треки до розділів
-    книги, музика до літератури, книги та музика{% endblock %}
-
-{% block structured_data %}
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          "name": "{{ SITE_NAME }}",
-          "url": "{{ request.scheme }}://{{ request.get_host }}",
-          "logo": "{{ request.scheme }}://{{ request.get_host }}/static/icons/icon-512.png",
-          "description": "Платформа музичних рекомендацій до книг",
-          "sameAs": []
-        }
-    </script>
-    {% if db_books %}
-        <script type="application/ld+json">
-            {
-              "@context": "https://schema.org",
-              "@type": "ItemList",
-              "name": "Каталог книг з музичними рекомендаціями",
-              "numberOfItems": {{ db_books.paginator.count }},
-              "itemListElement": [
-                {% for book in db_books %}
-                {
-                  "@type": "ListItem",
-                  "position": {{ forloop.counter }},
-                  "item": {
-                    "@type": "Book",
-                    "name": "{{ book|localized_title|escapejs }}",
-                    "author": { "@type": "Person", "name": "{{ book.author|escapejs }}" },
-                    "url": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' book.pk %}"
-                  }
-                }{% if not forloop.last %},{% endif %}
-                {% endfor %}
-              ]
-            }
-        </script>
-    {% endif %}
-{% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/pages/home.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
-{% endblock %}
 
 {% block content %}
-
-    {% if not user.is_authenticated and not active_genre %}
-        <section class="hero">
-            <div class="hero__label">Книги та музика</div>
-            <h1 class="hero__title">Музичні рекомендації<br>до кожного розділу</h1>
-            <p class="hero__sub">Спільнота підбирає треки, що передають настрій книги — розділ за розділом.</p>
-            <div class="flex gap-12">
-                <a href="#catalog" class="btn btn-accent btn-lg">Переглянути книги</a>
-                <a href="{% url 'signup' %}" class="btn btn-ghost btn-lg">Приєднатись</a>
-            </div>
-        </section>
-
-        <div class="how-strip">
-            <div class="how-step">
-                <span class="how-step__num">01</span>
-                <div>
-                    <div class="how-step__label">Обери книгу</div>
-                    <div class="how-step__desc">Перегляньте каталог або додайте свою</div>
+    <div class="content-pad">
+        <header class="page-intro">
+            <p class="eyebrow">Книги та музика</p>
+            <h1 class="page-intro__title">Музика до кожної книги та кожного розділу</h1>
+            <p class="page-intro__text">
+                Знайдіть книгу, послухайте, що до неї радять інші читачі, або додайте власну пісню.
+            </p>
+            {% if not user.is_authenticated %}
+                <div class="flex gap-12 mt-16 wrap">
+                    <a href="{% url 'signup' %}" class="btn btn-accent">Приєднатись</a>
+                    <a href="{% url 'core:book_list' %}" class="btn btn-ghost">Весь каталог</a>
                 </div>
-            </div>
-            <div class="how-step">
-                <span class="how-step__num">02</span>
-                <div>
-                    <div class="how-step__label">Відкрий розділ</div>
-                    <div class="how-step__desc">Кожен розділ має власний саундтрек</div>
-                </div>
-            </div>
-            <div class="how-step">
-                <span class="how-step__num">03</span>
-                <div>
-                    <div class="how-step__label">Слухай і ділися</div>
-                    <div class="how-step__desc">Лайкай треки або додавай власні</div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
-    <section class="section-wrap" id="catalog">
-        <div class="section-head">
-            <h2 class="section-head__title">{{ books_section_title }}</h2>
-            {% if user.is_authenticated %}
-                <a href="{% url 'core:create_book' %}" class="btn btn-ghost btn-sm">
-                    <i data-lucide="plus" style="width:13px;height:13px;"></i>
-                    Додати книгу
-                </a>
             {% endif %}
-        </div>
+        </header>
 
         {% if genres %}
-            <div class="genre-filters" role="navigation" aria-label="Фільтр за жанром">
-                <a href="{% url 'core:home' %}"
-                   class="genre-tag {% if not active_genre %}genre-tag--active{% endif %}">
-                    Усі
-                </a>
+            <nav class="chips" aria-label="Жанри">
                 {% for genre in genres %}
-                    <a href="?genre={{ genre }}"
-                       class="genre-tag {% if active_genre == genre %}genre-tag--active{% endif %}">
-                        {{ genre }}
-                    </a>
+                    <a class="chip" href="{% url 'core:book_list' %}?genre={{ genre.slug }}">{{ genre.name }}</a>
                 {% endfor %}
-            </div>
+            </nav>
         {% endif %}
 
-        <div class="sort-bar">
-            <span class="sort-bar__label">Сортування</span>
-            {% for slug, label in sort_options %}
-                <a href="?sort={{ slug }}{% if active_genre %}&genre={{ active_genre }}{% endif %}"
-                   class="sort-btn {% if current_sort == slug %}sort-btn--active{% endif %}">
-                    {{ label }}
-                </a>
-            {% endfor %}
-        </div>
-
-        {% if db_books %}
-            <div class="books-grid">
-                {% for book in db_books %}
-                    {% include 'includes/_book_card.html' with book=book %}
-                {% endfor %}
-            </div>
-
-            {% if page_obj.has_other_pages %}
-                <nav class="pagination" aria-label="Пагінація">
-                    {% if page_obj.has_previous %}
-                        <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}{% if active_genre %}&genre={{ active_genre }}{% endif %}"
-                           class="btn btn-ghost btn-sm" rel="prev">
-                            <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Назад
-                        </a>
-                    {% endif %}
-                    <span class="pagination__info">Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }}</span>
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}{% if active_genre %}&genre={{ active_genre }}{% endif %}"
-                           class="btn btn-ghost btn-sm" rel="next">
-                            Далі <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
-                        </a>
-                    {% endif %}
-                </nav>
+        {% for shelf in shelves %}
+            {% if shelf.books %}
+                <section class="shelf" aria-labelledby="shelf-{{ shelf.key }}">
+                    <div class="section-head">
+                        <h2 class="section-title" id="shelf-{{ shelf.key }}">{{ shelf.title }}</h2>
+                        <a href="{% url 'core:book_list' %}{% if shelf.key == 'popular' %}?sort=popular{% endif %}"
+                           class="section-head__link">Усі книги →</a>
+                    </div>
+                    <div class="books-grid">
+                        {% for book in shelf.books %}
+                            {% include 'includes/_book_card.html' with book=book show_count=True %}
+                        {% endfor %}
+                    </div>
+                </section>
             {% endif %}
+        {% endfor %}
 
-        {% else %}
+        {% if not shelves.0.books %}
             <div class="empty-state">
-                <div class="empty-state__icon">
-                    <i data-lucide="book" style="width:24px;height:24px;"></i>
-                </div>
-                <div class="empty-state__title">Книг не знайдено</div>
-                <p class="empty-state__text">
-                    {% if active_genre %}У жанрі "{{ active_genre }}" ще немає книг.
-                    {% else %}У каталозі поки немає книг.{% endif %}
-                </p>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'core:create_book' %}" class="btn btn-accent mt-16">Додати цю книгу</a>
-                {% endif %}
+                <div class="empty-state__title">У каталозі ще немає книг</div>
+                <p class="empty-state__text">Знайдіть книгу через пошук і додайте її — це займе кілька секунд.</p>
+                <a href="{% url 'core:search' %}" class="btn btn-accent mt-16">Знайти книгу</a>
             </div>
         {% endif %}
-    </section>
-
-    {% if top_music_db %}
-        <section class="section-wrap">
-            <div class="section-head">
-                <h2 class="section-head__title">Популярне зараз</h2>
-            </div>
-            <div class="music-feed">
-                {% for music in top_music_db %}
-                    <a href="{% url 'core:chapter_detail' music.chapter.book.id music.chapter.number %}"
-                       class="music-rank">
-                        <span class="music-rank__pos">{{ forloop.counter }}</span>
-                        <div class="music-rank__icon">
-                            <i data-lucide="music" style="width:16px;height:16px;"></i>
-                        </div>
-                        <div class="music-rank__body">
-                            <div class="music-rank__title">{{ music.track_title }}</div>
-                            <div class="music-rank__sub">{{ music.artist }} · {{ music.chapter.book|localized_title }}</div>
-                        </div>
-                        <div class="music-rank__likes">
-                            <i data-lucide="heart" style="width:13px;height:13px;"></i>
-                            {{ music.likes_count }}
-                        </div>
-                    </a>
-                {% endfor %}
-            </div>
-        </section>
-    {% endif %}
-
+    </div>
 {% endblock %}

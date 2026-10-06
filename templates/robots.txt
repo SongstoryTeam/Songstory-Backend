@@ -1,12 +1,10 @@
 User-agent: *
 Allow: /
-
 Disallow: /admin/
 Disallow: /profile/
-Disallow: /comments/add/
-Disallow: /author/apply/
+Disallow: /search/
+Disallow: /comments/
+Disallow: /accounts/
+Disallow: /verification/
 
-Allow: /book/
-Allow: /playlist/
-
-Sitemap: https://{{ SITE_DOMAIN }}/sitemap.xml
+Sitemap: {{ request.scheme }}://{{ SITE_DOMAIN }}/sitemap.xml

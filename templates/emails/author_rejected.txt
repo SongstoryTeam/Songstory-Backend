@@ -1,11 +1,10 @@
-{% load core_extras %}
 Вітаємо, {{ verification.user.username }}.
 
-На жаль, ваша заявка на підтвердження авторства книги "{{ verification.book|localized_title }}" не була схвалена.
-
-{% if verification.admin_note %}Причина: {{ verification.admin_note }}{% endif %}
-
-Якщо у вас є питання — зв'яжіться з нами через сайт.
+На жаль, вашу заявку на підтвердження авторства книги «{{ verification.book.title }}» не схвалено.
+{% if verification.admin_note %}
+Причина: {{ verification.admin_note }}
+{% endif %}
+Якщо у вас є запитання, зв'яжіться з нами.
 
 З повагою,
-Команда {{ site_url|cut:"https://" }}
+команда {{ site_name }}

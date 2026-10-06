@@ -3,11 +3,6 @@
 
 {% block title %}Реєстрація — {{ SITE_NAME }}{% endblock %}
 
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/components/social-auth.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/auth-wizard.css' %}">
-{% endblock %}
-
 {% block content %}
     <div class="form-wrap form-wrap--wizard">
         <div class="form-box auth-wizard" data-wizard data-check-url="{% url 'signup_check' %}">
@@ -96,11 +91,11 @@
                 </div>
             </form>
 
-            {% include 'includes/_social_auth.html' with cta_label="Зареєструватись через Google" %}
+            {% if GOOGLE_AUTH_ENABLED %}{% include 'includes/_social_auth.html' with cta_label="Зареєструватись через Google" %}{% endif %}
 
             <p class="text-sm text-muted mt-16" style="text-align:center;">
                 Вже є акаунт?
-                <a href="{% url 'login' %}" style="color:var(--clr-accent); font-weight:500;">Увійти</a>
+                <a href="{% url 'login' %}" class="text-accent">Увійти</a>
             </p>
         </div>
     </div>

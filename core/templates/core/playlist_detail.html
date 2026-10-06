@@ -1,107 +1,67 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load core_extras %}
 
-{% block title %}{{ playlist.title }} — {{ SITE_NAME }}{% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/pages/playlist.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
-{% endblock %}
+{% block title %}{{ playlist.title }} — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}{% if book.is_approved %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
 
 {% block content %}
-    <div class="playlist-detail">
-
-        <nav class="breadcrumbs">
-            <a href="{% url 'core:home' %}">Каталог</a>
-            <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' playlist.book.id %}">{{ playlist.book|localized_title }}</a>
-            <span class="breadcrumbs__sep">/</span>
+    <div class="content-pad">
+        <nav class="breadcrumbs" aria-label="Навігація">
+            <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+            <span aria-hidden="true">/</span>
             <span>{{ playlist.title }}</span>
         </nav>
 
-        <div class="playlist-hero">
-            <div class="playlist-icon">
-                <i data-lucide="music" style="width:40px;height:40px;"></i>
-            </div>
-
-            <div class="playlist-hero__body">
-                <h1 class="playlist-hero__title">{{ playlist.title }}</h1>
-                <div class="playlist-hero__creator">від {{ playlist.creator.username }}</div>
-
-                {% if playlist.description %}
-                    <p class="playlist-hero__desc">{{ playlist.description }}</p>
-                {% endif %}
-
-                <div class="playlist-hero__meta">
-                    <span class="playlist-hero__meta-item">
-                        <i data-lucide="heart" style="width:13px;height:13px;"></i>
-                        {{ playlist.likes_count }} вподобань
-                    </span>
-                    <span class="playlist-hero__meta-item">
-                        <i data-lucide="calendar" style="width:13px;height:13px;"></i>
-                        {{ playlist.created_at|date:"j E Y" }}
-                    </span>
-                    {% if playlist.mood %}
-                        <span class="tag tag--accent">{{ playlist.mood }}</span>
-                    {% endif %}
-                </div>
-
-                <div class="playlist-hero__actions">
-                    {% if user.is_authenticated %}
-                        <form method="post" action="{% url 'core:like_playlist' playlist.id %}" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="like-btn {% if is_liked %}liked{% endif %}">
-                                <i data-lucide="heart" style="width:13px;height:13px;"></i>
-                                {% if is_liked %}Вподобано{% else %}Вподобати{% endif %}
-                            </button>
-                        </form>
-                    {% endif %}
-                    {% if playlist.external_link %}
-                        <a href="{{ playlist.external_link }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">
-                            <i data-lucide="external-link" style="width:13px;height:13px;"></i>
-                            Відкрити на платформі
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <div class="tracks-section">
-            <div class="tracks-section__head">
-                <span class="tracks-section__title">Треки ({{ tracks|length }})</span>
-                {% if user == playlist.creator %}
-                    <a href="{% url 'core:add_track' playlist.id %}" class="btn btn-ghost btn-sm">
-                        <i data-lucide="plus" style="width:13px;height:13px;"></i>
-                        Додати трек
-                    </a>
-                {% endif %}
-            </div>
-
-            {% if tracks %}
-                {% for track in tracks %}
-                    <div class="track-row">
-                        <span class="track-row__num">{{ forloop.counter }}</span>
-                        <div class="track-row__body">
-                            <div class="track-row__title">{{ track.track_title }}</div>
-                            <div class="track-row__artist">{{ track.artist }}</div>
-                        </div>
-                        <a href="{{ track.link_url }}" target="_blank" rel="noopener" class="track-row__play" title="Відтворити">
-                            <i data-lucide="play" style="width:14px;height:14px;"></i>
-                        </a>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <div class="tracks-empty">
-                    <p class="text-muted text-sm">Треків ще немає.</p>
-                    {% if user == playlist.creator %}
-                        <a href="{% url 'core:add_track' playlist.id %}" class="btn btn-accent btn-sm mt-12">Додати перший трек</a>
-                    {% endif %}
-                </div>
+        <header class="chapter-header">
+            <p class="eyebrow">Плейлист · {{ playlist.user.username }}</p>
+            <h1 class="page-title">{{ playlist.title }}</h1>
+            {% if playlist.description %}<p class="text-muted">{{ playlist.description }}</p>{% endif %}
+            {% if can_manage %}
+                <form method="post" action="{% url 'core:playlist_delete' playlist.pk %}" class="mt-16" data-no-busy
+                      onsubmit="return confirm('Видалити плейлист?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost btn-sm">Видалити плейлист</button>
+                </form>
             {% endif %}
-        </div>
+        </header>
 
-        {% include 'includes/_comments.html' with comments=comments comment_form=comment_form playlist_id=playlist.id %}
+        <section class="mt-24" aria-labelledby="playlist-tracks">
+            <h2 class="section-title" id="playlist-tracks">Треки</h2>
+            {% for item in items %}
+                <article class="track-card">
+                    <div class="track-card__row">
+                        <button type="button" class="track-card__play" data-play data-platform="{{ item.track.platform }}"
+                                data-embed-url="{{ item.track.embed_url }}" data-title="{{ item.track }}"
+                                aria-label="Слухати: {{ item.track.title }}" aria-expanded="false">
+                            <i data-lucide="play" size="18" aria-hidden="true"></i>
+                        </button>
+                        <div class="track-card__info">
+                            <div class="track-card__title">{{ item.track.title }}</div>
+                            {% if item.track.artist %}<div class="track-card__artist">{{ item.track.artist }}</div>{% endif %}
+                        </div>
+                        {% if can_manage %}
+                            <form method="post" action="{% url 'core:playlist_remove_item' playlist.pk item.pk %}" data-no-busy>
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-ghost btn-sm">Прибрати</button>
+                            </form>
+                        {% endif %}
+                    </div>
+                    <div class="track-card__player"></div>
+                </article>
+            {% empty %}
+                <div class="empty-state empty-state--inline">
+                    <div class="empty-state__title">Плейлист порожній</div>
+                </div>
+            {% endfor %}
 
+            {% if add_form %}
+                <form method="post" action="{% url 'core:playlist_add_track' playlist.pk %}" class="search-form mt-16">
+                    {% csrf_token %}
+                    {{ add_form.track }}
+                    <button type="submit" class="btn btn-accent">Додати трек</button>
+                </form>
+            {% endif %}
+        </section>
+
+        {% include 'includes/_comments.html' %}
     </div>
 {% endblock %}

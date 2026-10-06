@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Новий плейлист — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+    <div class="content-pad">
+        <div class="form-box form-box--narrow">
+            <h1 class="page-title">Новий плейлист</h1>
+            <p class="text-muted text-sm mb-16">До книги «{{ book.title }}»</p>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label {% if field.name != 'tracks' %}for="{{ field.id_for_label }}"{% endif %}>{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.name == 'tracks' and not has_pool %}
+                            <p class="form-hint">До цієї книги ще не радили музику. Спершу <a href="{% url 'core:recommend' book.slug %}" class="text-accent">порадьте трек</a> — потім його можна додати до плейлиста.</p>
+                        {% endif %}
+                        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-accent">Створити плейлист</button>
+                <a href="{{ book.get_absolute_url }}" class="btn btn-ghost">Скасувати</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

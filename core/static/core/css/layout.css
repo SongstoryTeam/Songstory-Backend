@@ -73,10 +73,6 @@ main {
     overflow: hidden;
 }
 
-/* Both lines of the logo must clip to a single line with an ellipsis
-   rather than wrap — set overflow/white-space/ellipsis directly on each
-   line box, not just on the shared parent, so it holds regardless of how
-   narrow the sidebar gets. */
 .sidebar__logo .logo-word,
 .sidebar__logo .logo-tagline {
     display: block;
@@ -121,12 +117,6 @@ main {
     color: var(--clr-accent);
 }
 
-/* Single chevron that flips direction with the rail state — replaces the
-   old two-icon-with-`hidden` approach. That relied on `[hidden]` beating
-   `.sidebar__collapse-icon { display: block }` in the cascade, but author
-   rules always win over the UA default regardless of specificity, so both
-   icons rendered at once (the glitchy double-arrow glyph). A single icon
-   that rotates via a class has no such race to lose. */
 .sidebar__collapse-icon {
     display: block;
     transition: transform var(--transition);
@@ -268,21 +258,12 @@ html.sidebar-collapsed .sidebar__collapse-icon {
     text-overflow: ellipsis;
 }
 
-/* The collapsed rail is icon-only, so keyboard focus is often the only way
-   to tell which control is active — give every interactive sidebar element
-   an explicit ring instead of depending on a browser default that some
-   component reset elsewhere might strip. */
 .sidebar a:focus-visible,
 .sidebar button:focus-visible {
     outline: 2px solid var(--clr-accent);
     outline-offset: 2px;
 }
 
-/* Desktop collapse rail — icon-only sidebar, remembered across visits.
-   Scoped to non-mobile widths so it never fights the mobile drawer rules
-   further down, which have their own layout for .sidebar.
-   Breakpoint mirrors --bp-sidebar-drawer in tokens.css — see the comment
-   there for why this can't just reference the custom property. */
 @media (min-width: 901px) {
     html.sidebar-collapsed .sidebar {
         width: var(--nav-w-collapsed);
@@ -302,8 +283,6 @@ html.sidebar-collapsed .sidebar__collapse-icon {
         display: none;
     }
 
-    /* The collapse button itself stays visible and reachable at all times —
-       it must never be the one thing you can't get back without a reload. */
     html.sidebar-collapsed .nav-link,
     html.sidebar-collapsed .sidebar__user,
     html.sidebar-collapsed .sidebar__footer .btn {
@@ -311,10 +290,6 @@ html.sidebar-collapsed .sidebar__collapse-icon {
         position: relative;
     }
 
-    /* Icon-only elements lose their text label, so anything carrying a
-       data-tooltip attribute grows one back on hover or keyboard focus. One
-       rule covers nav links, the user card, and footer buttons alike, so a
-       future addition only needs the attribute, not a new selector here. */
     html.sidebar-collapsed [data-tooltip]:hover::after,
     html.sidebar-collapsed [data-tooltip]:focus-visible::after {
         content: attr(data-tooltip);
@@ -331,13 +306,6 @@ html.sidebar-collapsed .sidebar__collapse-icon {
         box-shadow: var(--shadow-lg);
         z-index: 200;
         pointer-events: none;
-    }
-
-    /* The sticky player bar (components/player.css) is offset by the
-       sidebar's width so it never sits underneath the rail; it needs the
-       same offset the rail collapses to, or it leaves a dead gap. */
-    html.sidebar-collapsed .sticky-player {
-        left: var(--nav-w-collapsed);
     }
 }
 
@@ -397,34 +365,6 @@ html.sidebar-collapsed .sidebar__collapse-icon {
     display: flex;
     align-items: center;
     gap: 12px;
-}
-
-.topbar__notify {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    color: var(--clr-muted);
-    transition: background var(--transition), color var(--transition);
-}
-
-.topbar__notify:hover {
-    background: var(--clr-accent-lt);
-    color: var(--clr-accent);
-}
-
-.topbar__notify-dot {
-    position: absolute;
-    top: 7px;
-    right: 7px;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--clr-accent);
-    border: 2px solid var(--clr-surface);
 }
 
 .sidebar-toggle {
@@ -514,8 +454,6 @@ footer {
     margin: 36px 0;
 }
 
-/* Off-canvas drawer — mirrors --bp-sidebar-drawer in tokens.css (see the
-   comment there; @media conditions can't read custom properties). */
 @media (max-width: 900px) {
     :root {
         --nav-w: 0px;
@@ -559,11 +497,6 @@ footer {
     }
 }
 
-/* Cross-document view transitions: the sidebar and topbar are named so the
-   browser keeps them visually static between page loads while the main
-   content cross-fades — the closest an MPA gets to an SPA's persistent
-   shell, with zero JS routing. Unsupported browsers just get a normal
-   navigation. */
 @media (prefers-reduced-motion: no-preference) {
     @supports (view-transition-name: none) {
         ::view-transition-old(app-main),

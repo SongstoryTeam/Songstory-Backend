@@ -4,7 +4,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Sync the django.contrib.sites Site record with SITE_DOMAIN/SITE_NAME env settings."
+    help = "Синхронізує запис Site з SITE_DOMAIN та SITE_NAME"
 
     def handle(self, *args, **options):
         site, created = Site.objects.update_or_create(

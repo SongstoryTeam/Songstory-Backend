@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}Порадити музику — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+    <div class="content-pad">
+        <nav class="breadcrumbs" aria-label="Навігація">
+            <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+            {% if chapter %}
+                <span aria-hidden="true">/</span>
+                <a href="{{ chapter.get_absolute_url }}">{{ chapter.display_title }}</a>
+            {% endif %}
+            <span aria-hidden="true">/</span>
+            <span>Порадити музику</span>
+        </nav>
+
+        <h1 class="page-title">Порадити музику</h1>
+        <p class="text-muted">
+            До {% if chapter %}розділу «{{ chapter.display_title }}» книги{% else %}книги{% endif %} «{{ book.title }}»
+        </p>
+
+        {% if draft_form %}
+            <section class="form-box mt-24">
+                <h2 class="section-title">Вкажіть назву треку</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="draft">
+                    {% if chapter %}<input type="hidden" name="chapter" value="{{ chapter.number }}">{% endif %}
+                    {{ draft_form.platform }}{{ draft_form.external_id }}
+                    {% for field in draft_form.visible_fields %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-accent">Додати рекомендацію</button>
+                </form>
+            </section>
+        {% else %}
+            <section class="form-box mt-24" aria-labelledby="find-existing">
+                <h2 class="section-title" id="find-existing">1. Спершу перевірте, чи трек уже є на сайті</h2>
+                <form method="get" class="search-form" data-no-busy>
+                    {% if chapter %}<input type="hidden" name="chapter" value="{{ chapter.number }}">{% endif %}
+                    <input type="search" name="q" value="{{ query }}" class="form-input" placeholder="Назва треку або виконавець"
+                           aria-label="Пошук серед треків на сайті">
+                    <button type="submit" class="btn btn-ghost">Знайти</button>
+                </form>
+
+                {% if query %}
+                    {% for track in found %}
+                        <div class="list-row list-row--static">
+                            <i data-lucide="music" size="18" aria-hidden="true"></i>
+                            <span class="list-row__title">{{ track.title }}{% if track.artist %} <span class="text-muted">— {{ track.artist }}</span>{% endif %}</span>
+                            {% if track.pk in already %}
+                                <span class="text-muted text-sm">Ви вже радили</span>
+                            {% else %}
+                                <form method="post" class="list-row__form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="pick">
+                                    <input type="hidden" name="track" value="{{ track.pk }}">
+                                    {% if chapter %}<input type="hidden" name="chapter" value="{{ chapter.number }}">{% endif %}
+                                    <button type="submit" class="btn btn-accent btn-sm">Порадити</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-sm mt-16">Такого треку ще немає. Додайте його за посиланням нижче.</p>
+                    {% endfor %}
+                {% endif %}
+            </section>
+
+            <section class="form-box mt-24" aria-labelledby="add-link">
+                <h2 class="section-title" id="add-link">2. Додайте новий трек за посиланням</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="link">
+                    {% if chapter %}<input type="hidden" name="chapter" value="{{ chapter.number }}">{% endif %}
+                    {% for field in link_form %}
+                        <div class="form-group">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.name == 'url' %}<p class="form-hint">Підтримуються YouTube і Spotify. Назву та виконавця підтягнемо автоматично.</p>{% endif %}
+                            {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button type="submit" class="btn btn-accent">Додати рекомендацію</button>
+                </form>
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}

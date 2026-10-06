@@ -48,4 +48,4 @@ Thumbs.db
 .mypy_cache/
 .ruff_cache/
 
-repomix-output.xml
+repomix-output.xmlprivate_media/

@@ -1,53 +1,29 @@
 from django.urls import path
 
-from core import views
-from core.views.notifications import (
-    notification_list,
-    notification_feed,
-    notification_mark_read,
-    notification_mark_all_read,
-)
+from core.views import books, catalog, comments, music, accounts, playlists, verification
 
 app_name = "core"
 
 urlpatterns = [
-    path("", views.HomeView.as_view(), name="home"),
-    path("search/", views.SearchResultsView.as_view(), name="search"),
-    path("book/create/", views.create_book, name="create_book"),
-    path("book/import/", views.BookImportView.as_view(), name="import_book"),
-    path("book/<int:pk>/", views.BookDetailView.as_view(), name="book_detail"),
-    path("book/<int:book_id>/save/", views.save_book, name="save_book"),
-    path("book/<int:book_id>/rate/", views.rate_book, name="rate_book"),
-    path("book/<int:book_id>/chapter/<int:chapter_num>/", views.ChapterDetailView.as_view(), name="chapter_detail"),
-    path("book/<int:book_id>/add-chapters/", views.add_chapters, name="add_chapters"),
-    path("book/<int:book_id>/create-playlist/", views.create_playlist, name="create_playlist"),
-    path("book/<slug:slug>/", views.BookDetailView.as_view(), name="book_detail_slug"),
-
-    path("chapter/<int:chapter_id>/add-music/", views.add_music_recommendation, name="add_music"),
-    path("music/<int:music_id>/like/", views.like_music, name="like_music"),
-    path("music/<int:music_id>/delete/", views.delete_music, name="delete_music"),
-
-    path("playlist/<int:pk>/", views.PlaylistDetailView.as_view(), name="playlist_detail"),
-    path("playlist/<int:playlist_id>/like/", views.like_playlist, name="like_playlist"),
-    path("playlist/<int:pk>/add-track/", views.add_track_to_playlist, name="add_track"),
-    path("playlist/<slug:slug>/", views.PlaylistDetailView.as_view(), name="playlist_detail_slug"),
-
-    path("comments/add/", views.add_comment, name="add_comment"),
-    path("comments/<int:comment_id>/delete/", views.delete_comment, name="delete_comment"),
-
-    path("author/apply/<int:book_id>/", views.apply_author_verification, name="apply_author"),
-    path("author/<int:user_id>/", views.author_profile, name="author_profile"),
-
-    path("user/<int:user_id>/follow/", views.follow_user, name="follow_user"),
-
-    path("youtube-search/", views.youtube_search, name="youtube_search"),
-
-    path("profile/", views.profile, name="profile"),
-
-    path("notifications/", notification_list, name="notifications"),
-    path("notifications/feed/", notification_feed, name="notifications_feed"),
-    path("notifications/<int:pk>/read/", notification_mark_read, name="notification_read"),
-    path("notifications/read-all/", notification_mark_all_read, name="notifications_read_all"),
-
-    path("about/", views.AboutView.as_view(), name="about"),
+    path("", catalog.home, name="home"),
+    path("books/", catalog.book_list, name="book_list"),
+    path("search/", catalog.search, name="search"),
+    path("search/suggest/", catalog.search_suggest, name="search_suggest"),
+    path("book/create/", books.create_book, name="create_book"),
+    path("book/import/", books.import_book, name="import_book"),
+    path("book/<slug:slug>/", books.book_detail, name="book_detail"),
+    path("book/<slug:slug>/chapters/add/", books.add_chapters, name="add_chapters"),
+    path("book/<slug:slug>/chapter/<int:number>/", books.chapter_detail, name="chapter_detail"),
+    path("book/<slug:slug>/recommend/", music.recommend, name="recommend"),
+    path("book/<slug:slug>/playlists/new/", playlists.playlist_create, name="playlist_create"),
+    path("book/<slug:slug>/author/apply/", verification.apply_author, name="apply_author"),
+    path("recommendations/<int:pk>/delete/", music.recommendation_delete, name="recommendation_delete"),
+    path("playlist/<int:pk>/", playlists.playlist_detail, name="playlist_detail"),
+    path("playlist/<int:pk>/tracks/add/", playlists.playlist_add_track, name="playlist_add_track"),
+    path("playlist/<int:pk>/items/<int:item_pk>/remove/", playlists.playlist_remove_item, name="playlist_remove_item"),
+    path("playlist/<int:pk>/delete/", playlists.playlist_delete, name="playlist_delete"),
+    path("comments/add/", comments.add_comment, name="add_comment"),
+    path("comments/<int:pk>/delete/", comments.delete_comment, name="delete_comment"),
+    path("profile/", accounts.profile, name="profile"),
+    path("verification/<int:pk>/<str:field>/", verification.proof_download, name="proof_download"),
 ]

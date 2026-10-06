@@ -1,212 +1,53 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load core_extras %}
 
-{% block title %}{{ chapter|localized_title }} — Розділ {{ chapter.number }} | {{ chapter.book|localized_title }} —
-    {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Музичні рекомендації до розділу {{ chapter.number }} "{{ chapter|localized_title }}" книги "
-    {{ chapter.book|localized_title }}" ({{ chapter.book.author }}). {% if chapter|localized_mood_tags %}Настрій: {{ chapter|localized_mood_tags }}.
-{% endif %} Треки від спільноти читачів.{% endblock %}
-{% block meta_keywords %}музика до розділу {{ chapter.number }} {{ chapter.book|localized_title }}, {{ chapter.book.author }}
-    саундтрек, треки під читання{% endblock %}
-{% block og_title %}{{ chapter|localized_title }} — {{ chapter.book|localized_title }} | {{ SITE_NAME }}{% endblock %}
-{% block og_description %}Музичні рекомендації до розділу {{ chapter.number }} книги "{{ chapter.book|localized_title }}
-    ".{% endblock %}
-{% block canonical %}{{ request.scheme }}://{{ request.get_host }}
-    {% url 'core:chapter_detail' chapter.book.pk chapter.number %}{% endblock %}
-
-{% block structured_data %}
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Каталог",
-              "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:home' %}"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "{{ chapter.book|localized_title|escapejs }}",
-              "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' chapter.book.pk %}"
-            },
-            {
-              "@type": "ListItem",
-              "position": 3,
-              "name": "Розділ {{ chapter.number }}: {{ chapter|localized_title|escapejs }}",
-              "item": "{{ request.build_absolute_uri }}"
-            }
-          ]
-        }
-    </script>
-    {% if other_music or author_music %}
-        {% with author_count=author_music|length %}
-            <script type="application/ld+json">
-                {
-                  "@context": "https://schema.org",
-                  "@type": "ItemList",
-                  "name": "Музика до розділу {{ chapter.number }} — {{ chapter|localized_title|escapejs }}",
-                  "description": "Музичні рекомендації до розділу {{ chapter.number }} книги {{ chapter.book|localized_title|escapejs }}",
-                  "numberOfItems": {{ other_music|length|add:author_count }},
-                  "itemListElement": [
-                {% for music in author_music %}
-                    {
-                      "@type": "ListItem",
-                      "position": {{ forloop.counter }},
-                      "item": {
-                        "@type": "MusicRecording",
-                        "name": "{{ music.track_title|escapejs }}",
-                        "byArtist": { "@type": "MusicGroup", "name": "{{ music.artist|escapejs }}" },
-                        "url": "{{ music.link_url }}"
-                      }
-                    }{% if not forloop.last or other_music %},{% endif %}
-                {% endfor %}
-                {% for music in other_music %}
-                    {
-                      "@type": "ListItem",
-                      "position": {{ forloop.counter|add:author_count }},
-                      "item": {
-                        "@type": "MusicRecording",
-                        "name": "{{ music.track_title|escapejs }}",
-                        "byArtist": { "@type": "MusicGroup", "name": "{{ music.artist|escapejs }}" },
-                        "url": "{{ music.link_url }}"
-                      }
-                    }{% if not forloop.last %},{% endif %}
-                {% endfor %}
-                  ]
-                }
-            </script>
-        {% endwith %}
-    {% endif %}
-{% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/pages/chapter.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/extras.css' %}">
-{% endblock %}
+{% block title %}{{ chapter.display_title }} — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}{% if book.is_approved %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
 
 {% block content %}
-    <div class="chapter-detail">
-
+    <div class="content-pad">
         <nav class="breadcrumbs" aria-label="Навігація">
-            <a href="{% url 'core:home' %}">Каталог</a>
-            <span class="breadcrumbs__sep" aria-hidden="true">/</span>
-            <a href="{% url 'core:book_detail' chapter.book.id %}">{{ chapter.book|localized_title }}</a>
-            <span class="breadcrumbs__sep" aria-hidden="true">/</span>
-            <span aria-current="page">Розділ {{ chapter.number }}</span>
+            <a href="{% url 'core:book_list' %}">Каталог</a>
+            <span aria-hidden="true">/</span>
+            <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+            <span aria-hidden="true">/</span>
+            <span>{{ chapter.display_title }}</span>
         </nav>
 
-        <div class="chapter-header">
-            <div class="chapter-header__num">Розділ {{ chapter.number }}</div>
-            <h1 class="chapter-header__title">{{ chapter|localized_title }}</h1>
-            {% if chapter.description %}
-                <p class="chapter-header__desc">{{ chapter.description }}</p>
-            {% endif %}
-            {% if chapter|localized_mood_tags %}
-                <span class="chapter-header__mood">
-                    <i data-lucide="music" style="width:12px;height:12px;"></i>
-                    {{ chapter|localized_mood_tags }}
-                </span>
-            {% endif %}
-        </div>
+        <header class="chapter-header">
+            <p class="eyebrow">Розділ {{ chapter.number }}</p>
+            <h1 class="page-title">{{ chapter.display_title }}</h1>
+            <p class="text-muted">{{ book.title }}{% if book.author %} · {{ book.author.name }}{% endif %}</p>
+        </header>
 
         <div class="chapter-nav">
-            {% if prev_chapter %}
-                <a href="{% url 'core:chapter_detail' chapter.book.id prev_chapter.number %}"
-                   class="btn btn-ghost btn-sm" rel="prev">
-                    <i data-lucide="arrow-left" style="width:13px;height:13px;"></i>
-                    Розділ {{ prev_chapter.number }}
-                </a>
-            {% endif %}
-            {% if next_chapter %}
-                <a href="{% url 'core:chapter_detail' chapter.book.id next_chapter.number %}"
-                   class="btn btn-ghost btn-sm" rel="next">
-                    Розділ {{ next_chapter.number }}
-                    <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
-                </a>
-            {% endif %}
-            <a href="{% url 'core:book_detail' chapter.book.id %}" class="btn btn-ghost btn-sm chapter-nav__back">
-                <i data-lucide="book-open" style="width:13px;height:13px;"></i>
-                До книги
-            </a>
+            {% if previous_number %}
+                <a href="{% url 'core:chapter_detail' book.slug previous_number %}" class="btn btn-ghost btn-sm">← Розділ {{ previous_number }}</a>
+            {% else %}<span></span>{% endif %}
+            <a href="{{ book.get_absolute_url }}" class="btn btn-ghost btn-sm">До книги</a>
+            {% if next_number %}
+                <a href="{% url 'core:chapter_detail' book.slug next_number %}" class="btn btn-ghost btn-sm">Розділ {{ next_number }} →</a>
+            {% else %}<span></span>{% endif %}
         </div>
 
-        <div class="music-section__head">
-            <h2 class="music-section__title">Музичні рекомендації</h2>
-            {% if user.is_authenticated %}
-                <a href="{% url 'core:add_music' chapter.id %}" class="btn btn-accent btn-sm">
-                    <i data-lucide="plus" style="width:13px;height:13px;"></i>
-                    Додати музику
-                </a>
-            {% else %}
-                <a href="{% url 'login' %}" class="btn btn-ghost btn-sm">Увійдіть, щоб додати</a>
-            {% endif %}
-        </div>
-
-        {% if author_music %}
-            <div class="author-picks mb-24">
-                <div class="author-picks__header">
-                    <i data-lucide="badge-check" style="width:15px;height:15px;color:var(--clr-accent);"></i>
-                    <span>Вибір автора</span>
-                    <a href="{% url 'core:author_profile' verified_author.id %}">
-                        {{ verified_author.get_full_name|default:verified_author.username }}
+        <section class="mt-24" aria-labelledby="chapter-music">
+            <div class="section-head">
+                <h2 class="section-title" id="chapter-music">Музика до розділу</h2>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'core:recommend' book.slug %}?chapter={{ chapter.number }}" class="btn btn-accent btn-sm">
+                        <i data-lucide="plus" size="14" aria-hidden="true"></i> Порадити
                     </a>
-                </div>
-                {% for music in author_music %}
-                    {% include 'includes/_music_card.html' with music=music %}
-                {% endfor %}
+                {% endif %}
             </div>
-            {% if other_music %}
-                <hr class="section-divider">{% endif %}
-        {% endif %}
-
-        {% for music in other_music %}
-            {% include 'includes/_music_card.html' with music=music %}
-        {% empty %}
-            {% if not author_music %}
-                <div class="empty-state">
-                    <div class="empty-state__icon">
-                        <i data-lucide="music" style="width:22px;height:22px;"></i>
-                    </div>
-                    <div class="empty-state__title">Музики ще немає</div>
-                    <p class="empty-state__text">Будьте першим, хто додасть трек, що передає атмосферу цього
-                        розділу.</p>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'core:add_music' chapter.id %}" class="btn btn-accent">Додати музику</a>
-                    {% endif %}
+            {% for group in groups %}
+                {% include 'includes/_track_card.html' with group=group %}
+            {% empty %}
+                <div class="empty-state empty-state--inline">
+                    <div class="empty-state__title">До цього розділу ще нічого не радили</div>
+                    <p class="empty-state__text">Яка пісня пасує до цієї сцени?</p>
                 </div>
-            {% endif %}
-        {% endfor %}
+            {% endfor %}
+        </section>
 
-        {% include 'includes/_comments.html' with comments=comments comment_form=comment_form chapter_id=chapter.id %}
-
+        {% include 'includes/_comments.html' %}
     </div>
-
-    <div id="sticky-player" class="sticky-player player--hidden" role="region" aria-label="Музичний плеєр">
-        <div id="player-embed-area" class="player__embed"></div>
-        <div class="player__bar">
-            <div id="player-dot" class="player__dot"></div>
-            <div class="player__meta">
-                <span id="player-title" class="player__title"></span>
-                <span id="player-artist" class="player__artist"></span>
-            </div>
-            <span id="player-platform" class="player__platform"></span>
-            <a id="player-open" href="#" target="_blank" rel="noopener" class="player__open">
-                <i data-lucide="external-link" style="width:11px;height:11px;"></i>
-                Відкрити
-            </a>
-            <button id="player-close" class="player__close" aria-label="Закрити плеєр">
-                <i data-lucide="x" style="width:14px;height:14px;"></i>
-            </button>
-        </div>
-    </div>
-{% endblock %}
-
-{% block extra_js %}
-    <script src="{% static 'core/js/player.js' %}"></script>
-    <script src="{% static 'core/js/likes.js' %}"></script>
 {% endblock %}

@@ -1,140 +1,77 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load core_extras %}
 
 {% block title %}Профіль — {{ SITE_NAME }}{% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/pages/profile.css' %}">
-{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
-    <div class="profile-wrap">
-
-        <div class="profile-head">
-            <div class="profile-avatar">{{ user.username|first|upper }}</div>
+    <div class="content-pad">
+        <header class="profile-header">
+            <div class="user-avatar user-avatar--lg" aria-hidden="true">{{ user.username|first|upper }}</div>
             <div>
-                <div class="profile-head__name">
-                    {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
-                </div>
-                <div class="profile-head__username">@{{ user.username }}</div>
+                <h1 class="page-title">{{ user.username }}</h1>
+                {% if user.profile.is_verified_author %}
+                    <span class="verified-badge"><i data-lucide="badge-check" aria-hidden="true"></i> Підтверджений автор</span>
+                {% endif %}
             </div>
-        </div>
+        </header>
 
-        <div class="edit-panel">
-            <div class="edit-panel__title">Редагувати профіль</div>
-            <form method="post">
+        <section class="form-box form-box--narrow mt-24" aria-labelledby="profile-edit">
+            <h2 class="section-title" id="profile-edit">Дані профілю</h2>
+            <form method="post" novalidate>
                 {% csrf_token %}
-                <div class="form-grid">
-                    {% for field in form %}
-                        <div class="form-group">
-                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.errors %}
-                                <span class="form-error">{{ field.errors.0 }}</span>
-                            {% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="mt-16">
-                    <button type="submit" class="btn btn-accent btn-sm">Зберегти</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="tab-bar">
-            <button class="tab-btn active" data-tab="saved">
-                Збережені ({{ saved_books.count }})
-            </button>
-            <button class="tab-btn" data-tab="playlists">
-                Плейлісти ({{ my_playlists.count }})
-            </button>
-            <button class="tab-btn" data-tab="music">
-                Рекомендації ({{ my_recommendations.count }})
-            </button>
-        </div>
-
-        <div class="tab-panel active" id="tab-saved">
-            {% if saved_books %}
-                <div class="profile-books-grid">
-                    {% for saved in saved_books %}
-                        <a href="{% url 'core:book_detail' saved.book.id %}" class="book-card">
-                            <div class="book-card__spine-wrap">
-                                <div class="book-card__cover">
-                                    {% with cover=saved.book.get_cover %}
-                                        {% if cover %}
-                                            <img src="{{ cover }}" alt="{{ saved.book|localized_title }}" loading="lazy"
-                                                 onerror="this.parentElement.innerHTML='<div class=\'book-card__no-cover\'>{{ saved.book|localized_title|truncatechars:30 }}</div>'">
-                                        {% else %}
-                                            <div class="book-card__no-cover">{{ saved.book|localized_title|truncatechars:40 }}</div>
-                                        {% endif %}
-                                    {% endwith %}
-                                </div>
-                            </div>
-                            <div class="book-card__meta">
-                                <div class="book-card__title">{{ saved.book|localized_title }}</div>
-                                <div class="book-card__author">{{ saved.book.author }}</div>
-                            </div>
-                        </a>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i data-lucide="bookmark" style="width:22px;height:22px;"></i></div>
-                    <div class="empty-state__title">Збережених немає</div>
-                    <p class="empty-state__text">Переглядайте каталог і зберігайте книги, які вам подобаються.</p>
-                    <a href="{% url 'core:home' %}" class="btn btn-accent">Переглянути книги</a>
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="tab-panel" id="tab-playlists">
-            {% if my_playlists %}
-                {% for playlist in my_playlists %}
-                    <a href="{% url 'core:playlist_detail' playlist.id %}" class="list-item">
-                        <div>
-                            <div class="list-item__title">{{ playlist.title }}</div>
-                            <div class="list-item__sub">{{ playlist.book|localized_title }}</div>
-                        </div>
-                        <div class="list-item__stat">
-                            <i data-lucide="heart" style="width:12px;height:12px;"></i>
-                            {{ playlist.likes_count }}
-                        </div>
-                    </a>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i data-lucide="music" style="width:22px;height:22px;"></i></div>
-                    <div class="empty-state__title">Плейлістів ще немає</div>
-                    <p class="empty-state__text">Створіть плейліст для улюбленої книги.</p>
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="tab-panel" id="tab-music">
-            {% if my_recommendations %}
-                {% for music in my_recommendations %}
-                    <div class="list-item list-item--static">
-                        <div>
-                            <div class="list-item__title">{{ music.track_title }}</div>
-                            <div class="list-item__sub">
-                                {{ music.artist }} · {{ music.chapter.book|localized_title }} — Розд. {{ music.chapter.number }}
-                            </div>
-                        </div>
-                        <div class="list-item__stat">
-                            <i data-lucide="heart" style="width:12px;height:12px;"></i>
-                            {{ music.likes_count }}
-                        </div>
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
                     </div>
                 {% endfor %}
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-state__icon"><i data-lucide="music" style="width:22px;height:22px;"></i></div>
-                    <div class="empty-state__title">Рекомендацій ще немає</div>
-                    <p class="empty-state__text">Знайдіть розділ і поділіться тим, що слухали під час читання.</p>
-                </div>
-            {% endif %}
-        </div>
+                <button type="submit" class="btn btn-accent">Зберегти</button>
+            </form>
+        </section>
 
+        <section class="mt-32" id="recommendations" aria-labelledby="my-recommendations">
+            <h2 class="section-title" id="my-recommendations">Мої рекомендації</h2>
+            {% for item in recommendations %}
+                <div class="list-row list-row--static">
+                    <i data-lucide="disc-3" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">
+                        {{ item.track.title }}
+                        <span class="text-muted">· <a href="{% if item.chapter %}{{ item.chapter.get_absolute_url }}{% else %}{{ item.book.get_absolute_url }}{% endif %}">{{ item.book.title }}{% if item.chapter %}, розд. {{ item.chapter.number }}{% endif %}</a></span>
+                    </span>
+                    <form method="post" action="{% url 'core:recommendation_delete' item.pk %}" class="list-row__form" data-no-busy>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-ghost btn-sm">Прибрати</button>
+                    </form>
+                </div>
+            {% empty %}
+                <p class="text-muted text-sm">Ви ще нічого не радили.</p>
+            {% endfor %}
+        </section>
+
+        <section class="mt-32" id="playlists" aria-labelledby="my-playlists">
+            <h2 class="section-title" id="my-playlists">Мої плейлисти</h2>
+            {% for playlist in playlists %}
+                <a href="{{ playlist.get_absolute_url }}" class="list-row">
+                    <i data-lucide="list-music" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">{{ playlist.title }}</span>
+                    <span class="list-row__meta">{{ playlist.book.title }}</span>
+                </a>
+            {% empty %}
+                <p class="text-muted text-sm">Плейлистів ще немає.</p>
+            {% endfor %}
+        </section>
+
+        {% if authored_books %}
+            <section class="mt-32" aria-labelledby="my-books">
+                <h2 class="section-title" id="my-books">Мої книги</h2>
+                {% for book in authored_books %}
+                    <a href="{{ book.get_absolute_url }}" class="list-row">
+                        <i data-lucide="book-open" size="18" aria-hidden="true"></i>
+                        <span class="list-row__title">{{ book.title }}</span>
+                    </a>
+                {% endfor %}
+            </section>
+        {% endif %}
     </div>
 {% endblock %}

@@ -1,8 +1,8 @@
 {% if messages %}
-    <div class="content-pad-sm" style="padding-bottom:0;">
-        <div class="messages-list">
-            {% for msg in messages %}
-                <div class="alert alert--{{ msg.tags|default:'info' }}">{{ msg }}</div>
+    <div class="content-pad-sm messages-wrap">
+        <div class="messages-list" role="status">
+            {% for message in messages %}
+                <div class="alert alert--{{ message.tags|default:'info' }}">{{ message }}</div>
             {% endfor %}
         </div>
     </div>

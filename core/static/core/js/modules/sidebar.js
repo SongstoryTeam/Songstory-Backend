@@ -1,17 +1,3 @@
-/**
- * Sidebar navigation module.
- *
- * Owns two independent concerns that both live on the same <aside id="sidebar">:
- *  - the mobile drawer (topbar hamburger opens/closes an overlay panel)
- *  - the persistent desktop collapse rail (icon-only mode, remembered per browser)
- *
- * It also keeps the "Мій простір" profile links (which all point at the same
- * URL but different tabs) highlighted according to the current hash, since
- * that state only exists on the client.
- *
- * The storage key and the anti-flicker bootstrap live in sidebar-init.js,
- * which runs synchronously before this file — see window.Songstery.sidebar.
- */
 const SidebarNav = (() => {
     const {storage, drawerBreakpoint} = window.Songstery.sidebar;
 
@@ -28,9 +14,7 @@ const SidebarNav = (() => {
     function openDrawer() {
         sidebar.classList.add('open');
         overlay.hidden = false;
-        // Let the browser paint `hidden = false` first, then trigger the
-        // opacity transition on the next frame — flipping both in the same
-        // tick would skip the fade-in entirely.
+
         requestAnimationFrame(() => overlay.classList.add('is-visible'));
         document.body.style.overflow = 'hidden';
         mobileToggle?.setAttribute('aria-expanded', 'true');
@@ -43,10 +27,7 @@ const SidebarNav = (() => {
         overlay.classList.remove('is-visible');
         document.body.style.overflow = '';
         mobileToggle?.setAttribute('aria-expanded', 'false');
-        // Wait for the transform/opacity transitions to finish before
-        // actually removing the overlay from the layout, otherwise it
-        // disappears mid-animation and the close reads as an abrupt jump
-        // rather than a slide.
+
         window.setTimeout(() => {
             if (!sidebar.classList.contains('open')) overlay.hidden = true;
         }, 220);
@@ -75,19 +56,6 @@ const SidebarNav = (() => {
         setCollapsed(!root.classList.contains('sidebar-collapsed'));
     }
 
-    function highlightProfileTab() {
-        const links = sidebar.querySelectorAll('[data-profile-tab]');
-        if (!links.length) return;
-
-        const currentTab = location.pathname.includes('/profile')
-            ? (location.hash.replace('#tab-', '') || 'saved')
-            : null;
-
-        links.forEach((link) => {
-            link.classList.toggle('active', link.dataset.profileTab === currentTab);
-        });
-    }
-
     function bindDrawer() {
         mobileToggle?.addEventListener('click', toggleDrawer);
         overlay?.addEventListener('click', () => closeDrawer({restoreFocus: true}));
@@ -111,16 +79,10 @@ const SidebarNav = (() => {
         collapseToggle?.addEventListener('click', toggleCollapsed);
     }
 
-    function bindProfileHighlight() {
-        window.addEventListener('hashchange', highlightProfileTab);
-        highlightProfileTab();
-    }
-
     function init() {
         if (!sidebar) return;
         bindDrawer();
         bindCollapse();
-        bindProfileHighlight();
     }
 
     return {init, setCollapsed};

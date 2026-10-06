@@ -1,50 +1,26 @@
 {% extends 'base.html' %}
-{% load static %}
-{% load core_extras %}
 
-{% block title %}Верифікація автора — {{ SITE_NAME }}{% endblock %}
+{% block title %}Підтвердження авторства — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block content %}
-    <div class="form-wrap">
-        <nav class="breadcrumbs">
-            <a href="{% url 'core:home' %}">Каталог</a>
-            <span class="breadcrumbs__sep">/</span>
-            <a href="{% url 'core:book_detail' book.id %}">{{ book|localized_title }}</a>
-            <span class="breadcrumbs__sep">/</span>
-            <span>Верифікація автора</span>
-        </nav>
-
-        <div class="form-box">
-            <div class="form-box__title">Підтвердити авторство</div>
-            <p class="form-box__subtitle">
-                Верифікуйте, що ви є автором книги <strong>{{ book|localized_title }}</strong>.
-                Документи перевіряються командою впродовж 3–5 робочих днів.
+    <div class="content-pad">
+        <div class="form-box form-box--narrow">
+            <h1 class="page-title">Підтвердження авторства</h1>
+            <p class="text-muted text-sm mb-16">
+                Книга «{{ book.title }}». Документи бачать лише модератори й не публікуються на сайті.
             </p>
-
-            <div class="alert alert--info mb-16" style="margin-bottom:20px;">
-                Усі надані документи зберігаються в суворій конфіденційності і використовуються виключно для
-                верифікації.
-            </div>
-
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
                 {% for field in form %}
                     <div class="form-group">
                         <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
-                        {% if field.errors %}
-                            <span class="form-error">{{ field.errors.0 }}</span>
-                        {% endif %}
-                        {% if field.help_text %}
-                            <small>{{ field.help_text }}</small>
-                        {% endif %}
+                        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
                     </div>
                 {% endfor %}
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-accent">Подати заявку</button>
-                    <a href="{% url 'core:book_detail' book.id %}" class="btn btn-ghost">Скасувати</a>
-                </div>
+                <button type="submit" class="btn btn-accent">Надіслати заявку</button>
+                <a href="{{ book.get_absolute_url }}" class="btn btn-ghost">Скасувати</a>
             </form>
         </div>
     </div>

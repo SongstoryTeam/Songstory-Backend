@@ -9,7 +9,7 @@ class StaticViewSitemap(Sitemap):
     changefreq = "daily"
 
     def items(self):
-        return ["core:home"]
+        return ["core:home", "core:book_list"]
 
     def location(self, item):
         return reverse(item)
@@ -20,21 +20,15 @@ class BookSitemap(Sitemap):
     priority = 0.8
 
     def items(self):
-        return Book.objects.all().order_by("-created_at")
+        return Book.objects.filter(is_approved=True)
 
     def lastmod(self, obj):
         return obj.created_at
 
-    def location(self, obj):
-        return obj.get_absolute_url()
-
 
 class ChapterSitemap(Sitemap):
     changefreq = "monthly"
-    priority = 0.7
+    priority = 0.6
 
     def items(self):
-        return Chapter.objects.filter(is_approved=True).select_related("book").order_by("-id")
-
-    def location(self, obj):
-        return obj.get_absolute_url()
+        return Chapter.objects.filter(book__is_approved=True).select_related("book")

@@ -1,18 +1,15 @@
 from django.conf import settings
 
 
-def site(request):
+def site(request) -> dict:
     return {
         "SITE_NAME": settings.SITE_NAME,
         "SITE_DOMAIN": settings.SITE_DOMAIN,
-        "CANONICAL_URL": f"https://{settings.SITE_DOMAIN}{request.path}",
-        "PLAUSIBLE_DOMAIN": getattr(settings, "PLAUSIBLE_DOMAIN", ""),
-        "GOOGLE_SITE_VERIFICATION": getattr(settings, "GOOGLE_SITE_VERIFICATION", ""),
+        "SITE_CONTACT_EMAIL": settings.SITE_CONTACT_EMAIL,
+        "CANONICAL_URL": f"{request.scheme}://{settings.SITE_DOMAIN}{request.path}",
+        "GOOGLE_AUTH_ENABLED": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
+        "PLAUSIBLE_DOMAIN": settings.PLAUSIBLE_DOMAIN,
+        "GOOGLE_SITE_VERIFICATION": settings.GOOGLE_SITE_VERIFICATION,
+        "SEARCH_SUGGEST_MIN_LENGTH": settings.SEARCH_SUGGEST_MIN_LENGTH,
+        "SEARCH_SUGGEST_DEBOUNCE_MS": settings.SEARCH_SUGGEST_DEBOUNCE_MS,
     }
-
-
-def notifications(request):
-    if not request.user.is_authenticated:
-        return {"unread_notifications": 0}
-    from .models.notification import Notification
-    return {"unread_notifications": Notification.unread_count(request.user)}

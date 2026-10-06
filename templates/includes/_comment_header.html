@@ -1,0 +1,13 @@
+<div class="comment-card__header">
+    <span class="user-avatar user-avatar--sm" aria-hidden="true">{{ comment.user.username|first|upper }}</span>
+    <strong class="text-sm">{{ comment.user.username }}</strong>
+    <span class="text-muted text-xs">{{ comment.created_at|timesince }} тому</span>
+    {% if user == comment.user or user.is_staff %}
+        <form method="post" action="{% url 'core:delete_comment' comment.pk %}" class="comment-card__delete" data-no-busy>
+            {% csrf_token %}
+            <button type="submit" class="icon-btn" title="Видалити" aria-label="Видалити коментар">
+                <i data-lucide="x" size="12" aria-hidden="true"></i>
+            </button>
+        </form>
+    {% endif %}
+</div>

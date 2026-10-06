@@ -1,0 +1,11 @@
+{% if page.has_other_pages %}
+    <nav class="pagination" aria-label="Сторінки">
+        {% if page.has_previous %}
+            <a class="btn btn-ghost btn-sm" href="?{{ query_string }}page={{ page.previous_page_number }}">← Назад</a>
+        {% endif %}
+        <span class="pagination__info">{{ page.number }} з {{ page.paginator.num_pages }}</span>
+        {% if page.has_next %}
+            <a class="btn btn-ghost btn-sm" href="?{{ query_string }}page={{ page.next_page_number }}">Далі →</a>
+        {% endif %}
+    </nav>
+{% endif %}

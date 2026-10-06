@@ -1,30 +1,85 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Avg
+from django.db.models import Count, Q
 from django.urls import reverse
 
-from .language import Language
-from .mixins import TranslatableMixin
+from core.text import normalize, search_terms
+from core.utils.slugs import generate_unique_slug
 
 
-class PublishedManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_approved=True)
+class Genre(models.Model):
+    name = models.CharField("Назва", max_length=100, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Жанр"
+        verbose_name_plural = "Жанри"
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.slug:
+            self.slug = generate_unique_slug(Genre, self.name, self)
+        super().save(*args, **kwargs)
 
 
-class ApprovedChapterManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset().filter(is_approved=True)
+class Author(models.Model):
+    name = models.CharField("Ім'я", max_length=255, unique=True)
+    slug = models.SlugField(unique=True, blank=True)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Автор"
+        verbose_name_plural = "Автори"
+
+    def __str__(self) -> str:
+        return self.name
+
+    def save(self, *args, **kwargs) -> None:
+        if not self.slug:
+            self.slug = generate_unique_slug(Author, self.name, self)
+        super().save(*args, **kwargs)
+        for book in self.books.all():
+            book.save(update_fields=["search_key"])
 
 
-class Book(TranslatableMixin, models.Model):
+class BookQuerySet(models.QuerySet):
+    def visible_to(self, user) -> "BookQuerySet":
+        if user.is_authenticated and user.is_staff:
+            return self
+        condition = Q(is_approved=True)
+        if user.is_authenticated:
+            condition |= Q(creator=user)
+        return self.filter(condition)
+
+    def search(self, query: str) -> "BookQuerySet":
+        queryset = self
+        for term in search_terms(query):
+            queryset = queryset.filter(search_key__contains=term)
+        return queryset
+
+    def with_recommendation_count(self) -> "BookQuerySet":
+        return self.annotate(recommendations_total=Count("recommendations", distinct=True))
+
+
+class Book(models.Model):
+    title = models.CharField("Назва", max_length=255)
+    description = models.TextField("Опис", blank=True)
+    slug = models.SlugField(unique=True, blank=True)
+    author = models.ForeignKey(
+        Author, on_delete=models.SET_NULL, null=True, blank=True, related_name="books", verbose_name="Автор"
+    )
+    genre = models.ForeignKey(
+        Genre, on_delete=models.SET_NULL, null=True, blank=True, related_name="books", verbose_name="Жанр"
+    )
+    year = models.PositiveSmallIntegerField("Рік", null=True, blank=True)
+    cover_url = models.URLField("Посилання на обкладинку", blank=True, max_length=500)
+    isbn = models.CharField("ISBN", max_length=20, blank=True)
+    google_books_id = models.CharField(max_length=50, unique=True, null=True, blank=True, editable=False)
     creator = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="created_books",
-        verbose_name="Added by",
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="created_books", verbose_name="Додав"
     )
     verified_author = models.ForeignKey(
         User,
@@ -32,153 +87,64 @@ class Book(TranslatableMixin, models.Model):
         null=True,
         blank=True,
         related_name="authored_books",
-        verbose_name="Verified author",
+        verbose_name="Підтверджений автор",
     )
-    author = models.ForeignKey(
-        "Author",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="books",
-        verbose_name="Author",
-    )
-    genre = models.ForeignKey(
-        "Genre",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="books",
-        verbose_name="Genre",
-    )
-    slug = models.SlugField(unique=True, blank=True)
-    year = models.IntegerField(verbose_name="Year")
-    cover_image = models.ImageField(
-        upload_to="books/covers/",
-        blank=True,
-        null=True,
-        verbose_name="Cover file",
-    )
-    cover_url = models.URLField(blank=True, verbose_name="Cover URL")
-    is_approved = models.BooleanField(default=False, db_index=True, verbose_name="Approved")
+    is_approved = models.BooleanField("Схвалено", default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    views_count = models.IntegerField(default=0)
-    isbn = models.CharField(max_length=20, blank=True, db_index=True)
-    open_library_id = models.CharField(max_length=50, blank=True, unique=True, null=True)
-    google_books_id = models.CharField(max_length=50, blank=True)
-    canonical_book = models.ForeignKey(
-        "self",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="editions",
-    )
+    search_key = models.CharField(max_length=600, editable=False, default="")
 
-    objects = models.Manager()
-    published = PublishedManager()
+    objects = BookQuerySet.as_manager()
 
     class Meta:
-        verbose_name = "Book"
-        verbose_name_plural = "Books"
-        ordering = ["-created_at"]
+        ordering = ["-created_at", "-pk"]
+        verbose_name = "Книга"
+        verbose_name_plural = "Книги"
 
     def __str__(self) -> str:
-        return f"{self.get_title()} — {self.get_author_name()}"
+        return self.title
 
-    def get_title(self, lang: str | None = None) -> str:
-        return self.get_translated_field("title", lang) or f"Book #{self.pk}"
+    def save(self, *args, **kwargs) -> None:
+        if not self.slug:
+            self.slug = generate_unique_slug(Book, self.title, self)
+        self.search_key = self.build_search_key()
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "title" in update_fields:
+            kwargs["update_fields"] = {*update_fields, "search_key"}
+        super().save(*args, **kwargs)
 
-    def get_description(self, lang: str | None = None) -> str:
-        return self.get_translated_field("description", lang)
-
-    def get_author_name(self, lang: str = "uk") -> str:
-        if self.author_id:
-            return self.author.get_name(lang)
-        return ""
-
-    def get_genre_name(self, lang: str = "uk") -> str:
-        if self.genre_id:
-            return self.genre.get_name(lang)
-        return ""
-
-    def get_cover(self) -> str | None:
-        if self.cover_image:
-            return self.cover_image.url
-        return self.cover_url or None
+    def build_search_key(self) -> str:
+        author_name = self.author.name if self.author_id else ""
+        return normalize(f"{self.title} {author_name}")[:600]
 
     def get_absolute_url(self) -> str:
-        if self.slug:
-            return reverse("core:book_detail_slug", kwargs={"slug": self.slug})
-        return reverse("core:book_detail", kwargs={"pk": self.pk})
+        return reverse("core:book_detail", kwargs={"slug": self.slug})
 
     def is_visible_to(self, user) -> bool:
         if self.is_approved:
             return True
-        return user.is_authenticated and (user == self.creator or user.is_staff)
+        return user.is_authenticated and (user.is_staff or user == self.creator)
+
+    def can_manage(self, user) -> bool:
+        return user.is_authenticated and (user.is_staff or user == self.creator)
+
+
+class Chapter(models.Model):
+    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="chapters")
+    number = models.PositiveIntegerField("Номер")
+    title = models.CharField("Назва", max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["number"]
+        constraints = [models.UniqueConstraint(fields=["book", "number"], name="unique_chapter_number_per_book")]
+        verbose_name = "Розділ"
+        verbose_name_plural = "Розділи"
+
+    def __str__(self) -> str:
+        return f"{self.book.title}: {self.display_title}"
 
     @property
-    def average_rating(self) -> float:
-        result = self.ratings.aggregate(avg=Avg("score"))
-        return round(result["avg"] or 0, 1)
-
-
-class BookTranslation(models.Model):
-    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="translations")
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-
-    class Meta:
-        unique_together = ["book", "language"]
-        verbose_name = "Book translation"
-        verbose_name_plural = "Book translations"
-
-    def __str__(self) -> str:
-        return f"{self.title} [{self.language.code}]"
-
-
-class Chapter(TranslatableMixin, models.Model):
-    book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="chapters")
-    number = models.IntegerField(verbose_name="Number")
-    is_approved = models.BooleanField(default=False, verbose_name="Approved")
-
-    objects = models.Manager()
-    approved = ApprovedChapterManager()
-
-    class Meta:
-        verbose_name = "Chapter"
-        verbose_name_plural = "Chapters"
-        ordering = ["number"]
-
-    def __str__(self) -> str:
-        return f"Ch.{self.number}: {self.get_title()}"
-
-    def get_title(self, lang: str | None = None) -> str:
-        return self.get_translated_field("title", lang) or f"Chapter {self.number}"
-
-    def get_description(self, lang: str | None = None) -> str:
-        return self.get_translated_field("description", lang)
-
-    def get_mood_tags(self, lang: str | None = None) -> str:
-        return self.get_translated_field("mood_tags", lang)
+    def display_title(self) -> str:
+        return self.title or f"Розділ {self.number}"
 
     def get_absolute_url(self) -> str:
-        return reverse(
-            "core:chapter_detail",
-            kwargs={"book_id": self.book_id, "chapter_num": self.number},
-        )
-
-
-class ChapterTranslation(models.Model):
-    chapter = models.ForeignKey(Chapter, on_delete=models.CASCADE, related_name="translations")
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    mood_tags = models.CharField(max_length=200, blank=True)
-
-    class Meta:
-        unique_together = ["chapter", "language"]
-        verbose_name = "Chapter translation"
-        verbose_name_plural = "Chapter translations"
-
-    def __str__(self) -> str:
-        return f"Ch.{self.chapter.number} [{self.language.code}] — {self.title}"
+        return reverse("core:chapter_detail", kwargs={"slug": self.book.slug, "number": self.number})

@@ -1,33 +1,3 @@
-from .books import BookImportView  # noqa: F401
-from .main import (  # noqa: F401
-    HomeView,
-    SearchResultsView,
-    BookDetailView,
-    ChapterDetailView,
-    PlaylistDetailView,
-    author_profile,
-    apply_author_verification,
-    follow_user,
-    rate_book,
-    youtube_search,
-    add_comment,
-    delete_comment,
-    create_book,
-    save_book,
-    add_chapters,
-    add_music_recommendation,
-    like_music,
-    delete_music,
-    create_playlist,
-    add_track_to_playlist,
-    like_playlist,
-    profile,
-    signup,
-    check_signup_field,
-    robots_txt,
-    page_not_found,
-    server_error,
-    too_many_requests,
-    service_worker,
-    AboutView
-)
+from . import accounts, books, catalog, comments, music, pages, playlists, verification
+
+__all__ = ["accounts", "books", "catalog", "comments", "music", "pages", "playlists", "verification"]

@@ -1,0 +1,59 @@
+{% load core_extras %}
+<article class="track-card">
+    <div class="track-card__row">
+        <button type="button" class="track-card__play" data-play data-platform="{{ group.track.platform }}"
+                data-embed-url="{{ group.track.embed_url }}" data-title="{{ group.track }}"
+                aria-label="Слухати: {{ group.track.title }}" aria-expanded="false">
+            <i data-lucide="play" size="18" aria-hidden="true"></i>
+        </button>
+        <div class="track-card__info">
+            <div class="track-card__title">{{ group.track.title }}</div>
+            {% if group.track.artist %}<div class="track-card__artist">{{ group.track.artist }}</div>{% endif %}
+            <div class="track-card__meta">
+                <span class="track-card__count">
+                    <i data-lucide="users" size="12" aria-hidden="true"></i>
+                    {{ group.count }} {{ group.count|uk_plural:"рекомендація,рекомендації,рекомендацій" }}
+                </span>
+                {% if group.by_verified_author %}
+                    <span class="verified-badge"><i data-lucide="badge-check" aria-hidden="true"></i> Радить автор</span>
+                {% endif %}
+                <a href="{{ group.track.url }}" target="_blank" rel="noopener noreferrer" class="track-card__link">
+                    {{ group.track.get_platform_display }}
+                    <i data-lucide="external-link" size="11" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+        {% if user.is_authenticated %}
+            <div class="track-card__actions">
+                {% if group.mine %}
+                    <form method="post" action="{% url 'core:recommendation_delete' group.mine.pk %}" data-no-busy>
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-ghost btn-sm" title="Прибрати мою рекомендацію">
+                            <i data-lucide="check" size="14" aria-hidden="true"></i> Ви радите
+                        </button>
+                    </form>
+                {% else %}
+                    <form method="post" action="{% url 'core:recommend' book.slug %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="pick">
+                        <input type="hidden" name="track" value="{{ group.track.pk }}">
+                        {% if chapter %}<input type="hidden" name="chapter" value="{{ chapter.number }}">{% endif %}
+                        <button type="submit" class="btn btn-ghost btn-sm">
+                            <i data-lucide="plus" size="14" aria-hidden="true"></i> Порадити також
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+    {% with notes=group.comments %}
+        {% if notes %}
+            <ul class="track-card__notes">
+                {% for item in notes|slice:":3" %}
+                    <li><strong>{{ item.user.username }}:</strong> {{ item.comment }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <div class="track-card__player"></div>
+</article>

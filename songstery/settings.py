@@ -1,20 +1,22 @@
-import os
-from datetime import timedelta
 from pathlib import Path
 
 import environ
 
-env = environ.Env(DEBUG=(bool, False))
-
-SITE_DOMAIN = env("SITE_DOMAIN", default="localhost:8000")
-SITE_NAME = env("SITE_NAME", default="Songstory")
-
 BASE_DIR = Path(__file__).resolve().parent.parent
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+env = environ.Env(DEBUG=(bool, False))
+environ.Env.read_env(BASE_DIR / ".env")
 
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+
+SITE_NAME = env("SITE_NAME", default="Songstery")
+SITE_DOMAIN = env("SITE_DOMAIN", default="localhost:8000")
+SITE_URL = env("SITE_URL", default="http://localhost:8000")
+SITE_CONTACT_EMAIL = env("SITE_CONTACT_EMAIL", default="")
+SITE_ID = 1
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -24,24 +26,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
-    "django_ratelimit",
     "django.contrib.sites",
+    "django_ratelimit",
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    "rest_framework",
-    "rest_framework_simplejwt",
-    "rest_framework_simplejwt.token_blacklist",
-    "corsheaders",
-    "django_filters",
     "core.apps.CoreConfig",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -52,6 +48,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "songstery.urls"
+WSGI_APPLICATION = "songstery.wsgi.application"
 
 TEMPLATES = [
     {
@@ -63,72 +60,37 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
-                "core.context_processors.notifications",
                 "core.context_processors.site",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = "songstery.wsgi.application"
+DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-_db_default = f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-DATABASES = {"default": env.db("DATABASE_URL", default=_db_default)}
-
-if DATABASES["default"]["ENGINE"] == "django.db.backends.mysql":
-    DATABASES["default"].setdefault("OPTIONS", {})
-    DATABASES["default"]["OPTIONS"]["charset"] = "utf8mb4"
-    DATABASES["default"]["OPTIONS"]["init_command"] = "SET sql_mode='STRICT_TRANS_TABLES'"
-
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://127.0.0.1:6379/0"),
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+REDIS_URL = env("REDIS_URL", default="")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        }
     }
-}
+else:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    SILENCED_SYSTEM_CHECKS = ["django_ratelimit.E003", "django_ratelimit.W001"]
 
 RATELIMIT_USE_CACHE = "default"
-
-REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
-    ),
-    "DEFAULT_FILTER_BACKENDS": (
-        "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.OrderingFilter",
-    ),
-    "DEFAULT_PAGINATION_CLASS": "api.v1.filters.pagination.DefaultCursorPagination",
-    "PAGE_SIZE": 20,
-    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
-    "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
-    ),
-    "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/hour",
-        "user": "1000/hour",
-    },
+RATE_LIMITS = {
+    "signup": "5/h",
+    "signup_check": "30/m",
+    "search": "60/m",
+    "import_book": "20/h",
+    "recommend": "30/h",
+    "comment": "10/m",
+    "playlist": "20/h",
 }
-
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
-    "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "UPDATE_LAST_LOGIN": True,
-    "ALGORITHM": "HS256",
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
-
-CORS_ALLOWED_ORIGINS = env.list(
-    "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:3000", "http://127.0.0.1:3000"],
-)
-CORS_ALLOW_CREDENTIALS = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -150,21 +112,26 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-if DEBUG:
-    WHITENOISE_USE_FINDERS = True
-    WHITENOISE_AUTOREFRESH = True
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+PRIVATE_MEDIA_ROOT = Path(env("PRIVATE_MEDIA_ROOT", default=str(BASE_DIR / "private_media")))
 
-SITE_ID = 1
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "private": {"BACKEND": "core.storage.PrivateMediaStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
+}
+WHITENOISE_USE_FINDERS = DEBUG
+WHITENOISE_AUTOREFRESH = DEBUG
 
+LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "core:home"
 LOGOUT_REDIRECT_URL = "core:home"
-LOGIN_URL = "login"
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 ACCOUNT_LOGIN_METHODS = {"username", "email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
@@ -173,81 +140,74 @@ ACCOUNT_UNIQUE_EMAIL = True
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_ADAPTER = "core.adapters.SocialAccountAdapter"
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
-        "APP": {
-            "client_id": env("GOOGLE_CLIENT_ID", default=""),
-            "secret": env("GOOGLE_CLIENT_SECRET", default=""),
-        },
+        "APP": {"client_id": GOOGLE_CLIENT_ID, "secret": GOOGLE_CLIENT_SECRET},
         "SCOPE": ["profile", "email"],
         "AUTH_PARAMS": {"access_type": "online"},
         "OAUTH_PKCE_ENABLED": True,
     }
 }
+GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION", default="")
 
-YOUTUBE_API_KEY = env("YOUTUBE_API_KEY", default="")
-SPOTIFY_CLIENT_ID = env("SPOTIFY_CLIENT_ID", default="")
-SPOTIFY_CLIENT_SECRET = env("SPOTIFY_CLIENT_SECRET", default="")
-GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default="")
-GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET", default="")
+CATALOG_LANGUAGE = "uk"
+HOME_SHELF_SIZE = 12
+CATALOG_PAGE_SIZE = 24
+SEARCH_PAGE_SIZE = 24
+SEARCH_SUGGEST_LIMIT = 6
+SEARCH_SUGGEST_MIN_LENGTH = 2
+SEARCH_SUGGEST_DEBOUNCE_MS = 250
+TRACK_SEARCH_LIMIT = 12
+BULK_CHAPTERS_MAX = 100
+COMMENT_MAX_LENGTH = 2000
+RECOMMENDATION_COMMENT_MAX_LENGTH = 500
 
-SITE_URL = env("SITE_URL", default="http://localhost:8000")
+EXTERNAL_HTTP_TIMEOUT = 5
+EXTERNAL_SEARCH_LIMIT = 10
+EXTERNAL_SEARCH_CACHE_TTL = 60 * 60 * 24
+GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
+GOOGLE_BOOKS_API_KEY = env("GOOGLE_BOOKS_API_KEY", default="")
+
+VERIFICATION_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
+VERIFICATION_ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"]
 
 EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
-EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@songstory.com")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=f"noreply@{SITE_DOMAIN.split(':')[0]}")
 ADMIN_EMAIL = env("ADMIN_EMAIL", default="")
-
 ADMINS = [("Admin", ADMIN_EMAIL)] if ADMIN_EMAIL else []
 MANAGERS = ADMINS
 
-DJANGO_LOG_LEVEL = env("DJANGO_LOG_LEVEL", default="INFO")
+PLAUSIBLE_DOMAIN = env("PLAUSIBLE_DOMAIN", default="")
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
+    SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=0)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "[{asctime}] {levelname} {name}: {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "verbose",
-        },
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": DJANGO_LOG_LEVEL,
-            "propagate": True,
-        },
-        "django.request": {
-            "handlers": ["console"],
-            "level": "ERROR",
-            "propagate": False,
-        },
-    },
+    "formatters": {"verbose": {"format": "[{asctime}] {levelname} {name}: {message}", "style": "{"}},
+    "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "verbose"}},
+    "root": {"handlers": ["console"], "level": env("DJANGO_LOG_LEVEL", default="INFO")},
 }
 
-PLAUSIBLE_DOMAIN = env("PLAUSIBLE_DOMAIN", default="")
-
 SENTRY_DSN = env("SENTRY_DSN", default="")
-
 if SENTRY_DSN and not DEBUG:
     import sentry_sdk
-    from sentry_sdk.integrations.django import DjangoIntegration
-    from sentry_sdk.integrations.redis import RedisIntegration
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration(), RedisIntegration()],
         traces_sample_rate=0.1,
         send_default_pii=False,
         environment=env("SENTRY_ENVIRONMENT", default="production"),

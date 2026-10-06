@@ -1,76 +1,62 @@
-const CACHE_NAME = 'songstory-v4';
+const CACHE_VERSION = 'v1';
+const STATIC_CACHE = `songstery-static-${CACHE_VERSION}`;
+const PAGE_CACHE = `songstery-pages-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline/';
+const STATIC_PREFIX = '/static/';
+const PRECACHE_URLS = [OFFLINE_URL, '/static/icons/icon-192.png', '/static/icons/icon-512.png'];
 
-const PRECACHE = [
-    '/',
-    '/static/core/css/tokens.css',
-    '/static/core/css/styles.css',
-    '/static/core/js/main.js',
-    '/static/core/js/forms.js',
-    '/static/core/js/likes.js',
-    '/static/core/js/player.js',
-    '/static/core/js/rating.js',
-    '/static/icons/icon-192.png',
-    '/static/icons/icon-512.png',
-];
-
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => Promise.all(
-                PRECACHE.map(url => cache.add(url).catch(() => {}))
-            ))
-            .then(() => self.skipWaiting())
+        caches
+            .open(PAGE_CACHE)
+            .then((cache) => Promise.all(PRECACHE_URLS.map((url) => cache.add(url).catch(() => undefined))))
+            .then(() => self.skipWaiting()),
     );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
+    const keep = new Set([STATIC_CACHE, PAGE_CACHE]);
     event.waitUntil(
-        caches.keys().then(keys =>
-            Promise.all(
-                keys
-                    .filter(k => k !== CACHE_NAME)
-                    .map(k => caches.delete(k))
-            )
-        ).then(() => self.clients.claim())
+        caches
+            .keys()
+            .then((keys) => Promise.all(keys.filter((key) => !keep.has(key)).map((key) => caches.delete(key))))
+            .then(() => self.clients.claim()),
     );
 });
 
-self.addEventListener('fetch', event => {
-    const { request } = event;
-    const url = new URL(request.url);
+async function cacheFirst(request) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    const response = await fetch(request);
+    if (response.ok) {
+        const cache = await caches.open(STATIC_CACHE);
+        cache.put(request, response.clone());
+    }
+    return response;
+}
 
+async function networkWithOfflineFallback(request) {
+    try {
+        return await fetch(request);
+    } catch (error) {
+        const offline = await caches.match(OFFLINE_URL);
+        return offline || Response.error();
+    }
+}
+
+self.addEventListener('fetch', (event) => {
+    const {request} = event;
     if (request.method !== 'GET') return;
-    if (url.origin !== location.origin) return;
 
-    if (url.pathname.startsWith('/static/') || url.pathname.startsWith('/media/')) {
-        event.respondWith(
-            caches.match(request).then(cached => {
-                if (cached) return cached;
-                return fetch(request).then(response => {
-                    if (response.ok) {
-                        const clone = response.clone();
-                        caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-                    }
-                    return response;
-                });
-            })
-        );
+    const url = new URL(request.url);
+    if (url.origin !== self.location.origin) return;
+
+    if (url.pathname.startsWith(STATIC_PREFIX)) {
+        event.respondWith(cacheFirst(request));
         return;
     }
 
-    event.respondWith(
-        fetch(request)
-            .then(response => {
-                if (response.ok) {
-                    const clone = response.clone();
-                    caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-                }
-                return response;
-            })
-            .catch(() => {
-                return caches.match(request)
-                    .then(cached => cached || caches.match('/'));
-            })
-    );
+    if (request.mode === 'navigate') {
+        event.respondWith(networkWithOfflineFallback(request));
+    }
 });

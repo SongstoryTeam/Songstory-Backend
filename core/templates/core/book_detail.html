@@ -1,303 +1,128 @@
 {% extends 'base.html' %}
-{% load static %}
 {% load core_extras %}
 
-{% block title %}{{ book|localized_title }} — {{ book.author }} | Музичні рекомендації — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Музичні рекомендації до книги "{{ book|localized_title }}" (
-    {{ book.author }}{% if book.year %}, {{ book.year }}{% endif %}). {{ book.chapters.count }} розділів з треками від
-    спільноти читачів.{% endblock %}
-{% block meta_keywords %}музика до {{ book|localized_title }}, саундтрек {{ book|localized_title }}, {{ book.author }} музика, музичні
-    рекомендації {{ book.genre }}{% endblock %}
+{% block title %}{{ book.title }}{% if book.author %} — {{ book.author.name }}{% endif %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Музичні рекомендації до книги «{{ book.title }}»{% if book.author %} — {{ book.author.name }}{% endif %}.{% endblock %}
 {% block og_type %}book{% endblock %}
-{% block og_title %}{{ book|localized_title }} — {{ book.author }} | {{ SITE_NAME }}{% endblock %}
-{% block og_description %}
-    {{ book|localized_description|truncatechars:200|default:"Музичні рекомендації до кожного розділу книги від спільноти читачів." }}{% endblock %}
-{% block og_image %}{% if book.get_cover %}{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}{% else %}
-    {{ block.super }}{% endif %}{% endblock %}
-{% block twitter_title %}{{ book|localized_title }} — {{ book.author }}{% endblock %}
-{% block twitter_description %}
-    {{ book|localized_description|truncatechars:200|default:"Музичні рекомендації до кожного розділу." }}{% endblock %}
-{% block twitter_image %}{% if book.get_cover %}{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}
-{% else %}{{ block.super }}{% endif %}{% endblock %}
-{% block canonical %}{{ request.scheme }}://{{ request.get_host }}{% url 'core:book_detail' book.pk %}{% endblock %}
+{% block og_title %}{{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block og_image %}{% if book.cover_url %}{{ book.cover_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block canonical %}{{ request.scheme }}://{{ SITE_DOMAIN }}{{ book.get_absolute_url }}{% endblock %}
+{% block meta_robots %}{% if book.is_approved %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
 
 {% block structured_data %}
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "Book",
-          "name": "{{ book|localized_title|escapejs }}",
-          "author": {
-            "@type": "Person",
-            "name": "{{ book.author|escapejs }}"
-          },
-          {% if book.year %}"datePublished": "{{ book.year }}",{% endif %}
-          {% if book.genre %}"genre": "{{ book.genre|escapejs }}",{% endif %}
-          {% if book|localized_description %}"description": "{{ book|localized_description|truncatechars:300|escapejs }}",{% endif %}
-          {% if book.get_cover %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ book.get_cover }}",{% endif %}
-          "url": "{{ request.build_absolute_uri }}",
-          "numberOfPages": {{ chapters|length }},
-          "inLanguage": "uk",
-          "aggregateRating": {% if book.ratings.count %}{
-            "@type": "AggregateRating",
-            "ratingValue": "{{ book.average_rating }}",
-            "reviewCount": "{{ book.ratings.count }}",
-            "bestRating": "5",
-            "worstRating": "1"
-          }{% else %}null{% endif %}
-        }
-    </script>
-    <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "BreadcrumbList",
-          "itemListElement": [
-            {
-              "@type": "ListItem",
-              "position": 1,
-              "name": "Каталог",
-              "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:home' %}"
-            },
-            {
-              "@type": "ListItem",
-              "position": 2,
-              "name": "{{ book|localized_title|escapejs }}",
-              "item": "{{ request.build_absolute_uri }}"
-            }
-          ]
-        }
-    </script>
-{% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/pages/book.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components/comments.css' %}">
+    <script type="application/ld+json">{{ structured_data|safe }}</script>
 {% endblock %}
 
 {% block content %}
-    <div class="book-detail">
-
+    <div class="content-pad">
         <nav class="breadcrumbs" aria-label="Навігація">
-            <a href="{% url 'core:home' %}">Каталог</a>
-            <span class="breadcrumbs__sep" aria-hidden="true">/</span>
-            <span aria-current="page">{{ book|localized_title }}</span>
+            <a href="{% url 'core:book_list' %}">Каталог</a>
+            <span aria-hidden="true">/</span>
+            <span>{{ book.title }}</span>
         </nav>
 
-        <div class="book-hero">
-            <div class="book-hero__cover-wrap">
-                <div class="book-hero__cover">
-                    {% with cover=book.get_cover %}
-                        {% if cover %}
-                            <img src="{{ cover }}" alt="Обкладинка книги {{ book|localized_title }} — {{ book.author }}"
-                                 onerror="this.parentElement.innerHTML='<div class=\'cover-placeholder\'>{{ book|localized_title|truncatechars:50 }}</div>'"
-                                 loading="lazy" width="200" height="300">
-                        {% else %}
-                            <div class="cover-placeholder">{{ book|localized_title }}</div>
-                        {% endif %}
-                    {% endwith %}
+        {% if not book.is_approved %}
+            <div class="alert alert--info">Книга очікує схвалення модератора. Поки що її бачите лише ви.</div>
+        {% endif %}
+
+        <section class="book-hero">
+            <div class="book-hero__cover">
+                <div class="book-card__cover">
+                    <div class="book-card__no-cover">{{ book.title }}</div>
+                    {% if book.cover_url %}<img src="{{ book.cover_url }}" alt="Обкладинка: {{ book.title }}" data-cover>{% endif %}
                 </div>
             </div>
-
-            <div class="book-hero__info">
-                {% if book.genre %}
-                    <span class="book-hero__genre">{{ book.genre }}</span>
-                {% endif %}
-
-                <h1 class="book-hero__title">{{ book|localized_title }}</h1>
-
+            <div class="book-hero__body">
+                {% if book.genre %}<span class="tag">{{ book.genre.name }}</span>{% endif %}
+                <h1 class="book-hero__title">{{ book.title }}</h1>
                 <p class="book-hero__author">
+                    {{ book.author.name|default:"Автор невідомий" }}
                     {% if book.verified_author %}
-                        <a href="{% url 'core:author_profile' book.verified_author.id %}" class="author-link">
-                            {{ book.author }}
-                            <span class="verified-badge">
-                                <i data-lucide="badge-check"></i>
-                                Підтверджений автор
-                            </span>
-                        </a>
-                    {% else %}
-                        {{ book.author }}
+                        <span class="verified-badge" title="Авторство підтверджено"><i data-lucide="badge-check" aria-hidden="true"></i> Підтверджений автор</span>
                     {% endif %}
                 </p>
-
-                <div class="book-hero__meta">
-                    <span class="book-hero__meta-item">
-                        <i data-lucide="calendar" style="width:13px;height:13px;"></i>
-                        {{ book.year }}
-                    </span>
-                    <span class="book-hero__meta-item">
-                        <i data-lucide="eye" style="width:13px;height:13px;"></i>
-                        {{ book.views_count }} переглядів
-                    </span>
-                    <span class="book-hero__meta-item">
-                        <i data-lucide="book-open" style="width:13px;height:13px;"></i>
-                        {{ chapters|length }} розділ{{ chapters|length|pluralize:",и,ів" }}
-                    </span>
-                    {% if book.average_rating %}
-                        <span class="book-hero__meta-item rating-display">
-                            <i data-lucide="star" style="width:13px;height:13px;color:#E8A020;"></i>
-                            <span class="rating-display__score">{{ book.average_rating }}</span>
-                            <span class="rating-display__count">({{ book.ratings.count }})</span>
-                        </span>
-                    {% endif %}
-                </div>
-
-                {% if book|localized_description %}
-                    <p class="book-hero__desc">{{ book|localized_description }}</p>
-                {% endif %}
+                <ul class="book-hero__meta">
+                    {% if book.year %}<li><i data-lucide="calendar" size="14" aria-hidden="true"></i> {{ book.year }}</li>{% endif %}
+                    <li><i data-lucide="book-open" size="14" aria-hidden="true"></i> {{ chapters|length }} {{ chapters|length|uk_plural:"розділ,розділи,розділів" }}</li>
+                    <li><i data-lucide="music" size="14" aria-hidden="true"></i> {{ groups|length }} {{ groups|length|uk_plural:"трек,треки,треків" }}</li>
+                </ul>
+                {% if book.description %}<p class="book-hero__description">{{ book.description|truncatechars:600 }}</p>{% endif %}
 
                 <div class="book-hero__actions">
                     {% if user.is_authenticated %}
-                        <a href="{% url 'core:save_book' book.id %}" class="btn btn-accent btn-sm">
-                            {% if is_saved %}
-                                <i data-lucide="bookmark-check" style="width:14px;height:14px;"></i> Збережено
-                            {% else %}
-                                <i data-lucide="bookmark" style="width:14px;height:14px;"></i> Зберегти
-                            {% endif %}
+                        <a href="{% url 'core:recommend' book.slug %}" class="btn btn-accent">
+                            <i data-lucide="plus" size="16" aria-hidden="true"></i> Порадити музику
                         </a>
-                        <a href="{% url 'core:create_playlist' book.id %}" class="btn btn-ghost btn-sm">
-                            <i data-lucide="list-music" style="width:14px;height:14px;"></i> Плейліст
+                        <a href="{% url 'core:playlist_create' book.slug %}" class="btn btn-ghost">
+                            <i data-lucide="list-music" size="16" aria-hidden="true"></i> Створити плейлист
                         </a>
-                        <a href="{% url 'core:add_chapters' book.id %}" class="btn btn-ghost btn-sm">
-                            <i data-lucide="plus" style="width:14px;height:14px;"></i> Додати розділи
-                        </a>
-                        {% if can_apply_author %}
-                            <a href="{% url 'core:apply_author' book.id %}" class="btn btn-ghost btn-sm">
-                                <i data-lucide="badge-check" style="width:14px;height:14px;"></i> Я автор
+                        {% if can_manage %}
+                            <a href="{% url 'core:add_chapters' book.slug %}" class="btn btn-ghost">
+                                <i data-lucide="list-plus" size="16" aria-hidden="true"></i> Додати розділи
                             </a>
+                        {% endif %}
+                        {% if verification_state == 'available' %}
+                            <a href="{% url 'core:apply_author' book.slug %}" class="btn btn-ghost">
+                                <i data-lucide="badge-check" size="16" aria-hidden="true"></i> Я автор
+                            </a>
+                        {% elif verification_state == 'pending' %}
+                            <span class="btn btn-ghost is-disabled">Заявка розглядається</span>
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'login' %}" class="btn btn-accent btn-sm">Увійдіть для взаємодії</a>
+                        <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent">Увійдіть, щоб радити музику</a>
                     {% endif %}
                 </div>
-
-                {% if user.is_authenticated %}
-                    <form id="star-rating" method="post" action="{% url 'core:rate_book' book.id %}"
-                          style="margin-top:16px;display:flex;align-items:center;gap:10px;"
-                          aria-label="Оцінити книгу">
-                        {% csrf_token %}
-                        {{ rating_form.score }}
-                        <div class="star-rating">
-                            {% for i in "12345" %}
-                                <button type="button"
-                                        class="star-btn {% if user_rating >= forloop.counter %}star-btn--active{% endif %}"
-                                        data-value="{{ forloop.counter }}"
-                                        aria-label="Оцінка {{ forloop.counter }} з 5">
-                                    <i data-lucide="star" style="width:20px;height:20px;"></i>
-                                </button>
-                            {% endfor %}
-                        </div>
-                        <span class="text-xs text-muted">
-                            {% if user_rating %}Ваша оцінка: {{ user_rating }}/5{% else %}Оцінити книгу{% endif %}
-                        </span>
-                    </form>
-                {% endif %}
             </div>
-        </div>
+        </section>
 
-        <div class="content-grid">
-            <div>
-                <div class="flex-between mb-16">
-                    <h2 class="section-head__title">Розділи</h2>
+        <section class="mt-32" aria-labelledby="book-music">
+            <h2 class="section-title" id="book-music">Музика до книги</h2>
+            {% for group in groups %}
+                {% include 'includes/_track_card.html' with group=group chapter=None %}
+            {% empty %}
+                <div class="empty-state empty-state--inline">
+                    <div class="empty-state__title">Тут ще тихо</div>
+                    <p class="empty-state__text">Порадьте першу пісню до цієї книги.</p>
                 </div>
+            {% endfor %}
+        </section>
 
-                {% if chapters %}
-                    <div class="chapters-list">
-                        {% for chapter in chapters %}
-                            <a href="{% url 'core:chapter_detail' book.id chapter.number %}"
-                               class="chapter-card {% if not chapter.is_approved %}chapter-card--unapproved{% endif %}">
-                                <span class="chapter-card__num">{{ chapter.number }}</span>
-                                <div class="chapter-card__info">
-                                    <div class="chapter-card__title">
-                                        {{ chapter|localized_title }}
-                                        {% if not chapter.is_approved %}
-                                            <span class="tag tag--danger" style="font-size:10px;margin-left:6px;">На розгляді</span>
-                                        {% endif %}
-                                    </div>
-                                    {% if chapter|localized_mood_tags %}
-                                        <div class="chapter-card__desc italic text-accent">{{ chapter|localized_mood_tags }}</div>
-                                    {% elif chapter.description %}
-                                        <div class="chapter-card__desc">{{ chapter.description|truncatewords:12 }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="chapter-card__stat">
-                                    <i data-lucide="music" style="width:13px;height:13px;"></i>
-                                    {{ chapter.music_recommendations.count }}
-                                </div>
-                                <i data-lucide="chevron-right"
-                                   style="width:15px;height:15px;color:var(--clr-border);flex-shrink:0;"></i>
-                            </a>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="empty-state">
-                        <div class="empty-state__icon">
-                            <i data-lucide="book-open" style="width:22px;height:22px;"></i>
-                        </div>
-                        <div class="empty-state__title">Розділів ще немає</div>
-                        <p class="empty-state__text">Будьте першим, хто додасть розділи до цієї книги.</p>
-                        {% if user.is_authenticated %}
-                            <a href="{% url 'core:add_chapters' book.id %}" class="btn btn-accent">Додати розділи</a>
-                        {% endif %}
-                    </div>
-                {% endif %}
+        <section class="mt-32" aria-labelledby="book-playlists">
+            <h2 class="section-title" id="book-playlists">Плейлисти</h2>
+            {% for playlist in playlists %}
+                <a href="{{ playlist.get_absolute_url }}" class="list-row">
+                    <i data-lucide="list-music" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">{{ playlist.title }}</span>
+                    <span class="list-row__meta">{{ playlist.tracks_total }} {{ playlist.tracks_total|uk_plural:"трек,треки,треків" }} · {{ playlist.user.username }}</span>
+                </a>
+            {% empty %}
+                <p class="text-muted text-sm">Плейлистів ще немає.</p>
+            {% endfor %}
+        </section>
 
-                {% if popular_playlists %}
-                    <hr class="section-divider">
-                    <h2 class="section-head__title mb-16">Плейлісти</h2>
-                    <div class="playlists-grid">
-                        {% for playlist in popular_playlists %}
-                            <a href="{% url 'core:playlist_detail' playlist.pk %}" class="playlist-card">
-                                <div class="playlist-card__title">{{ playlist.title }}</div>
-                                {% if playlist.description %}
-                                    <div class="playlist-card__desc">{{ playlist.description|truncatewords:15 }}</div>
-                                {% endif %}
-                                <div class="playlist-card__meta">
-                                    <span>{{ playlist.creator.username }}</span>
-                                    <span class="flex-center gap-8">
-                                        <i data-lucide="heart" style="width:12px;height:12px;"></i>
-                                        {{ playlist.likes_count }}
-                                    </span>
-                                </div>
-                            </a>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-
-                {% include 'includes/_comments.html' with comments=comments comment_form=comment_form book_id=book.id %}
+        <section class="mt-32" aria-labelledby="book-chapters">
+            <h2 class="section-title" id="book-chapters">Розділи</h2>
+            <div class="chapter-list">
+                {% for chapter in chapters %}
+                    <a href="{{ chapter.get_absolute_url }}" class="chapter-card">
+                        <span class="chapter-card__num">{{ chapter.number }}</span>
+                        <span class="chapter-card__info">
+                            <span class="chapter-card__title">{{ chapter.display_title }}</span>
+                        </span>
+                        <span class="chapter-card__stat">
+                            <i data-lucide="music" size="12" aria-hidden="true"></i>
+                            {{ chapter.recommendations_total }}
+                        </span>
+                    </a>
+                {% empty %}
+                    <p class="text-muted text-sm">
+                        Розділів ще немає.
+                        {% if can_manage %}<a href="{% url 'core:add_chapters' book.slug %}" class="text-accent">Додайте їх</a>, щоб радити музику до окремих розділів.{% endif %}
+                    </p>
+                {% endfor %}
             </div>
+        </section>
 
-            {% if top_music %}
-                <aside aria-label="Топ треків">
-                    <div class="side-panel">
-                        <div class="side-panel__head">
-                            <i data-lucide="music" style="width:14px;height:14px;"></i>
-                            Топ треків до книги
-                        </div>
-                        <div class="side-panel__body">
-                            {% for music in top_music %}
-                                <div class="top-music-item">
-                                    <div class="top-music-item__icon">
-                                        <i data-lucide="music" style="width:14px;height:14px;"></i>
-                                    </div>
-                                    <div class="top-music-item__body">
-                                        <div class="top-music-item__title">{{ music.track_title }}</div>
-                                        <div class="top-music-item__sub">
-                                            {{ music.artist }} · Розд.{{ music.chapter.number }}
-                                        </div>
-                                    </div>
-                                    <a href="{{ music.link_url }}" target="_blank" rel="noopener"
-                                       class="top-music-item__listen">Грати</a>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </aside>
-            {% endif %}
-        </div>
-
+        {% include 'includes/_comments.html' %}
     </div>
-{% endblock %}
-
-{% block extra_js %}
-    <script src="{% static 'core/js/rating.js' %}"></script>
 {% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Каталог — {{ SITE_NAME }}{% endblock %}
+
+{% block content %}
+    <div class="content-pad">
+        <h1 class="page-title">Каталог</h1>
+
+        {% if genres %}
+            <nav class="chips" aria-label="Жанри">
+                <a class="chip {% if not active_genre %}chip--active{% endif %}" href="?sort={{ active_sort }}">Усі</a>
+                {% for genre in genres %}
+                    <a class="chip {% if genre.slug == active_genre %}chip--active{% endif %}"
+                       href="?genre={{ genre.slug }}&sort={{ active_sort }}">{{ genre.name }}</a>
+                {% endfor %}
+            </nav>
+        {% endif %}
+
+        <div class="sort-bar">
+            <span class="sort-bar__label">Сортування</span>
+            {% for key, label in sort_options %}
+                <a class="sort-btn {% if key == active_sort %}sort-btn--active{% endif %}"
+                   href="?{% if active_genre %}genre={{ active_genre }}&{% endif %}sort={{ key }}">{{ label }}</a>
+            {% endfor %}
+        </div>
+
+        {% if page.object_list %}
+            <div class="books-grid">
+                {% for book in page.object_list %}
+                    {% include 'includes/_book_card.html' with book=book show_count=True %}
+                {% endfor %}
+            </div>
+            {% include 'includes/_pagination.html' with query_string=pagination_query %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state__title">Книг не знайдено</div>
+                <p class="empty-state__text">Спробуйте інший жанр або додайте книгу самі.</p>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
