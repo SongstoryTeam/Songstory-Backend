@@ -1,0 +1,105 @@
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-topbar);
+    display: grid;
+    grid-template-columns: 1fr minmax(0, var(--search-w)) 1fr;
+    align-items: center;
+    gap: 20px;
+    height: var(--topbar-h);
+    padding: 0 var(--gutter);
+    background: var(--clr-bg-glass);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--clr-border);
+    view-transition-name: app-topbar;
+}
+
+.topbar__lead {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.menu-toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-sm);
+    background: var(--clr-surface);
+    color: var(--clr-ink);
+    transition: background var(--transition), border-color var(--transition), color var(--transition);
+}
+
+.menu-toggle:hover {
+    background: var(--clr-accent-lt);
+    border-color: var(--clr-accent-lt);
+    color: var(--clr-accent);
+}
+
+.menu-toggle:focus-visible {
+    outline: 2px solid var(--clr-accent);
+    outline-offset: 2px;
+}
+
+.topbar__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    background: var(--clr-surface);
+    border: 1px solid var(--clr-border);
+    border-radius: 100px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.topbar__search:focus-within {
+    border-color: var(--clr-accent);
+    box-shadow: 0 0 0 3px var(--clr-focus-ring);
+}
+
+.topbar__search svg {
+    flex-shrink: 0;
+    color: var(--clr-muted);
+}
+
+.topbar__search input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: var(--text-sm);
+    color: var(--clr-ink);
+}
+
+.topbar__search input::placeholder {
+    color: var(--clr-muted);
+}
+
+.topbar__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+@media (max-width: 900px) {
+    .topbar {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 600px) {
+    .topbar .brand__text,
+    .topbar__action-label,
+    .topbar__action--secondary {
+        display: none;
+    }
+}

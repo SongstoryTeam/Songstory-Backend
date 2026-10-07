@@ -1,0 +1,55 @@
+{% load core_extras %}
+{% url 'core:home' as home_url %}
+{% url 'core:book_list' as catalog_url %}
+{% url 'core:search' as search_url %}
+{% url 'core:profile' as profile_url %}
+{% nav_active 'core:profile' as profile_active %}
+
+<div class="drawer-scrim" data-drawer-close aria-hidden="true"></div>
+
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Меню навігації" data-drawer>
+    <div class="drawer__header">
+        {% include 'includes/_brand.html' with tagline='Книги та музика' %}
+        <button type="button" class="drawer__close" aria-label="Закрити меню" data-drawer-close data-drawer-initial-focus>
+            <i data-lucide="x" size="16" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <nav class="drawer__nav" aria-label="Основна навігація">
+        <span class="drawer__label">Огляд</span>
+        {% include 'includes/_drawer_item.html' with url_name='core:home' href=home_url icon='home' label='Головна' %}
+        {% include 'includes/_drawer_item.html' with url_name='core:book_list' href=catalog_url icon='library' label='Каталог' %}
+        {% include 'includes/_drawer_item.html' with url_name='core:search' href=search_url icon='search' label='Пошук' %}
+
+        {% if user.is_authenticated %}
+            <span class="drawer__label">Мій простір</span>
+            {% include 'includes/_drawer_item.html' with href=profile_url fragment='recommendations' icon='disc-3' label='Мої рекомендації' %}
+            {% include 'includes/_drawer_item.html' with href=profile_url fragment='playlists' icon='list-music' label='Мої плейлисти' %}
+        {% endif %}
+    </nav>
+
+    <div class="drawer__footer">
+        {% if user.is_authenticated %}
+            <a href="{{ profile_url }}"
+               class="drawer__item{% if profile_active %} is-active{% endif %}"
+               {% if profile_active %}aria-current="page"{% endif %}
+               data-drawer-item>
+                <span class="user-avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
+                <span class="drawer__user-text">
+                    <span class="drawer__user-name">{{ user.username }}</span>
+                    <span class="drawer__user-role">{% if user.profile.is_verified_author %}Підтверджений автор{% else %}Учасник{% endif %}</span>
+                </span>
+            </a>
+            <form action="{% url 'logout' %}" method="post" data-no-busy>
+                {% csrf_token %}
+                <button type="submit" class="drawer__item" data-drawer-item>
+                    <i data-lucide="log-out" size="18" class="drawer__item-icon" aria-hidden="true"></i>
+                    <span class="drawer__item-label">Вийти</span>
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-ghost btn-sm w-full justify-center">Увійти</a>
+            <a href="{% url 'signup' %}" class="btn btn-accent btn-sm w-full justify-center">Реєстрація</a>
+        {% endif %}
+    </div>
+</aside>

@@ -1,0 +1,7 @@
+<a href="{% url 'core:home' %}" class="brand{% if compact %} brand--compact{% endif %}">
+    <span class="brand__mark" aria-hidden="true">{{ SITE_NAME|slice:":1" }}</span>
+    <span class="brand__text">
+        <span class="brand__name">{{ SITE_NAME }}</span>
+        {% if tagline %}<span class="brand__tagline">{{ tagline }}</span>{% endif %}
+    </span>
+</a>

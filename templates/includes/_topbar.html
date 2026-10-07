@@ -1,17 +1,20 @@
 <header class="topbar">
-    <button class="sidebar-toggle" id="sidebarToggle" aria-label="Меню" aria-controls="sidebar" aria-expanded="false">
-        <i data-lucide="menu" size="20"></i>
-    </button>
+    <div class="topbar__lead">
+        <button type="button" class="menu-toggle" aria-label="Меню" aria-controls="drawer" aria-expanded="false" data-drawer-toggle>
+            <i data-lucide="menu" size="20" aria-hidden="true"></i>
+        </button>
+        {% include 'includes/_brand.html' with compact=True %}
+    </div>
 
     <form class="topbar__search site-search" action="{% url 'core:search' %}" method="get" role="search"
           autocomplete="off" data-site-search data-suggest-url="{% url 'core:search_suggest' %}"
           data-min-length="{{ SEARCH_SUGGEST_MIN_LENGTH }}" data-debounce-ms="{{ SEARCH_SUGGEST_DEBOUNCE_MS }}">
-        <i data-lucide="search" size="16"></i>
+        <i data-lucide="search" size="16" aria-hidden="true"></i>
         <input type="text" name="q" placeholder="Пошук книг або авторів…"
                autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-haspopup="listbox"
                aria-controls="site-search-listbox" aria-autocomplete="list" data-site-search-input>
         <button type="button" class="site-search__clear" data-site-search-clear aria-label="Очистити пошук" hidden>
-            <i data-lucide="x" size="14"></i>
+            <i data-lucide="x" size="14" aria-hidden="true"></i>
         </button>
         <div class="site-search__panel" data-site-search-panel hidden>
             <ul class="site-search__listbox" id="site-search-listbox" role="listbox" aria-label="Результати пошуку"
@@ -22,10 +25,11 @@
     <div class="topbar__actions">
         {% if user.is_authenticated %}
             <a href="{% url 'core:create_book' %}" class="btn btn-accent btn-sm">
-                <i data-lucide="plus" size="16"></i> <span class="topbar__action-label">Додати книгу</span>
+                <i data-lucide="plus" size="16" aria-hidden="true"></i>
+                <span class="topbar__action-label">Додати книгу</span>
             </a>
         {% else %}
-            <a href="{% url 'login' %}" class="btn btn-ghost btn-sm">Увійти</a>
+            <a href="{% url 'login' %}" class="btn btn-ghost btn-sm topbar__action--secondary">Увійти</a>
             <a href="{% url 'signup' %}" class="btn btn-accent btn-sm">Реєстрація</a>
         {% endif %}
     </div>

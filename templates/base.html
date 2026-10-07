@@ -41,12 +41,11 @@
     {% if PLAUSIBLE_DOMAIN %}
         <script defer data-domain="{{ PLAUSIBLE_DOMAIN }}" src="https://plausible.io/js/script.js"></script>
     {% endif %}
-    <script src="{% static 'core/js/modules/sidebar-init.js' %}"></script>
 </head>
 <body>
-{% include 'includes/_sidebar.html' %}
+{% include 'includes/_drawer.html' %}
 
-<div class="main-content">
+<div class="main-content" data-drawer-background>
     {% include 'includes/_topbar.html' %}
     {% include 'includes/_messages.html' %}
 
@@ -57,10 +56,8 @@
     {% include 'includes/_footer.html' %}
 </div>
 
-<div id="sidebarOverlay" hidden></div>
-
 <script src="{% static 'vendor/lucide.min.js' %}" defer></script>
-<script src="{% static 'core/js/modules/sidebar.js' %}" defer></script>
+<script src="{% static 'core/js/modules/drawer.js' %}" defer></script>
 <script src="{% static 'core/js/forms.js' %}" defer></script>
 <script src="{% static 'core/js/covers.js' %}" defer></script>
 <script src="{% static 'core/js/player.js' %}" defer></script>

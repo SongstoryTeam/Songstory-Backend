@@ -1,0 +1,9 @@
+{% load core_extras %}
+{% if url_name %}{% nav_active url_name as is_active %}{% endif %}
+<a href="{{ href }}{% if fragment %}#{{ fragment }}{% endif %}"
+   class="drawer__item{% if is_active %} is-active{% endif %}"
+   {% if is_active %}aria-current="page"{% endif %}
+   data-drawer-item>
+    <i data-lucide="{{ icon }}" size="18" class="drawer__item-icon" aria-hidden="true"></i>
+    <span class="drawer__item-label">{{ label }}</span>
+</a>

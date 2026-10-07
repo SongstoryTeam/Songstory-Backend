@@ -26,6 +26,9 @@
     --clr-star: #E8A020;
     --clr-highlight: #E8A87C;
     --clr-accent-tint: #FEF0EB;
+    --clr-scrim: rgba(26, 22, 18, .4);
+    --clr-bg-glass: rgba(247, 244, 239, .92);
+    --clr-focus-ring: rgba(196, 98, 45, .12);
 
     --clr-placeholder-start: #E8E0D5;
     --clr-placeholder-end: #D4C9BC;
@@ -47,6 +50,11 @@
     --ff-display: 'Playfair Display', Georgia, serif;
     --ff-body: 'DM Sans', system-ui, sans-serif;
 
+    --tracking-tight: -.3px;
+    --tracking-wide: .3px;
+    --tracking-caps: 1px;
+
+    --text-2xs: 11px;
     --text-xs: 12px;
     --text-sm: 13px;
     --text-base: 15px;
@@ -63,16 +71,42 @@
     --shadow-md: 0 4px 12px rgba(26, 22, 18, .10), 0 2px 4px rgba(26, 22, 18, .06);
     --shadow-lg: 0 12px 32px rgba(26, 22, 18, .13), 0 4px 10px rgba(26, 22, 18, .07);
 
-    --nav-w: 240px;
-    --nav-w-collapsed: 76px;
-    
-    --nav-w-drawer: 240px;
+    --gutter: 36px;
+    --gutter-y-sm: 24px;
+    --topbar-h: 60px;
+    --search-w: 320px;
+    --drawer-w: 288px;
+    --drawer-w-max: 86vw;
 
-    --bp-sidebar-drawer: 900px;
+    --z-topbar: 50;
+    --z-scrim: 200;
+    --z-drawer: 210;
 
     --ease: cubic-bezier(.4, 0, .2, 1);
     --duration: 200ms;
     --transition: var(--duration) var(--ease);
+    --ease-drawer: cubic-bezier(.32, .72, 0, 1);
+    --dur-drawer: 340ms;
+    --dur-scrim: 280ms;
+    --dur-stagger-base: 120ms;
+    --dur-stagger-step: 35ms;
+    --dur-page: 160ms;
+}
+
+@media (max-width: 900px) {
+    :root {
+        --gutter: 20px;
+        --gutter-y-sm: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --dur-drawer: 0ms;
+        --dur-scrim: 0ms;
+        --dur-stagger-base: 0ms;
+        --dur-stagger-step: 0ms;
+    }
 }
 
 *,
@@ -85,6 +119,7 @@
 
 html {
     scroll-behavior: smooth;
+    scrollbar-gutter: stable;
 }
 
 body {
@@ -93,8 +128,6 @@ body {
     line-height: 1.6;
     color: var(--clr-ink);
     background: var(--clr-bg);
-    display: flex;
-    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
 }
 
