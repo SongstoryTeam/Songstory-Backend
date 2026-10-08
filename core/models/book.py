@@ -99,6 +99,7 @@ class Book(models.Model):
         ordering = ["-created_at", "-pk"]
         verbose_name = "Книга"
         verbose_name_plural = "Книги"
+        indexes = [models.Index(fields=["is_approved", "-created_at"], name="book_approved_created_idx")]
 
     def __str__(self) -> str:
         return self.title

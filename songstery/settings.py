@@ -38,6 +38,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.middleware.gzip.GZipMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -67,19 +68,34 @@ TEMPLATES = [
 ]
 
 DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
+_database = DATABASES["default"]
+if _database["ENGINE"] == "django.db.backends.postgresql":
+    _database["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
+    _database["CONN_HEALTH_CHECKS"] = True
+    _database["DISABLE_SERVER_SIDE_CURSORS"] = True
+    _database.setdefault("OPTIONS", {})["prepare_threshold"] = None
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REDIS_URL = env("REDIS_URL", default="")
 if REDIS_URL:
     CACHES = {
         "default": {
-            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "BACKEND": "core.cache.ResilientRedisCache",
             "LOCATION": REDIS_URL,
+            "OPTIONS": {
+                "socket_connect_timeout": env.float("REDIS_CONNECT_TIMEOUT", default=1.0),
+                "socket_timeout": env.float("REDIS_SOCKET_TIMEOUT", default=1.0),
+                "health_check_interval": 30,
+                "cooldown": env.float("REDIS_COOLDOWN", default=15.0),
+            },
         }
     }
+    SILENCED_SYSTEM_CHECKS = ["django_ratelimit.W001"]
 else:
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
     SILENCED_SYSTEM_CHECKS = ["django_ratelimit.E003", "django_ratelimit.W001"]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 RATELIMIT_USE_CACHE = "default"
 RATE_LIMITS = {

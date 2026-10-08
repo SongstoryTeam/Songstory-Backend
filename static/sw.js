@@ -1,8 +1,9 @@
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const STATIC_CACHE = `songstery-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `songstery-pages-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline/';
 const STATIC_PREFIX = '/static/';
+const HASHED_ASSET = /\.[0-9a-f]{8,}\.[a-z0-9]+$/i;
 const PRECACHE_URLS = [OFFLINE_URL, '/static/icons/icon-192.png', '/static/icons/icon-512.png'];
 
 self.addEventListener('install', (event) => {
@@ -35,6 +36,19 @@ async function cacheFirst(request) {
     return response;
 }
 
+async function networkFirst(request) {
+    const cache = await caches.open(STATIC_CACHE);
+    try {
+        const response = await fetch(request, {cache: 'no-cache'});
+        if (response.ok) cache.put(request, response.clone());
+        return response;
+    } catch (error) {
+        const cached = await cache.match(request);
+        if (cached) return cached;
+        throw error;
+    }
+}
+
 async function networkWithOfflineFallback(request) {
     try {
         return await fetch(request);
@@ -52,7 +66,7 @@ self.addEventListener('fetch', (event) => {
     if (url.origin !== self.location.origin) return;
 
     if (url.pathname.startsWith(STATIC_PREFIX)) {
-        event.respondWith(cacheFirst(request));
+        event.respondWith(HASHED_ASSET.test(url.pathname) ? cacheFirst(request) : networkFirst(request));
         return;
     }
 
