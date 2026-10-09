@@ -15,7 +15,7 @@
 
 .btn-primary {
   background: var(--clr-ink);
-  color: var(--clr-white);
+  color: var(--clr-on-ink);
 }
 
 .btn-primary:hover { background: var(--clr-ink-dk); }
@@ -23,12 +23,12 @@
 .btn-accent {
   background: var(--clr-accent);
   color: var(--clr-white);
-  box-shadow: 0 2px 8px rgba(196, 98, 45, .3);
+  box-shadow: var(--shadow-accent);
 }
 
 .btn-accent:hover {
   background: var(--clr-accent-dk);
-  box-shadow: 0 4px 12px rgba(196, 98, 45, .4);
+  box-shadow: var(--shadow-accent-hover);
   transform: translateY(-1px);
 }
 
@@ -47,7 +47,7 @@
 .btn-danger {
   background: transparent;
   color: var(--clr-danger);
-  border: 1px solid rgba(192, 57, 43, .25);
+  border: 1px solid var(--clr-danger-border);
 }
 
 .btn-danger:hover {
@@ -152,7 +152,7 @@
 .tag--danger {
   background: var(--clr-danger-lt);
   color: var(--clr-danger);
-  border-color: rgba(192, 57, 43, .3);
+  border-color: var(--clr-danger-border-strong);
 }
 
 .pagination {
@@ -203,9 +203,7 @@
   aspect-ratio: 2/3;
   border-radius: var(--radius-sm);
   overflow: hidden;
-  box-shadow:
-    4px 4px 12px rgba(26, 22, 18, .18),
-    inset -3px 0 6px rgba(0, 0, 0, .1);
+  box-shadow: var(--shadow-book);
   transition: box-shadow var(--transition), transform var(--transition);
   background: var(--clr-border);
   position: relative;
@@ -220,13 +218,11 @@
   height: 3px;
   background: var(--clr-shelf);
   border-radius: 2px;
-  box-shadow: 0 2px 4px rgba(26, 22, 18, .15);
+  box-shadow: var(--shadow-shelf);
 }
 
 .book-card:hover .book-card__cover {
-  box-shadow:
-    8px 8px 20px rgba(26, 22, 18, .22),
-    inset -3px 0 6px rgba(0, 0, 0, .1);
+  box-shadow: var(--shadow-book-hover);
   transform: translateY(-4px) rotate(-1deg);
 }
 
@@ -518,7 +514,7 @@
 .form-box textarea:focus {
   outline: none;
   border-color: var(--clr-accent);
-  box-shadow: 0 0 0 3px rgba(196, 98, 45, .12);
+  box-shadow: 0 0 0 3px var(--clr-focus-ring);
   background: var(--clr-surface);
 }
 
@@ -535,7 +531,7 @@
   margin-right: 10px;
   background: var(--clr-ink);
   border: none;
-  color: var(--clr-white);
+  color: var(--clr-on-ink);
   padding: 5px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -718,7 +714,7 @@
 .comment-form textarea:focus {
     outline: none;
     border-color: var(--clr-accent);
-    box-shadow: 0 0 0 3px rgba(196, 98, 45, .12);
+    box-shadow: 0 0 0 3px var(--clr-focus-ring);
     background: var(--clr-surface);
 }
 

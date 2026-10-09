@@ -1,10 +1,7 @@
 <header class="topbar">
-    <div class="topbar__lead">
-        <button type="button" class="menu-toggle" aria-label="Меню" aria-controls="drawer" aria-expanded="false" data-drawer-toggle>
-            <i data-lucide="menu" size="20" aria-hidden="true"></i>
-        </button>
-        {% include 'includes/_brand.html' with compact=True %}
-    </div>
+    <button type="button" class="topbar__button" aria-label="Меню" aria-controls="sidebar" aria-expanded="false" data-sidebar-toggle>
+        <i data-lucide="menu" size="20" aria-hidden="true"></i>
+    </button>
 
     <form class="topbar__search site-search" action="{% url 'core:search' %}" method="get" role="search"
           autocomplete="off" data-site-search data-suggest-url="{% url 'core:search_suggest' %}"
@@ -23,6 +20,11 @@
     </form>
 
     <div class="topbar__actions">
+        <button type="button" class="topbar__button" aria-label="Змінити тему" data-theme-toggle>
+            <span class="theme-toggle__icon theme-toggle__icon--dark"><i data-lucide="moon" size="18" aria-hidden="true"></i></span>
+            <span class="theme-toggle__icon theme-toggle__icon--light"><i data-lucide="sun" size="18" aria-hidden="true"></i></span>
+        </button>
+
         {% if user.is_authenticated %}
             <a href="{% url 'core:create_book' %}" class="btn btn-accent btn-sm">
                 <i data-lucide="plus" size="16" aria-hidden="true"></i>

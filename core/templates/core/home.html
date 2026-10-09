@@ -3,7 +3,6 @@
 {% block content %}
     <div class="content-pad">
         <header class="page-intro">
-            <p class="eyebrow">Книги та музика</p>
             <h1 class="page-intro__title">Музика до кожної книги та кожного розділу</h1>
             <p class="page-intro__text">
                 Знайдіть книгу, послухайте, що до неї радять інші читачі, або додайте власну пісню.
@@ -30,7 +29,7 @@
                     <div class="section-head">
                         <h2 class="section-title" id="shelf-{{ shelf.key }}">{{ shelf.title }}</h2>
                         <a href="{% url 'core:book_list' %}{% if shelf.key == 'popular' %}?sort=popular{% endif %}"
-                           class="section-head__link">Усі книги →</a>
+                           class="section-head__link">Усі книги</a>
                     </div>
                     <div class="books-grid">
                         {% for book in shelf.books %}

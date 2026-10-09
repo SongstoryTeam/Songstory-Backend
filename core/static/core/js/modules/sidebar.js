@@ -1,91 +1,61 @@
 const SidebarNav = (() => {
-    const {storage, drawerBreakpoint} = window.Songstery.sidebar;
+    const OPEN_CLASS = 'sidebar-open';
+    const DRAWER_QUERY_TOKEN = '--mq-drawer';
 
     const root = document.documentElement;
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebarOverlay');
-    const mobileToggle = document.getElementById('sidebarToggle');
-    const collapseToggle = document.getElementById('sidebarCollapseToggle');
+    const sidebar = document.querySelector('[data-sidebar]');
+    const toggle = document.querySelector('[data-sidebar-toggle]');
+    const closers = document.querySelectorAll('[data-sidebar-close]');
+    const backgroundRegions = document.querySelectorAll('[data-sidebar-background]');
+    const drawerQuery = window.matchMedia(getComputedStyle(root).getPropertyValue(DRAWER_QUERY_TOKEN).trim());
 
-    function isMobile() {
-        return window.matchMedia(`(max-width: ${drawerBreakpoint()})`).matches;
+    function isOpen() {
+        return root.classList.contains(OPEN_CLASS);
     }
 
-    function openDrawer() {
-        sidebar.classList.add('open');
-        overlay.hidden = false;
-
-        requestAnimationFrame(() => overlay.classList.add('is-visible'));
-        document.body.style.overflow = 'hidden';
-        mobileToggle?.setAttribute('aria-expanded', 'true');
-        sidebar.querySelector('.nav-link')?.focus();
+    function render(open) {
+        root.classList.toggle(OPEN_CLASS, open);
+        toggle.setAttribute('aria-expanded', String(open));
+        backgroundRegions.forEach((region) => {
+            region.inert = open;
+        });
     }
 
-    function closeDrawer({restoreFocus = false} = {}) {
-        if (!sidebar.classList.contains('open')) return;
-        sidebar.classList.remove('open');
-        overlay.classList.remove('is-visible');
-        document.body.style.overflow = '';
-        mobileToggle?.setAttribute('aria-expanded', 'false');
-
-        window.setTimeout(() => {
-            if (!sidebar.classList.contains('open')) overlay.hidden = true;
-        }, 220);
-        if (restoreFocus) mobileToggle?.focus();
+    function open() {
+        if (isOpen()) return;
+        render(true);
+        sidebar.querySelector('[data-sidebar-initial-focus]')?.focus();
     }
 
-    function toggleDrawer() {
-        if (sidebar.classList.contains('open')) {
-            closeDrawer({restoreFocus: true});
-        } else {
-            openDrawer();
-        }
+    function close({restoreFocus = true} = {}) {
+        if (!isOpen()) return;
+        render(false);
+        if (restoreFocus) toggle.focus();
     }
 
-    function setCollapsed(collapsed) {
-        root.classList.toggle('sidebar-collapsed', collapsed);
-        collapseToggle?.setAttribute('aria-expanded', String(!collapsed));
-        collapseToggle?.setAttribute(
-            'aria-label',
-            collapsed ? 'Розгорнути бічну панель' : 'Згорнути бічну панель',
-        );
-        storage.set(collapsed ? '1' : '0');
-    }
+    function bind() {
+        toggle.addEventListener('click', () => (isOpen() ? close() : open()));
+        closers.forEach((closer) => closer.addEventListener('click', () => close()));
 
-    function toggleCollapsed() {
-        setCollapsed(!root.classList.contains('sidebar-collapsed'));
-    }
-
-    function bindDrawer() {
-        mobileToggle?.addEventListener('click', toggleDrawer);
-        overlay?.addEventListener('click', () => closeDrawer({restoreFocus: true}));
+        sidebar.addEventListener('click', (event) => {
+            if (event.target.closest('a[href]')) close({restoreFocus: false});
+        });
 
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closeDrawer({restoreFocus: true});
+            if (event.key === 'Escape') close();
         });
 
-        window.addEventListener('resize', () => {
-            if (!isMobile()) closeDrawer();
+        drawerQuery.addEventListener('change', (event) => {
+            if (!event.matches) close({restoreFocus: false});
         });
-
-        sidebar.querySelectorAll('.nav-link, .sidebar__user').forEach((link) => {
-            link.addEventListener('click', () => {
-                if (isMobile()) closeDrawer();
-            });
-        });
-    }
-
-    function bindCollapse() {
-        collapseToggle?.addEventListener('click', toggleCollapsed);
     }
 
     function init() {
-        if (!sidebar) return;
-        bindDrawer();
-        bindCollapse();
+        if (!sidebar || !toggle) return;
+        bind();
     }
 
-    return {init, setCollapsed};
+    return {init, open, close};
 })();
 
 document.addEventListener('DOMContentLoaded', SidebarNav.init);

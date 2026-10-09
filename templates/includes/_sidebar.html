@@ -1,0 +1,54 @@
+{% load core_extras %}
+{% url 'core:home' as home_url %}
+{% url 'core:book_list' as catalog_url %}
+{% url 'core:search' as search_url %}
+{% url 'core:profile' as profile_url %}
+{% nav_active 'core:profile' as profile_active %}
+
+<div class="sidebar-scrim" data-sidebar-close aria-hidden="true"></div>
+
+<aside class="sidebar" id="sidebar" data-sidebar>
+    <div class="sidebar__header">
+        {% include 'includes/_brand.html' %}
+        <button type="button" class="sidebar__close" aria-label="Закрити меню" data-sidebar-close data-sidebar-initial-focus>
+            <i data-lucide="x" size="16" aria-hidden="true"></i>
+        </button>
+    </div>
+
+    <nav class="sidebar__nav" aria-label="Основна навігація">
+        <span class="sidebar__label">Огляд</span>
+        {% include 'includes/_sidebar_item.html' with url_name='core:home' href=home_url icon='home' label='Головна' %}
+        {% include 'includes/_sidebar_item.html' with url_name='core:book_list' href=catalog_url icon='library' label='Каталог' %}
+        {% include 'includes/_sidebar_item.html' with url_name='core:search' href=search_url icon='search' label='Пошук' %}
+
+        {% if user.is_authenticated %}
+            <span class="sidebar__label">Мій простір</span>
+            {% include 'includes/_sidebar_item.html' with href=profile_url fragment='recommendations' icon='disc-3' label='Мої рекомендації' %}
+            {% include 'includes/_sidebar_item.html' with href=profile_url fragment='playlists' icon='list-music' label='Мої плейлисти' %}
+        {% endif %}
+    </nav>
+
+    <div class="sidebar__footer">
+        {% if user.is_authenticated %}
+            <a href="{{ profile_url }}"
+               class="sidebar__user{% if profile_active %} is-active{% endif %}"
+               {% if profile_active %}aria-current="page"{% endif %}>
+                <span class="user-avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
+                <span class="sidebar__user-text">
+                    <span class="sidebar__user-name">{{ user.username }}</span>
+                    <span class="sidebar__user-role">{% if user.profile.is_verified_author %}Підтверджений автор{% else %}Учасник{% endif %}</span>
+                </span>
+            </a>
+            <form action="{% url 'logout' %}" method="post" data-no-busy>
+                {% csrf_token %}
+                <button type="submit" class="sidebar__item">
+                    <i data-lucide="log-out" size="18" class="sidebar__item-icon" aria-hidden="true"></i>
+                    <span class="sidebar__item-label">Вийти</span>
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-ghost btn-sm w-full justify-center">Увійти</a>
+            <a href="{% url 'signup' %}" class="btn btn-accent btn-sm w-full justify-center">Реєстрація</a>
+        {% endif %}
+    </div>
+</aside>

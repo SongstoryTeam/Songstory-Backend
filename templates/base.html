@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="uk" data-service-worker="{% if SERVICE_WORKER_ENABLED %}on{% else %}off{% endif %}">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -34,20 +34,9 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap"></noscript>
+    <script src="{% static 'core/js/modules/theme-init.js' %}"></script>
     <link rel="stylesheet" href="{% static 'core/css/tokens.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/layout.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/brand.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/avatar.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/topbar.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/drawer.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/utilities.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/components.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/search.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/auth.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/styles.css' %}">
     {% block extra_css %}{% endblock %}
 
     {% if PLAUSIBLE_DOMAIN %}
@@ -55,21 +44,24 @@
     {% endif %}
 </head>
 <body>
-{% include 'includes/_drawer.html' %}
+<div class="app-shell">
+    {% include 'includes/_sidebar.html' %}
 
-<div class="main-content" data-drawer-background>
-    {% include 'includes/_topbar.html' %}
-    {% include 'includes/_messages.html' %}
+    <div class="app-content" data-sidebar-background>
+        {% include 'includes/_topbar.html' %}
+        {% include 'includes/_messages.html' %}
 
-    <main id="main-content">
-        {% block content %}{% endblock %}
-    </main>
+        <main id="main-content">
+            {% block content %}{% endblock %}
+        </main>
 
-    {% include 'includes/_footer.html' %}
+        {% include 'includes/_footer.html' %}
+    </div>
 </div>
 
 <script src="{% static 'vendor/lucide.min.js' %}" defer></script>
-<script src="{% static 'core/js/modules/drawer.js' %}" defer></script>
+<script src="{% static 'core/js/modules/theme.js' %}" defer></script>
+<script src="{% static 'core/js/modules/sidebar.js' %}" defer></script>
 <script src="{% static 'core/js/forms.js' %}" defer></script>
 <script src="{% static 'core/js/covers.js' %}" defer></script>
 <script src="{% static 'core/js/player.js' %}" defer></script>
