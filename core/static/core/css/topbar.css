@@ -87,19 +87,6 @@
     padding-inline: 22px;
 }
 
-.theme-toggle__icon {
-    display: flex;
-}
-
-.theme-toggle__icon--light,
-[data-theme="dark"] .theme-toggle__icon--dark {
-    display: none;
-}
-
-[data-theme="dark"] .theme-toggle__icon--light {
-    display: flex;
-}
-
 @media (max-width: 600px) {
     .topbar__action-label,
     .topbar__action--secondary {

@@ -1,12 +1,22 @@
 window.Songstery = window.Songstery || {};
 
+/**
+ * Модуль теми. Підключається синхронно в <head>, щоб тема застосувалась до
+ * першого малювання сторінки (без «мигання»).
+ *
+ * Збережена перевага: 'light' | 'dark' | 'system' (за замовчуванням — 'system').
+ * На <html> завжди виставляються:
+ *   data-theme            — фактична тема ('light' | 'dark'), її читає CSS;
+ *   data-theme-preference — вибір користувача ('light' | 'dark' | 'system').
+ */
 window.Songstery.theme = (() => {
     const STORAGE_KEY = 'songstery:theme';
-    const ATTRIBUTE = 'data-theme';
-    const THEMES = Object.freeze({LIGHT: 'light', DARK: 'dark'});
+    const CHANGE_EVENT = 'songstery:themechange';
+    const PREFERENCES = Object.freeze({LIGHT: 'light', DARK: 'dark', SYSTEM: 'system'});
 
     const root = document.documentElement;
     const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    const isPreference = (value) => Object.values(PREFERENCES).includes(value);
 
     function readStored() {
         try {
@@ -16,42 +26,50 @@ window.Songstery.theme = (() => {
         }
     }
 
-    function writeStored(theme) {
+    function writeStored(preference) {
         try {
-            window.localStorage.setItem(STORAGE_KEY, theme);
+            if (preference === PREFERENCES.SYSTEM) window.localStorage.removeItem(STORAGE_KEY);
+            else window.localStorage.setItem(STORAGE_KEY, preference);
         } catch {
-            return;
+            // Сховище недоступне (приватний режим) — тема діє лише на цій сторінці.
         }
     }
 
-    function resolve() {
+    function preference() {
         const stored = readStored();
-        if (Object.values(THEMES).includes(stored)) return stored;
-        return systemPrefersDark.matches ? THEMES.DARK : THEMES.LIGHT;
+        return isPreference(stored) ? stored : PREFERENCES.SYSTEM;
     }
 
-    function apply(theme) {
-        root.setAttribute(ATTRIBUTE, theme);
+    function resolve(value = preference()) {
+        if (value !== PREFERENCES.SYSTEM) return value;
+        return systemPrefersDark.matches ? PREFERENCES.DARK : PREFERENCES.LIGHT;
     }
 
-    function current() {
-        return root.getAttribute(ATTRIBUTE);
+    function apply() {
+        const value = preference();
+        root.setAttribute('data-theme', resolve(value));
+        root.setAttribute('data-theme-preference', value);
+        document.dispatchEvent(new CustomEvent(CHANGE_EVENT, {detail: {preference: value, theme: resolve(value)}}));
     }
 
-    function set(theme) {
-        apply(theme);
-        writeStored(theme);
+    function setPreference(value) {
+        if (!isPreference(value)) return;
+        writeStored(value);
+        apply();
     }
 
-    function toggle() {
-        set(current() === THEMES.DARK ? THEMES.LIGHT : THEMES.DARK);
+    function subscribe(listener) {
+        document.addEventListener(CHANGE_EVENT, (event) => listener(event.detail));
     }
 
     systemPrefersDark.addEventListener('change', () => {
-        if (!readStored()) apply(resolve());
+        if (preference() === PREFERENCES.SYSTEM) apply();
+    });
+    window.addEventListener('storage', (event) => {
+        if (event.key === STORAGE_KEY || event.key === null) apply();
     });
 
-    apply(resolve());
+    apply();
 
-    return {THEMES, current, set, toggle};
+    return {PREFERENCES, preference, resolved: () => resolve(), setPreference, subscribe};
 })();

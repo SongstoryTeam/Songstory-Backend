@@ -98,10 +98,14 @@ else:
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
 RATELIMIT_USE_CACHE = "default"
+# Кількість довірених reverse-proxy перед застосунком (для коректного IP у лімітах).
+TRUSTED_PROXY_COUNT = env.int("TRUSTED_PROXY_COUNT", default=0 if DEBUG else 1)
+RATELIMIT_IP_META_KEY = "core.ratelimits.client_ip"
 RATE_LIMITS = {
     "signup": "5/h",
     "signup_check": "30/m",
     "search": "60/m",
+    "search_suggest": "180/m",
     "import_book": "20/h",
     "recommend": "30/h",
     "comment": "10/m",

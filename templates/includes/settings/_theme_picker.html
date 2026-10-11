@@ -1,0 +1,25 @@
+<fieldset class="theme-picker" data-theme-picker>
+    <legend class="visually-hidden">Тема оформлення</legend>
+    {% for option in theme_options %}
+        <label class="theme-option">
+            <input type="radio" class="theme-option__input" name="theme" value="{{ option.value }}" data-theme-option>
+            <span class="theme-option__card">
+                <span class="theme-option__preview" aria-hidden="true">
+                    {% if option.value == 'system' %}
+                        {% include 'includes/settings/_theme_mock.html' with variant='light' %}
+                        {% include 'includes/settings/_theme_mock.html' with variant='dark' half=True %}
+                    {% else %}
+                        {% include 'includes/settings/_theme_mock.html' with variant=option.value %}
+                    {% endif %}
+                </span>
+                <span class="theme-option__meta">
+                    <i data-lucide="{{ option.icon }}" size="16" class="theme-option__icon" aria-hidden="true"></i>
+                    <span class="theme-option__label">{{ option.label }}</span>
+                    <span class="theme-option__check" aria-hidden="true"><i data-lucide="check" size="12"></i></span>
+                </span>
+                <span class="theme-option__hint">{{ option.hint }}</span>
+            </span>
+        </label>
+    {% endfor %}
+</fieldset>
+<p class="visually-hidden" role="status" aria-live="polite" data-theme-status></p>

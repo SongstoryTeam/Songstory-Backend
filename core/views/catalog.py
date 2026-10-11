@@ -8,7 +8,7 @@ from core.models import Book
 from core.ratelimits import IP, rate_limited
 from core.services import catalog
 from core.services.google_books import search_google_books
-from core.text import normalize
+from core.text import clean_query, normalize
 
 MIN_EXTERNAL_QUERY_LENGTH = 2
 
@@ -45,7 +45,7 @@ def book_list(request):
 
 @rate_limited("search", key=IP, methods=("GET",))
 def search(request):
-    query = request.GET.get("q", "").strip()
+    query = clean_query(request.GET.get("q", ""))
     context = {"query": query, "local_books": [], "external_books": [], "external_unavailable": False}
     if query:
         local_books = catalog.search_local(request.user, query, settings.SEARCH_PAGE_SIZE)
@@ -67,11 +67,12 @@ def search(request):
     return render(request, "core/search_results.html", context)
 
 
-@rate_limited("search", key=IP, methods=("GET",), json=True)
+@rate_limited("search_suggest", key=IP, methods=("GET",), json=True)
 def search_suggest(request):
-    query = request.GET.get("q", "").strip()
-    if not query:
-        return JsonResponse({"results": []})
+    query = clean_query(request.GET.get("q", ""))
+    all_url = f"{reverse('core:search')}?{urlencode({'q': query})}"
+    if len(query) < settings.SEARCH_SUGGEST_MIN_LENGTH:
+        return JsonResponse({"results": [], "all_url": all_url})
     books = catalog.search_local(request.user, query, settings.SEARCH_SUGGEST_LIMIT)
     return JsonResponse(
         {
@@ -84,6 +85,6 @@ def search_suggest(request):
                 }
                 for book in books
             ],
-            "all_url": f"{reverse('core:search')}?{urlencode({'q': query})}",
+            "all_url": all_url,
         }
     )

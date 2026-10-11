@@ -1,0 +1,30 @@
+<section class="settings-section" id="account" aria-labelledby="account-title">
+    <header class="settings-section__head">
+        <h2 class="settings-section__title" id="account-title">Акаунт</h2>
+        <p class="settings-section__desc">
+            {% if user.is_authenticated %}Ви увійшли як <strong>{{ user.username }}</strong>.{% else %}Увійдіть, щоб додавати книги та рекомендації.{% endif %}
+        </p>
+    </header>
+
+    <div class="settings-card">
+        {% if user.is_authenticated %}
+            {% url 'core:profile' as profile_url %}
+            {% include 'includes/settings/_link_row.html' with href=profile_url icon='user-round' title='Профіль' desc='Дані акаунта, ваші рекомендації та плейлисти' %}
+            <form action="{% url 'logout' %}" method="post" class="settings-row-form" data-no-busy>
+                {% csrf_token %}
+                <button type="submit" class="settings-row settings-row--action">
+                    <span class="settings-row__icon"><i data-lucide="log-out" size="18" aria-hidden="true"></i></span>
+                    <span class="settings-row__text">
+                        <span class="settings-row__title">Вийти</span>
+                        <span class="settings-row__desc">Завершити сеанс на цьому пристрої</span>
+                    </span>
+                </button>
+            </form>
+        {% else %}
+            {% url 'login' as login_url %}
+            {% url 'signup' as signup_url %}
+            {% include 'includes/settings/_link_row.html' with href=login_url icon='log-in' title='Увійти' desc='Вже маєте акаунт' %}
+            {% include 'includes/settings/_link_row.html' with href=signup_url icon='user-plus' title='Створити акаунт' desc='Безкоштовно, це займе хвилину' %}
+        {% endif %}
+    </div>
+</section>

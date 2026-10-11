@@ -1,0 +1,2 @@
+core/static/core/js/modules/theme.js
+core/static/core/js/site_search.js

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from core.views import books, catalog, comments, music, accounts, playlists, verification
+from core.views import accounts, books, catalog, comments, music, playlists, preferences, verification
 
 app_name = "core"
 
@@ -25,5 +25,6 @@ urlpatterns = [
     path("comments/add/", comments.add_comment, name="add_comment"),
     path("comments/<int:pk>/delete/", comments.delete_comment, name="delete_comment"),
     path("profile/", accounts.profile, name="profile"),
+    path("settings/", preferences.settings_page, name="settings"),
     path("verification/<int:pk>/<str:field>/", verification.proof_download, name="proof_download"),
 ]

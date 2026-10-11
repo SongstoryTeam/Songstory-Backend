@@ -184,7 +184,13 @@
   transition: background var(--transition);
 }
 
-.site-search__footer:hover { background: var(--clr-accent-lt); }
+.site-search__footer:hover,
+.site-search__footer[aria-selected="true"] { background: var(--clr-accent-lt); }
+
+.site-search__footer-hint {
+  font-weight: 400;
+  color: var(--clr-muted);
+}
 
 @media (max-width: 600px) {
   .site-search__panel {

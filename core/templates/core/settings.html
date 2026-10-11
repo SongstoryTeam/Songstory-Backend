@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Налаштування — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, follow{% endblock %}
+
+{% block content %}
+    <div class="content-pad">
+        <header class="settings-header">
+            <h1 class="page-title">Налаштування</h1>
+            <p class="settings-header__lead">Зміни застосовуються одразу й зберігаються в цьому браузері.</p>
+        </header>
+
+        <div class="settings">
+            <nav class="settings-nav" aria-label="Розділи налаштувань">
+                <a class="settings-nav__link" href="#appearance"><i data-lucide="palette" size="16" aria-hidden="true"></i> Вигляд</a>
+                <a class="settings-nav__link" href="#account"><i data-lucide="user-round" size="16" aria-hidden="true"></i> Акаунт</a>
+            </nav>
+
+            <div class="settings__sections">
+                {% include 'includes/settings/_appearance.html' %}
+                {% include 'includes/settings/_account.html' %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'core/js/modules/settings-theme.js' %}" defer></script>
+{% endblock %}
