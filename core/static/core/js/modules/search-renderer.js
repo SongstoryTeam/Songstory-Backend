@@ -54,6 +54,24 @@ window.Songstery.searchRenderer = (() => {
         return listItem(link);
     }
 
+    function groupHeading(text) {
+        return listItem(element('div', 'site-search__group', text));
+    }
+
+    function externalItem(result, index) {
+        const button = option(element('button', 'site-search__item'), index);
+        button.type = 'button';
+        button.dataset.externalId = result.external_id;
+
+        const meta = [result.author, result.year].filter(Boolean).join(' · ');
+        const body = element('span', 'site-search__item-body');
+        body.appendChild(element('span', 'site-search__item-title', result.title));
+        if (meta) body.appendChild(element('span', 'site-search__item-meta', meta));
+
+        button.append(cover(result.cover_url), body, element('span', 'site-search__item-flag', 'Додати'));
+        return listItem(button);
+    }
+
     function footerItem(payload, query, index) {
         const link = option(element('a', 'site-search__footer'), index);
         link.href = payload.all_url;
@@ -80,10 +98,23 @@ window.Songstery.searchRenderer = (() => {
 
     return {
         results(payload, query) {
-            const items = payload.results.length
-                ? payload.results.map(resultItem)
-                : [message('Нічого не знайдено в каталозі')];
-            items.push(footerItem(payload, query, payload.results.length));
+            const local = payload.results;
+            const external = payload.external || [];
+            const items = [];
+            let index = 0;
+
+            if (local.length) {
+                items.push(groupHeading('У каталозі'));
+                local.forEach((result) => items.push(resultItem(result, index++)));
+            }
+            if (external.length) {
+                items.push(groupHeading('Можна додати з Google Books'));
+                external.forEach((result) => items.push(externalItem(result, index++)));
+            }
+            if (!local.length && !external.length) {
+                items.push(message(payload.external_unavailable ? 'Google Books тимчасово недоступний' : 'Нічого не знайдено'));
+            }
+            items.push(footerItem(payload, query, index));
             return items;
         },
         loading() {

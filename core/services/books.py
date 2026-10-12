@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models import Max
 
 from core.models import Author, Book, Chapter, Genre
-from core.text import normalize
+from core.text import search_form
 
 from .google_books import ExternalBook
 
@@ -49,7 +49,9 @@ def create_book(
 
 @transaction.atomic
 def import_external_book(external: ExternalBook, user: User) -> tuple[Book, bool]:
-    existing = Book.objects.filter(google_books_id=external.external_id).first()
+    existing = Book.objects.filter(google_books_id=external.external_id).first() or find_duplicate(
+        external.title, external.author
+    )
     if existing:
         return existing, False
     book = Book.objects.create(
@@ -67,7 +69,7 @@ def import_external_book(external: ExternalBook, user: User) -> tuple[Book, bool
 
 
 def find_duplicate(title: str, author_name: str) -> Book | None:
-    key = normalize(f"{title} {author_name}")
+    key = search_form(f"{title} {author_name}")
     return Book.objects.filter(search_key=key).first()
 
 

@@ -7,8 +7,8 @@ from urllib.parse import urlencode
 from core.models import Book
 from core.ratelimits import IP, rate_limited
 from core.services import catalog
-from core.services.google_books import search_google_books
-from core.text import clean_query, normalize
+from core.services.google_books import ExternalBook, search_google_books
+from core.text import clean_query, search_form
 
 MIN_EXTERNAL_QUERY_LENGTH = 2
 
@@ -48,43 +48,57 @@ def search(request):
     query = clean_query(request.GET.get("q", ""))
     context = {"query": query, "local_books": [], "external_books": [], "external_unavailable": False}
     if query:
-        local_books = catalog.search_local(request.user, query, settings.SEARCH_PAGE_SIZE)
-        context["local_books"] = local_books
-        if len(query) >= MIN_EXTERNAL_QUERY_LENGTH:
+        context["local_books"] = catalog.search_local(request.user, query, settings.SEARCH_PAGE_SIZE)
+        if len(search_form(query)) >= MIN_EXTERNAL_QUERY_LENGTH:
             external = search_google_books(query)
-            known_ids = set(
-                Book.objects.filter(google_books_id__in=[item.external_id for item in external.books]).values_list(
-                    "google_books_id", flat=True
-                )
-            )
-            known_keys = {normalize(f"{book.title} {book.author.name if book.author else ''}") for book in local_books}
-            context["external_books"] = [
-                item
-                for item in external.books
-                if item.external_id not in known_ids and normalize(f"{item.title} {item.author}") not in known_keys
-            ]
+            context["external_books"] = catalog.exclude_known(external.books)
             context["external_unavailable"] = external.unavailable
     return render(request, "core/search_results.html", context)
+
+
+def serialize_book(book: Book) -> dict:
+    return {
+        "title": book.title,
+        "author": book.author.name if book.author else "",
+        "cover_url": book.cover_url,
+        "url": book.get_absolute_url(),
+    }
+
+
+def serialize_external(item: ExternalBook) -> dict:
+    return {
+        "external_id": item.external_id,
+        "title": item.title,
+        "author": item.author,
+        "year": item.year,
+        "cover_url": item.cover_url,
+    }
 
 
 @rate_limited("search_suggest", key=IP, methods=("GET",), json=True)
 def search_suggest(request):
     query = clean_query(request.GET.get("q", ""))
-    all_url = f"{reverse('core:search')}?{urlencode({'q': query})}"
-    if len(query) < settings.SEARCH_SUGGEST_MIN_LENGTH:
-        return JsonResponse({"results": [], "all_url": all_url})
-    books = catalog.search_local(request.user, query, settings.SEARCH_SUGGEST_LIMIT)
-    return JsonResponse(
-        {
-            "results": [
-                {
-                    "title": book.title,
-                    "author": book.author.name if book.author else "",
-                    "cover_url": book.cover_url,
-                    "url": book.get_absolute_url(),
-                }
-                for book in books
-            ],
-            "all_url": all_url,
-        }
+    search_url = reverse("core:search")
+    all_url = f"{search_url}?{urlencode({'q': query})}"
+    payload = {"results": [], "external": [], "external_unavailable": False, "all_url": all_url}
+    if len(query) < settings.SEARCH_SUGGEST_MIN_LENGTH or not search_form(query):
+        return JsonResponse(payload)
+
+    local = catalog.search_local(request.user, query, settings.SEARCH_SUGGEST_LIMIT)
+    payload["results"] = [serialize_book(book) for book in local]
+
+    wants_external = (
+        len(search_form(query)) >= settings.SEARCH_SUGGEST_EXTERNAL_MIN_LENGTH
+        and len(local) < settings.SEARCH_SUGGEST_LIMIT
     )
+    if wants_external:
+        external = search_google_books(query, limit=settings.SEARCH_SUGGEST_EXTERNAL_LIMIT)
+        payload["external"] = [serialize_external(item) for item in catalog.exclude_known(external.books)]
+        payload["external_unavailable"] = external.unavailable
+
+    payload.update(
+        import_url=reverse("core:import_book"),
+        login_url=f"{reverse('login')}?{urlencode({'next': all_url})}",
+        can_import=request.user.is_authenticated,
+    )
+    return JsonResponse(payload)

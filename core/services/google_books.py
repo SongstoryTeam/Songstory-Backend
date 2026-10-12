@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from django.conf import settings
 from django.core.cache import cache
 
-from core.text import normalize
+from core.text import search_form
 
 from .http import ExternalServiceError, get_json
 
@@ -67,8 +67,22 @@ def _parse_item(item: dict) -> ExternalBook | None:
     )
 
 
+def book_key(book: "ExternalBook") -> str:
+    return search_form(f"{book.title} {book.author}")
+
+
+def _dedupe(books: list[ExternalBook]) -> list[ExternalBook]:
+    unique: dict[str, ExternalBook] = {}
+    for book in books:
+        key = book_key(book)
+        current = unique.get(key)
+        if current is None or (not current.cover_url and book.cover_url):
+            unique[key] = book
+    return list(unique.values())
+
+
 def _cache_key(query: str) -> str:
-    return f"google_books:{settings.CATALOG_LANGUAGE}:{normalize(query)}"
+    return f"google_books:{settings.CATALOG_LANGUAGE}:{search_form(query)}"
 
 
 def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
@@ -92,7 +106,7 @@ def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
     except ExternalServiceError:
         return ExternalSearch(books=[], unavailable=True)
 
-    books = [book for book in map(_parse_item, payload.get("items", [])) if book]
+    books = _dedupe([book for book in map(_parse_item, payload.get("items", [])) if book])
     cache.set(key, books, settings.EXTERNAL_SEARCH_CACHE_TTL)
     return ExternalSearch(books=books[:limit])
 

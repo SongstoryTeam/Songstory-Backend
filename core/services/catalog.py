@@ -4,6 +4,8 @@ from django.db.models import Count, Q
 
 from core.models import Book, Genre
 
+from .google_books import ExternalBook, book_key
+
 
 SORT_OPTIONS = {
     "new": ("Нові", ("-created_at", "-pk")),
@@ -51,3 +53,17 @@ def genres_in_use():
 
 def search_local(user, query: str, limit: int):
     return list(visible_books(user).search(query)[:limit])
+
+
+def exclude_known(items: list[ExternalBook]) -> list[ExternalBook]:
+    if not items:
+        return []
+    known_ids = set(
+        Book.objects.filter(google_books_id__in=[item.external_id for item in items]).values_list(
+            "google_books_id", flat=True
+        )
+    )
+    known_keys = set(
+        Book.objects.filter(search_key__in=[book_key(item) for item in items]).values_list("search_key", flat=True)
+    )
+    return [item for item in items if item.external_id not in known_ids and book_key(item) not in known_keys]

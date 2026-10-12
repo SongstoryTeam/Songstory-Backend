@@ -1,9 +1,9 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.urls import reverse
 
-from core.text import normalize, search_terms
+from core.text import search_form, search_terms
 from core.utils.slugs import generate_unique_slug
 
 
@@ -55,10 +55,21 @@ class BookQuerySet(models.QuerySet):
         return self.filter(condition)
 
     def search(self, query: str) -> "BookQuerySet":
+        terms = search_terms(query)
+        if not terms:
+            return self.none()
         queryset = self
-        for term in search_terms(query):
+        for term in terms:
             queryset = queryset.filter(search_key__contains=term)
-        return queryset
+        phrase = " ".join(terms)
+        return queryset.annotate(
+            match_rank=Case(
+                When(title_key=phrase, then=Value(0)),
+                When(title_key__startswith=phrase, then=Value(1)),
+                default=Value(2),
+                output_field=IntegerField(),
+            )
+        ).order_by("match_rank", "-created_at", "-pk")
 
     def with_recommendation_count(self) -> "BookQuerySet":
         return self.annotate(recommendations_total=Count("recommendations", distinct=True))
@@ -92,6 +103,7 @@ class Book(models.Model):
     is_approved = models.BooleanField("Схвалено", default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     search_key = models.CharField(max_length=600, editable=False, default="")
+    title_key = models.CharField(max_length=255, editable=False, default="", db_index=True)
 
     objects = BookQuerySet.as_manager()
 
@@ -108,14 +120,15 @@ class Book(models.Model):
         if not self.slug:
             self.slug = generate_unique_slug(Book, self.title, self)
         self.search_key = self.build_search_key()
+        self.title_key = search_form(self.title)[:255]
         update_fields = kwargs.get("update_fields")
         if update_fields is not None and "title" in update_fields:
-            kwargs["update_fields"] = {*update_fields, "search_key"}
+            kwargs["update_fields"] = {*update_fields, "search_key", "title_key"}
         super().save(*args, **kwargs)
 
     def build_search_key(self) -> str:
         author_name = self.author.name if self.author_id else ""
-        return normalize(f"{self.title} {author_name}")[:600]
+        return search_form(f"{self.title} {author_name}")[:600]
 
     def get_absolute_url(self) -> str:
         return reverse("core:book_detail", kwargs={"slug": self.slug})

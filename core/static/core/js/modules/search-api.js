@@ -16,6 +16,32 @@ window.Songstery.searchApi = (() => {
 
     const ERROR_KINDS = Object.freeze({RATE_LIMITED: 'rate_limited', SERVER: 'server', NETWORK: 'network'});
 
+    function csrfToken() {
+        const field = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (field) return field.value;
+        const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : '';
+    }
+
+    async function importBook(url, externalId) {
+        const body = new FormData();
+        body.append('external_id', externalId);
+        let response;
+        try {
+            response = await fetch(url, {
+                method: 'POST',
+                body,
+                credentials: 'same-origin',
+                headers: {'X-CSRFToken': csrfToken(), Accept: 'application/json'},
+            });
+        } catch (error) {
+            throw new SearchError(ERROR_KINDS.NETWORK, error.message);
+        }
+        const data = await response.json().catch(() => null);
+        if (data && data.url) return data.url;
+        throw new SearchError(ERROR_KINDS.SERVER, String(response.status));
+    }
+
     function createClient(url) {
         const cache = new Map();
         let controller = null;
@@ -58,5 +84,5 @@ window.Songstery.searchApi = (() => {
         return {suggest, abort};
     }
 
-    return {createClient, ERROR_KINDS};
+    return {createClient, importBook, ERROR_KINDS};
 })();

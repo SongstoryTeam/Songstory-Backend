@@ -4,6 +4,7 @@ badge-check
 book-open
 calendar
 check
+chevron-left
 chevron-right
 contact
 disc-3

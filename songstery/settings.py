@@ -142,7 +142,7 @@ STORAGES = {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
             if DEBUG
-            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            else "core.storage.TolerantManifestStaticFilesStorage"
         )
     },
 }
@@ -178,7 +178,9 @@ CATALOG_PAGE_SIZE = 24
 SEARCH_PAGE_SIZE = 24
 SEARCH_SUGGEST_LIMIT = 6
 SEARCH_SUGGEST_MIN_LENGTH = 2
-SEARCH_SUGGEST_DEBOUNCE_MS = 250
+SEARCH_SUGGEST_DEBOUNCE_MS = 350
+SEARCH_SUGGEST_EXTERNAL_MIN_LENGTH = 3
+SEARCH_SUGGEST_EXTERNAL_LIMIT = 5
 TRACK_SEARCH_LIMIT = 12
 BULK_CHAPTERS_MAX = 100
 COMMENT_MAX_LENGTH = 2000
@@ -187,7 +189,7 @@ RECOMMENDATION_COMMENT_MAX_LENGTH = 500
 EXTERNAL_HTTP_TIMEOUT = 5
 EXTERNAL_SEARCH_LIMIT = 10
 EXTERNAL_SEARCH_CACHE_TTL = 60 * 60 * 24
-GOOGLE_BOOKS_API_URL = "https://www.googleapis.com/books/v1/volumes"
+GOOGLE_BOOKS_API_URL = env("GOOGLE_BOOKS_API_URL", default="https://www.googleapis.com/books/v1/volumes")
 GOOGLE_BOOKS_API_KEY = env("GOOGLE_BOOKS_API_KEY", default="")
 
 VERIFICATION_UPLOAD_MAX_BYTES = 10 * 1024 * 1024

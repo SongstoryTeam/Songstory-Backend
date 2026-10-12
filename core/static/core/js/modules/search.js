@@ -22,12 +22,14 @@
         [searchApi.ERROR_KINDS.NETWORK]: 'Немає з’єднання. Перевірте інтернет.',
         [searchApi.ERROR_KINDS.SERVER]: 'Не вдалося виконати пошук. Спробуйте ще раз.',
     };
+    const IMPORT_FAILED = 'Не вдалося додати книгу. Спробуйте ще раз.';
 
     const client = searchApi.createClient(form.dataset.suggestUrl);
     let debounceTimer = null;
     let skeletonTimer = null;
     let activeIndex = -1;
     let lastQuery = '';
+    let lastPayload = null;
 
     const options = () => Array.from(listbox.querySelectorAll('[role="option"]'));
     const currentQuery = () => input.value.trim();
@@ -81,8 +83,10 @@
             const payload = await client.suggest(query);
             window.clearTimeout(skeletonTimer);
             listbox.removeAttribute('aria-busy');
+            lastPayload = payload;
             show(searchRenderer.results(payload, query));
-            announce(payload.results.length ? `Знайдено підказок: ${payload.results.length}` : 'Нічого не знайдено');
+            const total = payload.results.length + (payload.external || []).length;
+            announce(total ? `Знайдено підказок: ${total}` : 'Нічого не знайдено');
         } catch (error) {
             window.clearTimeout(skeletonTimer);
             if (error.name === 'AbortError') return;
@@ -90,6 +94,28 @@
             show(searchRenderer.error(MESSAGES[error.kind] || MESSAGES.server));
             announce(MESSAGES[error.kind] || MESSAGES.server);
         }
+    }
+
+    async function chooseExternal(button) {
+        if (!lastPayload) return;
+        if (!lastPayload.can_import) {
+            window.location.assign(lastPayload.login_url);
+            return;
+        }
+        button.classList.add('is-busy');
+        button.setAttribute('aria-busy', 'true');
+        try {
+            window.location.assign(await searchApi.importBook(lastPayload.import_url, button.dataset.externalId));
+        } catch (error) {
+            button.classList.remove('is-busy');
+            button.removeAttribute('aria-busy');
+            announce(IMPORT_FAILED);
+        }
+    }
+
+    function onListboxClick(event) {
+        const button = event.target.closest('[data-external-id]');
+        if (button) chooseExternal(button);
     }
 
     function onInput() {
@@ -156,6 +182,7 @@
     input.addEventListener('keydown', onKeydown);
     input.addEventListener('focus', onFocus);
     clearButton.addEventListener('click', onClear);
+    listbox.addEventListener('click', onListboxClick);
     form.addEventListener('focusout', onFocusOut);
     form.addEventListener('submit', () => {
         stopPending();

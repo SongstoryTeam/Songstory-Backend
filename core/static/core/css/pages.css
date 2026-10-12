@@ -576,3 +576,51 @@ a.list-row:hover {
     display: grid;
     gap: 8px;
 }
+
+.shelf .books-grid {
+    scroll-padding-inline: var(--rail-inset);
+}
+
+.section-head__tools {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.rail-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.rail-controls[hidden] {
+    display: none;
+}
+
+.rail-button {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--clr-border);
+    border-radius: 50%;
+    background: var(--clr-surface);
+    color: var(--clr-ink);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+}
+
+.rail-button:hover:not(:disabled) {
+    border-color: var(--clr-accent);
+    color: var(--clr-accent);
+}
+
+.rail-button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+@media (hover: none), (max-width: 700px) {
+    .rail-controls {
+        display: none;
+    }
+}

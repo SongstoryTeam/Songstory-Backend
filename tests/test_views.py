@@ -107,6 +107,20 @@ class SearchAndImportTests(TestCase):
         self.assertRedirects(first, book.get_absolute_url())
         self.assertRedirects(second, book.get_absolute_url())
 
+    def test_import_returns_location_as_json_for_script_clients(self):
+        self.client.force_login(self.user)
+        with mock.patch("core.views.books.get_google_book", return_value=self.external):
+            response = self.client.post(reverse("core:import_book"), {"external_id": "gb1"}, headers={"accept": "application/json"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["url"], Book.objects.get().get_absolute_url())
+
+    def test_import_failure_reports_error_location(self):
+        self.client.force_login(self.user)
+        with mock.patch("core.views.books.get_google_book", return_value=None):
+            response = self.client.post(reverse("core:import_book"), {"external_id": "gb1"}, headers={"accept": "application/json"})
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.json()["url"], reverse("core:search"))
+
     def test_import_requires_login_and_post(self):
         self.assertEqual(self.client.post(reverse("core:import_book"), {"external_id": "gb1"}).status_code, 302)
         self.client.force_login(self.user)

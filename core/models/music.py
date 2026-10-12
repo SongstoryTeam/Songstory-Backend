@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 
-from core.text import normalize, search_terms
+from core.text import search_form, search_terms
 
 from .book import Book, Chapter
 
@@ -16,8 +16,11 @@ class Platform(models.TextChoices):
 
 class TrackQuerySet(models.QuerySet):
     def search(self, query: str) -> "TrackQuerySet":
+        terms = search_terms(query)
+        if not terms:
+            return self.none()
         queryset = self
-        for term in search_terms(query):
+        for term in terms:
             queryset = queryset.filter(search_key__contains=term)
         return queryset
 
@@ -43,7 +46,7 @@ class Track(models.Model):
         return f"{self.artist} — {self.title}" if self.artist else self.title
 
     def save(self, *args, **kwargs) -> None:
-        self.search_key = normalize(f"{self.title} {self.artist}")[:520]
+        self.search_key = search_form(f"{self.title} {self.artist}")[:520]
         update_fields = kwargs.get("update_fields")
         if update_fields is not None:
             kwargs["update_fields"] = {*update_fields, "search_key"}

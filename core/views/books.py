@@ -1,8 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from core.forms import BookCreateForm, ChapterCountForm, CommentForm
@@ -98,6 +99,16 @@ def create_book(request):
     return render(request, "core/create_book.html", {"form": form, "duplicate": form.duplicate})
 
 
+def wants_json(request) -> bool:
+    return request.headers.get("accept", "").startswith("application/json")
+
+
+def respond_with_location(request, location: str, status: int = 200):
+    if wants_json(request):
+        return JsonResponse({"url": location}, status=status)
+    return redirect(location)
+
+
 @login_required
 @require_POST
 @rate_limited("import_book")
@@ -105,10 +116,10 @@ def import_book(request):
     external = get_google_book(request.POST.get("external_id", "").strip())
     if external is None:
         messages.error(request, "Не вдалося отримати дані про книгу. Спробуйте пізніше.")
-        return redirect("core:search")
+        return respond_with_location(request, reverse("core:search"), status=502)
     book, created = book_service.import_external_book(external, request.user)
     messages.success(request, "Книгу додано до каталогу." if created else "Ця книга вже є в каталозі.")
-    return redirect(book)
+    return respond_with_location(request, book.get_absolute_url())
 
 
 @login_required

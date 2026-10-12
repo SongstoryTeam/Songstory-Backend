@@ -28,10 +28,20 @@
                 <section class="shelf" aria-labelledby="shelf-{{ shelf.key }}">
                     <div class="section-head">
                         <h2 class="section-title" id="shelf-{{ shelf.key }}">{{ shelf.title }}</h2>
-                        <a href="{% url 'core:book_list' %}{% if shelf.key == 'popular' %}?sort=popular{% endif %}"
-                           class="section-head__link">Усі книги</a>
+                        <div class="section-head__tools">
+                            <div class="rail-controls" data-rail-controls hidden>
+                                <button type="button" class="rail-button" data-rail-prev aria-label="Прокрутити назад">
+                                    <i data-lucide="chevron-left" size="18" aria-hidden="true"></i>
+                                </button>
+                                <button type="button" class="rail-button" data-rail-next aria-label="Прокрутити вперед">
+                                    <i data-lucide="chevron-right" size="18" aria-hidden="true"></i>
+                                </button>
+                            </div>
+                            <a href="{% url 'core:book_list' %}{% if shelf.key == 'popular' %}?sort=popular{% endif %}"
+                               class="section-head__link">Усі книги</a>
+                        </div>
                     </div>
-                    <div class="books-grid">
+                    <div class="books-grid" data-rail>
                         {% for book in shelf.books %}
                             {% include 'includes/_book_card.html' with book=book show_count=True %}
                         {% endfor %}
