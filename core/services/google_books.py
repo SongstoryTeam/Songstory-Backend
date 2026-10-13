@@ -51,7 +51,7 @@ def _parse_isbn(info: dict) -> str:
     return ""
 
 
-def _parse_item(item: dict) -> ExternalBook | None:
+def parse_volume(item: dict) -> ExternalBook | None:
     info = item.get("volumeInfo") or {}
     title = (info.get("title") or "").strip()
     if not title or info.get("language") != settings.CATALOG_LANGUAGE:
@@ -96,7 +96,7 @@ def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
         "q": query,
         "langRestrict": settings.CATALOG_LANGUAGE,
         "printType": "books",
-        "maxResults": limit,
+        "maxResults": settings.EXTERNAL_SEARCH_LIMIT,
     }
     if settings.GOOGLE_BOOKS_API_KEY:
         params["key"] = settings.GOOGLE_BOOKS_API_KEY
@@ -106,8 +106,9 @@ def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
     except ExternalServiceError:
         return ExternalSearch(books=[], unavailable=True)
 
-    books = _dedupe([book for book in map(_parse_item, payload.get("items", [])) if book])
-    cache.set(key, books, settings.EXTERNAL_SEARCH_CACHE_TTL)
+    books = _dedupe([book for book in map(parse_volume, payload.get("items", [])) if book])
+    if books:
+        cache.set(key, books, settings.EXTERNAL_SEARCH_CACHE_TTL)
     return ExternalSearch(books=books[:limit])
 
 
@@ -117,4 +118,4 @@ def get_google_book(external_id: str) -> ExternalBook | None:
         payload = get_json(f"{settings.GOOGLE_BOOKS_API_URL}/{external_id}", params)
     except ExternalServiceError:
         return None
-    return _parse_item(payload)
+    return parse_volume(payload)
