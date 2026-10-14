@@ -6,7 +6,7 @@ from django.db.models import Max
 from core.models import Author, Book, Chapter, Genre
 from core.text import search_form
 
-from .google_books import ExternalBook
+from .external import ExternalBook
 
 
 def get_or_create_author(name: str) -> Author | None:

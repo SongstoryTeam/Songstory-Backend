@@ -15,7 +15,7 @@
         {% if not query %}
             <div class="empty-state">
                 <div class="empty-state__title">Що шукаємо?</div>
-                <p class="empty-state__text">Введіть назву книги або ім'я автора. Спершу перевіримо каталог, потім Google Books.</p>
+                <p class="empty-state__text">Введіть назву книги або ім'я автора. Спершу перевіримо каталог, потім книжкові сервіси в інтернеті.</p>
             </div>
         {% else %}
             <section class="mt-24">
@@ -32,9 +32,9 @@
             </section>
 
             <section class="mt-32">
-                <h2 class="section-title">Можна додати з Google Books</h2>
+                <h2 class="section-title">Можна додати з інтернету</h2>
                 {% if external_unavailable %}
-                    <div class="alert alert--warning">Google Books тимчасово недоступний. Спробуйте ще раз за хвилину.</div>
+                    <div class="alert alert--warning">Пошук в інтернеті тимчасово недоступний. Спробуйте ще раз за хвилину.</div>
                 {% elif external_books %}
                     <ul class="result-list">
                         {% for item in external_books %}

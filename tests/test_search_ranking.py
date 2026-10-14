@@ -134,7 +134,7 @@ class SuggestEndpointTests(TestCase):
 
     def get(self, query, external=None):
         found = ExternalSearch([self.external] if external is None else external)
-        with mock.patch("core.views.catalog.search_google_books", return_value=found) as fetch:
+        with mock.patch("core.views.catalog.search_books", return_value=found) as fetch:
             response = self.client.get(self.url, {"q": query})
         return response.json(), fetch
 
@@ -160,7 +160,7 @@ class SuggestEndpointTests(TestCase):
     def test_flags_unavailable_service(self):
         payload, _ = self.get("тіні", external=[])
         self.assertFalse(payload["external_unavailable"])
-        with mock.patch("core.views.catalog.search_google_books", return_value=ExternalSearch([], unavailable=True)):
+        with mock.patch("core.views.catalog.search_books", return_value=ExternalSearch([], unavailable=True)):
             payload = self.client.get(self.url, {"q": "тіні"}).json()
         self.assertTrue(payload["external_unavailable"])
 

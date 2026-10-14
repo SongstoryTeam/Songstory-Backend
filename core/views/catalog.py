@@ -7,7 +7,8 @@ from urllib.parse import urlencode
 from core.models import Book
 from core.ratelimits import IP, rate_limited
 from core.services import catalog
-from core.services.google_books import ExternalBook, search_google_books
+from core.services.book_search import search_books
+from core.services.external import ExternalBook
 from core.text import clean_query, search_form
 
 MIN_EXTERNAL_QUERY_LENGTH = 2
@@ -50,7 +51,7 @@ def search(request):
     if query:
         context["local_books"] = catalog.search_local(request.user, query, settings.SEARCH_PAGE_SIZE)
         if len(search_form(query)) >= MIN_EXTERNAL_QUERY_LENGTH:
-            external = search_google_books(query)
+            external = search_books(query)
             context["external_books"] = catalog.exclude_known(external.books)
             context["external_unavailable"] = external.unavailable
     return render(request, "core/search_results.html", context)
@@ -92,7 +93,7 @@ def search_suggest(request):
         and len(local) < settings.SEARCH_SUGGEST_LIMIT
     )
     if wants_external:
-        external = search_google_books(query, limit=settings.SEARCH_SUGGEST_EXTERNAL_LIMIT)
+        external = search_books(query, limit=settings.SEARCH_SUGGEST_EXTERNAL_LIMIT)
         payload["external"] = [serialize_external(item) for item in catalog.exclude_known(external.books)]
         payload["external_unavailable"] = external.unavailable
 

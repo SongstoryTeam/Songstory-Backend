@@ -29,9 +29,16 @@ def _error_detail(response: requests.Response) -> str:
     return redact(str(message))[:MAX_DETAIL_LENGTH]
 
 
+def _headers() -> dict:
+    # Open Library просить представлятися у User-Agent; іншим джерелам це не шкодить.
+    return {"User-Agent": settings.EXTERNAL_HTTP_USER_AGENT, "Accept": "application/json"}
+
+
 def get_json(url: str, params: dict | None = None) -> dict:
     try:
-        response = requests.get(url, params=params, timeout=settings.EXTERNAL_HTTP_TIMEOUT)
+        response = requests.get(
+            url, params=params, headers=_headers(), timeout=settings.EXTERNAL_HTTP_TIMEOUT
+        )
     except requests.RequestException as exc:
         message = redact(str(exc))
         logger.warning("External request to %s failed: %s", url, message)

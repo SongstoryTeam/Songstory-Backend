@@ -11,7 +11,7 @@ from core.models import AuthorVerification, Book, Comment
 from core.ratelimits import rate_limited
 from core.seo import book_json_ld
 from core.services import books as book_service
-from core.services.google_books import get_google_book
+from core.services.book_search import get_external_book
 from core.services.recommendations import grouped_recommendations
 
 
@@ -113,7 +113,7 @@ def respond_with_location(request, location: str, status: int = 200):
 @require_POST
 @rate_limited("import_book")
 def import_book(request):
-    external = get_google_book(request.POST.get("external_id", "").strip())
+    external = get_external_book(request.POST.get("external_id", "").strip())
     if external is None:
         messages.error(request, "Не вдалося отримати дані про книгу. Спробуйте пізніше.")
         return respond_with_location(request, reverse("core:search"), status=502)

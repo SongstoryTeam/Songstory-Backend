@@ -4,7 +4,8 @@ from django.db.models import Count, Q
 
 from core.models import Book, Genre
 
-from .google_books import ExternalBook, book_key
+from .external import ExternalBook
+from .google_books import book_key
 
 
 SORT_OPTIONS = {

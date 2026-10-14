@@ -75,7 +75,7 @@ window.Songstery.searchRenderer = (() => {
     function footerItem(payload, query, index) {
         const link = option(element('a', 'site-search__footer'), index);
         link.href = payload.all_url;
-        link.append(element('span', '', `Усі результати для «${query}»`), element('span', 'site-search__footer-hint', 'каталог і Google Books'));
+        link.append(element('span', '', `Усі результати для «${query}»`), element('span', 'site-search__footer-hint', 'каталог та інтернет'));
         return listItem(link);
     }
 
@@ -108,11 +108,11 @@ window.Songstery.searchRenderer = (() => {
                 local.forEach((result) => items.push(resultItem(result, index++)));
             }
             if (external.length) {
-                items.push(groupHeading('Можна додати з Google Books'));
+                items.push(groupHeading('Можна додати з інтернету'));
                 external.forEach((result) => items.push(externalItem(result, index++)));
             }
             if (!local.length && !external.length) {
-                items.push(message(payload.external_unavailable ? 'Google Books тимчасово недоступний' : 'Нічого не знайдено'));
+                items.push(message(payload.external_unavailable ? 'Пошук в інтернеті тимчасово недоступний' : 'Нічого не знайдено'));
             }
             items.push(footerItem(payload, query, index));
             return items;

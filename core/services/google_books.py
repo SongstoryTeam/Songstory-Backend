@@ -1,11 +1,11 @@
 import re
-from dataclasses import dataclass
 
 from django.conf import settings
 from django.core.cache import cache
 
 from core.text import search_form
 
+from .external import ExternalBook, ExternalSearch
 from .http import ExternalServiceError, get_json
 
 YEAR_PATTERN = re.compile(r"^\d{4}")
@@ -13,23 +13,6 @@ ISBN_TYPES = ("ISBN_13", "ISBN_10")
 INSECURE_SCHEME = "http://"
 SECURE_SCHEME = "https://"
 CURL_PARAMETER = "&edge=curl"
-
-
-@dataclass(frozen=True)
-class ExternalBook:
-    external_id: str
-    title: str
-    author: str
-    year: int | None
-    cover_url: str
-    description: str
-    isbn: str
-
-
-@dataclass(frozen=True)
-class ExternalSearch:
-    books: list[ExternalBook]
-    unavailable: bool = False
 
 
 def _parse_year(value: str) -> int | None:

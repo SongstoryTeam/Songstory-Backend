@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import environ
@@ -191,6 +192,15 @@ EXTERNAL_SEARCH_LIMIT = 10
 EXTERNAL_SEARCH_CACHE_TTL = 60 * 60 * 24
 GOOGLE_BOOKS_API_URL = env("GOOGLE_BOOKS_API_URL", default="https://www.googleapis.com/books/v1/volumes")
 GOOGLE_BOOKS_API_KEY = env("GOOGLE_BOOKS_API_KEY", default="").strip().strip("\"'")
+
+# Джерела зовнішнього пошуку книг. Google Books без ключа не використовується: спільна квота без ключа майже завжди вичерпана.
+BOOK_SOURCES = [] if "test" in sys.argv else env.list("BOOK_SOURCES", default=["google", "openlibrary", "apple"])
+OPEN_LIBRARY_API_URL = env("OPEN_LIBRARY_API_URL", default="https://openlibrary.org/search.json")
+APPLE_BOOKS_API_URL = env("APPLE_BOOKS_API_URL", default="https://itunes.apple.com/search")
+APPLE_BOOKS_COUNTRY = "ua"
+EXTERNAL_HTTP_USER_AGENT = env("EXTERNAL_HTTP_USER_AGENT", default=f"{SITE_NAME}/1.0 ({SITE_URL})")
+EXTERNAL_FAILURE_COOLDOWN = 60
+EXTERNAL_BOOK_CACHE_TTL = 60 * 60 * 24
 
 VERIFICATION_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
 VERIFICATION_ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"]

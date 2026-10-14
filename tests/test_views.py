@@ -8,7 +8,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from core.models import AuthorVerification, Book, Comment, Playlist, Recommendation, Track
-from core.services.google_books import ExternalBook, ExternalSearch
+from core.services.external import ExternalBook, ExternalSearch
 from core.services.music_links import TrackMetadata
 from tests.conftest_helpers import make_book, make_chapter, make_track, make_user
 
@@ -80,24 +80,24 @@ class SearchAndImportTests(TestCase):
         self.external = ExternalBook("gb1", "Тіні забутих предків", "Михайло Коцюбинський", 1911, "", "Опис", "123")
 
     def test_search_page_lists_external_results(self):
-        with mock.patch("core.views.catalog.search_google_books", return_value=ExternalSearch([self.external])):
+        with mock.patch("core.views.catalog.search_books", return_value=ExternalSearch([self.external])):
             response = self.client.get(reverse("core:search"), {"q": "тіні забутих"})
         self.assertContains(response, "Тіні забутих предків")
 
     def test_search_hides_external_books_already_in_catalog(self):
         make_book(title="Тіні забутих предків", author="Михайло Коцюбинський")
-        with mock.patch("core.views.catalog.search_google_books", return_value=ExternalSearch([self.external])):
+        with mock.patch("core.views.catalog.search_books", return_value=ExternalSearch([self.external])):
             response = self.client.get(reverse("core:search"), {"q": "тіні"})
         self.assertEqual(response.context["external_books"], [])
 
     def test_search_reports_unavailable_service(self):
-        with mock.patch("core.views.catalog.search_google_books", return_value=ExternalSearch([], unavailable=True)):
+        with mock.patch("core.views.catalog.search_books", return_value=ExternalSearch([], unavailable=True)):
             response = self.client.get(reverse("core:search"), {"q": "тіні"})
         self.assertContains(response, "тимчасово недоступний")
 
     def test_import_creates_approved_book_once(self):
         self.client.force_login(self.user)
-        with mock.patch("core.views.books.get_google_book", return_value=self.external):
+        with mock.patch("core.views.books.get_external_book", return_value=self.external):
             first = self.client.post(reverse("core:import_book"), {"external_id": "gb1"})
             second = self.client.post(reverse("core:import_book"), {"external_id": "gb1"})
         self.assertEqual(Book.objects.count(), 1)
@@ -109,14 +109,14 @@ class SearchAndImportTests(TestCase):
 
     def test_import_returns_location_as_json_for_script_clients(self):
         self.client.force_login(self.user)
-        with mock.patch("core.views.books.get_google_book", return_value=self.external):
+        with mock.patch("core.views.books.get_external_book", return_value=self.external):
             response = self.client.post(reverse("core:import_book"), {"external_id": "gb1"}, headers={"accept": "application/json"})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["url"], Book.objects.get().get_absolute_url())
 
     def test_import_failure_reports_error_location(self):
         self.client.force_login(self.user)
-        with mock.patch("core.views.books.get_google_book", return_value=None):
+        with mock.patch("core.views.books.get_external_book", return_value=None):
             response = self.client.post(reverse("core:import_book"), {"external_id": "gb1"}, headers={"accept": "application/json"})
         self.assertEqual(response.status_code, 502)
         self.assertEqual(response.json()["url"], reverse("core:search"))
