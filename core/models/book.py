@@ -3,7 +3,15 @@ from django.db import models
 from django.db.models import Case, Count, IntegerField, Q, Value, When
 from django.urls import reverse
 
-from core.text import search_form, search_terms
+from core.services.normalize import (
+    clean_cover_url,
+    clean_description,
+    clean_isbn,
+    clean_person_name,
+    clean_title,
+    clean_year,
+)
+from core.text import name_key, search_form, search_terms
 from core.utils.slugs import generate_unique_slug
 
 
@@ -28,6 +36,7 @@ class Genre(models.Model):
 class Author(models.Model):
     name = models.CharField("Ім'я", max_length=255, unique=True)
     slug = models.SlugField(unique=True, blank=True)
+    name_key = models.CharField(max_length=255, editable=False, default="", db_index=True)
 
     class Meta:
         ordering = ["name"]
@@ -38,8 +47,13 @@ class Author(models.Model):
         return self.name
 
     def save(self, *args, **kwargs) -> None:
+        self.name = clean_person_name(self.name)
+        self.name_key = name_key(self.name)
         if not self.slug:
             self.slug = generate_unique_slug(Author, self.name, self)
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "name" in update_fields:
+            kwargs["update_fields"] = {*update_fields, "name_key"}
         super().save(*args, **kwargs)
         for book in self.books.all():
             book.save(update_fields=["search_key"])
@@ -116,7 +130,16 @@ class Book(models.Model):
     def __str__(self) -> str:
         return self.title
 
+    def normalize_fields(self) -> None:
+        """Єдині правила для всіх записів: що б не передали (форма, імпорт, адмінка, shell), у базу піде однаковий вигляд."""
+        self.title = clean_title(self.title)
+        self.description = clean_description(self.description)
+        self.cover_url = clean_cover_url(self.cover_url)
+        self.isbn = clean_isbn(self.isbn)
+        self.year = clean_year(self.year)
+
     def save(self, *args, **kwargs) -> None:
+        self.normalize_fields()
         if not self.slug:
             self.slug = generate_unique_slug(Book, self.title, self)
         self.search_key = self.build_search_key()

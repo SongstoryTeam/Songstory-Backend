@@ -7,6 +7,13 @@ from django.contrib.auth.models import User
 
 from .models import AuthorVerification, Platform, Track
 from .services.books import find_duplicate
+from .services.normalize import (
+    clean_cover_url,
+    clean_description,
+    clean_genre_name,
+    clean_person_name,
+    clean_title,
+)
 from .services.music_links import parse_link
 
 
@@ -152,6 +159,31 @@ class BookCreateForm(StyledFormMixin, forms.Form):
     genre_name = forms.CharField(label="Жанр", max_length=100, required=False)
     cover_url = forms.URLField(label="Посилання на обкладинку", required=False, max_length=500)
     description = forms.CharField(label="Опис", required=False, widget=forms.Textarea(attrs={"rows": 4}))
+
+    def clean_title(self):
+        title = clean_title(self.cleaned_data["title"])
+        if not title:
+            raise forms.ValidationError("Вкажіть назву книги.")
+        return title
+
+    def clean_author_name(self):
+        author = clean_person_name(self.cleaned_data["author_name"])
+        if not author:
+            raise forms.ValidationError("Вкажіть автора.")
+        return author
+
+    def clean_genre_name(self):
+        return clean_genre_name(self.cleaned_data["genre_name"])
+
+    def clean_description(self):
+        return clean_description(self.cleaned_data["description"])
+
+    def clean_cover_url(self):
+        url = self.cleaned_data["cover_url"]
+        cleaned = clean_cover_url(url)
+        if url and not cleaned:
+            raise forms.ValidationError("Потрібне коректне https-посилання на зображення.")
+        return cleaned
 
     def clean_year(self):
         year = self.cleaned_data["year"]

@@ -1,4 +1,6 @@
+import hashlib
 import re
+import time
 
 from django.conf import settings
 from django.core.cache import cache
@@ -13,6 +15,10 @@ ISBN_TYPES = ("ISBN_13", "ISBN_10")
 INSECURE_SCHEME = "http://"
 SECURE_SCHEME = "https://"
 CURL_PARAMETER = "&edge=curl"
+SERVER_ERROR_FROM = 500
+RETRY_DELAY = 0.4
+# Параметри, без яких Google іноді відповідає там, де з ними дає 503.
+OPTIONAL_PARAMS = ("langRestrict", "printType")
 
 
 def _parse_year(value: str) -> int | None:
@@ -65,7 +71,24 @@ def _dedupe(books: list[ExternalBook]) -> list[ExternalBook]:
 
 
 def _cache_key(query: str) -> str:
-    return f"google_books:{settings.CATALOG_LANGUAGE}:{search_form(query)}"
+    digest = hashlib.sha1(search_form(query).encode("utf-8")).hexdigest()
+    return f"google_books:{settings.CATALOG_LANGUAGE}:{digest}"
+
+
+def _fetch_with_retry(params: dict) -> dict:
+    """Google Books час від часу віддає 503 backendFailed без причини. Повторюємо запит, а останню спробу робимо без
+    langRestrict/printType: мову все одно перевіряє parse_volume. Помилки клієнта (400, 403, 429) не повторюємо."""
+    fallback = {name: value for name, value in params.items() if name not in OPTIONAL_PARAMS}
+    attempts = [params, params, fallback]
+    for index, attempt in enumerate(attempts):
+        try:
+            return get_json(settings.GOOGLE_BOOKS_API_URL, attempt)
+        except ExternalServiceError as exc:
+            retryable = exc.status is not None and exc.status >= SERVER_ERROR_FROM
+            if not retryable or index == len(attempts) - 1:
+                raise
+            time.sleep(RETRY_DELAY)
+    raise AssertionError("unreachable")
 
 
 def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
@@ -85,7 +108,7 @@ def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
         params["key"] = settings.GOOGLE_BOOKS_API_KEY
 
     try:
-        payload = get_json(settings.GOOGLE_BOOKS_API_URL, params)
+        payload = _fetch_with_retry(params)
     except ExternalServiceError:
         return ExternalSearch(books=[], unavailable=True)
 

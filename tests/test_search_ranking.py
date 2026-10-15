@@ -50,7 +50,7 @@ class LocalSearchTests(TestCase):
     def test_apostrophe_and_case_insensitive_matching(self):
         for query in ("п'ять", "П’ять", "Пʼять", "ПЯТЬ", "пять пальців"):
             with self.subTest(query=query):
-                self.assertEqual(self.titles(query), ["П'ять пальців"])
+                self.assertEqual(self.titles(query), ["П’ять пальців"])
 
     def test_trailing_punctuation_does_not_break_match(self):
         self.assertIn("Тигролови", self.titles(" Тигролови: "))

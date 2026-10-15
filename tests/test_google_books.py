@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.core.management import call_command
 from django.test import SimpleTestCase, override_settings
 
-from core.services.google_books import search_google_books
+from core.services.google_books import _cache_key, search_google_books
 from core.services.http import ExternalServiceError, get_json, redact
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
@@ -86,7 +86,7 @@ class SearchCacheTests(SimpleTestCase):
         with mock.patch("core.services.google_books.get_json", side_effect=ExternalServiceError("x", status=403)):
             result = search_google_books("кобзар")
         self.assertTrue(result.unavailable)
-        self.assertIsNone(cache.get("google_books:uk:кобзар"))
+        self.assertIsNone(cache.get(_cache_key("кобзар")))
 
 
 @override_settings(GOOGLE_BOOKS_API_KEY=SECRET)
@@ -115,3 +115,40 @@ class CheckCommandTests(SimpleTestCase):
         output = self.run_command([{"items": []}])
         self.assertIn("НЕ ЗАДАНО", output)
         self.assertNotIn("[з ключем]", output)
+
+
+@override_settings(CACHES=CACHES, GOOGLE_BOOKS_API_KEY=SECRET)
+class RetryTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+        patcher = mock.patch("core.services.google_books.time.sleep")
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_transient_503_is_retried_and_last_attempt_drops_language_params(self):
+        outage = ExternalServiceError("HTTP 503", status=503)
+        good = {"items": [volume("g1", "Тюремна цілителька", "Автор")]}
+        with mock.patch("core.services.google_books.get_json", side_effect=[outage, outage, good]) as fetch:
+            result = search_google_books("тюремна цілителька")
+        self.assertFalse(result.unavailable)
+        self.assertEqual([book.external_id for book in result.books], ["g1"])
+        self.assertEqual(fetch.call_count, 3)
+        self.assertIn("langRestrict", fetch.call_args_list[0].args[1])
+        self.assertNotIn("langRestrict", fetch.call_args_list[2].args[1])
+        self.assertIn("key", fetch.call_args_list[2].args[1])
+
+    def test_persistent_503_gives_up_after_three_attempts(self):
+        outage = ExternalServiceError("HTTP 503", status=503)
+        with mock.patch("core.services.google_books.get_json", side_effect=outage) as fetch:
+            result = search_google_books("кобзар")
+        self.assertTrue(result.unavailable)
+        self.assertEqual(fetch.call_count, 3)
+
+    def test_client_errors_are_not_retried(self):
+        for status in (400, 403, 429):
+            with self.subTest(status=status):
+                with mock.patch("core.services.google_books.get_json", side_effect=ExternalServiceError("x", status=status)) as fetch:
+                    result = search_google_books(f"кобзар {status}")
+                self.assertTrue(result.unavailable)
+                self.assertEqual(fetch.call_count, 1)

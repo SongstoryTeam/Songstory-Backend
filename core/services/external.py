@@ -62,7 +62,7 @@ def strip_html(text: str) -> str:
 
 def loose_form(text: str) -> str:
     """Форма для порівняння між різними джерелами: «Бардуґо» і «Бардуго» — те саме."""
-    return search_form(text).replace("ґ", "г")
+    return search_form(text)
 
 
 def cached_search(
