@@ -7,7 +7,7 @@ from django.core.cache import cache
 
 from core.text import search_form
 
-from .external import ExternalBook, ExternalSearch
+from .external import ExternalBook, ExternalSearch, has_ukrainian_letters, looks_ukrainian
 from .http import ExternalServiceError, get_json
 
 YEAR_PATTERN = re.compile(r"^\d{4}")
@@ -19,6 +19,12 @@ SERVER_ERROR_FROM = 500
 RETRY_DELAY = 0.4
 # Параметри, без яких Google іноді відповідає там, де з ними дає 503.
 OPTIONAL_PARAMS = ("langRestrict", "printType")
+# Якщо з langRestrict знайшлося менше книг, шукаємо ще раз без нього: Google часто не ставить мову або ставить хибну.
+SPARSE_RESULTS = 3
+# Підзаголовки-жанри не є частиною назви: «Тигролови. Роман» мало б збігатися з «Тигролови».
+GENERIC_SUBTITLES = frozenset(
+    {"роман", "повість", "оповідання", "збірка", "поезії", "вірші", "поема", "казка", "казки", "п єса", "novel", "a novel", "stories", "poems"}
+)
 
 
 def _parse_year(value: str) -> int | None:
@@ -40,10 +46,30 @@ def _parse_isbn(info: dict) -> str:
     return ""
 
 
+def _full_title(info: dict) -> str:
+    """Українські видання серій записують так: title «Кров і попіл», subtitle «Книга 1. Із крові й попелу»."""
+    title = (info.get("title") or "").strip()
+    subtitle = (info.get("subtitle") or "").strip()
+    folded = search_form(subtitle)
+    if not subtitle or folded in GENERIC_SUBTITLES or folded in search_form(title):
+        return title
+    return f"{title}. {subtitle}"
+
+
+def _is_ukrainian_volume(info: dict, title: str) -> bool:
+    language = info.get("language") or ""
+    if language == settings.CATALOG_LANGUAGE:
+        return True
+    if language in ("", "und"):
+        return looks_ukrainian(title)
+    # Мова позначена хибно (наприклад, «ru»), але в назві є суто українські літери: це українське видання.
+    return has_ukrainian_letters(title) and looks_ukrainian(title)
+
+
 def parse_volume(item: dict) -> ExternalBook | None:
     info = item.get("volumeInfo") or {}
-    title = (info.get("title") or "").strip()
-    if not title or info.get("language") != settings.CATALOG_LANGUAGE:
+    title = _full_title(info)
+    if not title or not _is_ukrainian_volume(info, title):
         return None
     return ExternalBook(
         external_id=item["id"],
@@ -113,9 +139,21 @@ def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
         return ExternalSearch(books=[], unavailable=True)
 
     books = _dedupe([book for book in map(parse_volume, payload.get("items", [])) if book])
+    if len(books) < SPARSE_RESULTS:
+        books = _dedupe(books + _search_without_language(params))
     if books:
         cache.set(key, books, settings.EXTERNAL_SEARCH_CACHE_TTL)
     return ExternalSearch(books=books[:limit])
+
+
+def _search_without_language(params: dict) -> list[ExternalBook]:
+    """Другий прохід без langRestrict. Мову все одно перевіряє parse_volume, тож чужі книги не пролізуть."""
+    loose = {name: value for name, value in params.items() if name != "langRestrict"}
+    try:
+        payload = _fetch_with_retry(loose)
+    except ExternalServiceError:
+        return []
+    return [book for book in map(parse_volume, payload.get("items", [])) if book]
 
 
 def get_google_book(external_id: str) -> ExternalBook | None:

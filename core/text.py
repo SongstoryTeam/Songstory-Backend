@@ -34,3 +34,13 @@ def search_terms(query: str) -> list[str]:
 def clean_query(raw: str) -> str:
     """Обрізає надто довгі пошукові запити, щоб не навантажувати БД."""
     return " ".join(raw.split())[:MAX_QUERY_LENGTH]
+
+
+# Позначка «перша книга серії» в кінці назви: «Кн. 1», «Книга перша», «Том 1». Лише першу: «Кн. 2» — вже інша книга.
+_FIRST_VOLUME = re.compile(r"\s+(?:кн|книга|том|т|частина|ч|book|vol|volume)\s+(?:1|перша|перший|одна|one)$")
+
+
+def title_identity(title: str) -> str:
+    """Ключ «тієї самої книги»: «Тюремна цілителька» і «Тюремна цілителька. Кн. 1» збігаються, а «Кн. 2» — ні."""
+    key = search_form(title)
+    return _FIRST_VOLUME.sub("", key).strip() or key

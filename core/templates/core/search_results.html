@@ -60,8 +60,19 @@
                             </li>
                         {% endfor %}
                     </ul>
+                {% elif external_failed %}
+                    <div class="alert alert--warning">
+                        Не вдалося отримати відповідь від: {{ external_failed|join:", " }}. Книгу могло бути пропущено через збій.
+                        <a href="{{ request.get_full_path }}" class="text-accent">Спробувати ще раз</a>
+                    </div>
                 {% else %}
                     <p class="text-muted text-sm">Нових українських видань не знайдено.</p>
+                {% endif %}
+                {% if external_books and external_failed %}
+                    <p class="text-sm text-muted mt-16">
+                        Не всі джерела відповіли ({{ external_failed|join:", " }}), тож список може бути неповним.
+                        <a href="{{ request.get_full_path }}" class="text-accent">Оновити</a>
+                    </p>
                 {% endif %}
                 <p class="text-sm text-muted mt-16">
                     Не знайшли потрібну книгу?

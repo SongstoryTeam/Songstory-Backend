@@ -7,7 +7,7 @@ from dataclasses import replace
 from django.conf import settings
 from django.core.cache import cache
 
-from core.text import search_terms
+from core.text import search_terms, title_identity
 
 from .apple_books import search_apple_books
 from .external import ExternalBook, ExternalSearch, has_cyrillic, has_ukrainian_letters, loose_form
@@ -20,12 +20,15 @@ SHORT_TERM = 4
 INFLECTION_TAIL = 2
 EXACT_TITLE_SCORE = 100
 PREFIX_TITLE_SCORE = 70
+PHRASE_TITLE_SCORE = 60
 ALL_TERMS_SCORE = 50
 PARTIAL_TERMS_SCORE = 20
 COVER_BONUS = 8
 UKRAINIAN_LETTERS_BONUS = 6
 CYRILLIC_AUTHOR_BONUS = 3
+NO_AUTHOR_PENALTY = 10
 EXTERNAL_ID_SEPARATOR = ":"
+SOURCE_LABELS = {"google": "Google Books", "openlibrary": "Open Library", "apple": "Apple Books"}
 
 
 def _providers() -> list[tuple[str, callable]]:
@@ -86,6 +89,8 @@ def _score(book: ExternalBook, terms: list[str]) -> int:
         score = EXACT_TITLE_SCORE
     elif title.startswith(phrase):
         score = PREFIX_TITLE_SCORE
+    elif phrase in title:
+        score = PHRASE_TITLE_SCORE
     elif all(_stem(term) in title for term in terms):
         score = ALL_TERMS_SCORE
     else:
@@ -96,6 +101,8 @@ def _score(book: ExternalBook, terms: list[str]) -> int:
         score += UKRAINIAN_LETTERS_BONUS
     if has_cyrillic(book.author):
         score += CYRILLIC_AUTHOR_BONUS
+    if not book.author:
+        score -= NO_AUTHOR_PENALTY
     return score
 
 
@@ -116,23 +123,37 @@ def _quality(book: ExternalBook) -> tuple[bool, bool, bool]:
 
 def _merge(first: ExternalBook, second: ExternalBook) -> ExternalBook:
     primary, other = (first, second) if _quality(first) >= _quality(second) else (second, first)
+    # Назва кирилицею важливіша за якість запису: читач шукає українською. Іншу назву лишаємо як оригінальну.
+    title, alternative = primary.title, other.title
+    if has_cyrillic(other.title) and not has_cyrillic(primary.title):
+        title, alternative = other.title, primary.title
+    original = primary.original_title or other.original_title
+    if not original and loose_form(alternative) != loose_form(title):
+        original = alternative
     return replace(
         primary,
+        title=title,
         author=primary.author or other.author,
         year=primary.year or other.year,
         cover_url=primary.cover_url or other.cover_url,
         description=primary.description or other.description,
         isbn=primary.isbn or other.isbn,
-        original_title=primary.original_title or other.original_title,
+        original_title=original,
     )
+
+
+def _same_book(first: ExternalBook, second: ExternalBook) -> bool:
+    """Той самий ISBN, або та сама назва (з точністю до «Кн. 1») і сумісні автори."""
+    if first.isbn and first.isbn == second.isbn:
+        return True
+    return title_identity(first.title) == title_identity(second.title) and _authors_compatible(first.author, second.author)
 
 
 def _merge_duplicates(books: list[ExternalBook]) -> list[ExternalBook]:
     merged: list[ExternalBook] = []
     for book in books:
-        title = loose_form(book.title)
         for index, existing in enumerate(merged):
-            if loose_form(existing.title) == title and _authors_compatible(existing.author, book.author):
+            if _same_book(existing, book):
                 merged[index] = _merge(existing, book)
                 break
         else:
@@ -161,8 +182,11 @@ def search_books(query: str, limit: int | None = None) -> ExternalSearch:
     # sorted() стабільний: за однакового балу лишається порядок джерел із налаштувань.
     ranked = sorted(candidates, key=lambda book: -_score(book, terms))[:limit]
     _remember(ranked)
-    all_failed = all(result is None or result.unavailable for result in results)
-    return ExternalSearch(books=ranked, unavailable=all_failed and not ranked)
+    failed = tuple(
+        SOURCE_LABELS[name] for (name, _), result in zip(providers, results) if result is None or result.unavailable
+    )
+    all_failed = len(failed) == len(providers)
+    return ExternalSearch(books=ranked, unavailable=all_failed and not ranked, failed=failed)
 
 
 def get_external_book(external_id: str) -> ExternalBook | None:

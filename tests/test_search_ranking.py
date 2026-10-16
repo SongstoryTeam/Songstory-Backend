@@ -102,7 +102,7 @@ class ExternalSearchTests(TestCase):
     def test_requests_are_restricted_to_ukrainian(self):
         with mock.patch("core.services.google_books.get_json", return_value={}) as fetch:
             search_google_books("кобзар")
-        self.assertEqual(fetch.call_args.args[1]["langRestrict"], "uk")
+        self.assertEqual(fetch.call_args_list[0].args[1]["langRestrict"], "uk")
 
     def test_known_books_are_excluded_by_id_and_by_title_author(self):
         make_book(None, title="Кобзар", author="Тарас Шевченко")

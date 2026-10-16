@@ -4,7 +4,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import Max
 
 from core.models import Author, Book, Chapter, Genre
-from core.text import name_key, search_form
+from core.text import name_key, title_identity
 
 from .external import ExternalBook
 from .normalize import clean_external_id, clean_genre_name, clean_isbn, clean_person_name, clean_title
@@ -104,13 +104,14 @@ def find_duplicate(title: str, author_name: str, isbn: str = "") -> Book | None:
         by_isbn = Book.objects.filter(isbn=code).first()
         if by_isbn:
             return by_isbn
-    title_key = search_form(clean_title(title))[:255]
-    if not title_key:
+    identity = title_identity(clean_title(title))
+    if not identity:
         return None
     author_key = name_key(clean_person_name(author_name))
-    for candidate in Book.objects.filter(title_key=title_key).select_related("author").order_by("pk"):
+    # startswith використовує індекс title_key; точне порівняння робимо вже в Python, щоб «Кн. 1» збігалося з назвою без неї.
+    for candidate in Book.objects.filter(title_key__startswith=identity[:255]).select_related("author").order_by("pk"):
         candidate_key = candidate.author.name_key if candidate.author_id else ""
-        if candidate_key == author_key:
+        if candidate_key == author_key and title_identity(candidate.title) == identity:
             return candidate
     return None
 

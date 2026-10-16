@@ -4,8 +4,8 @@ from django.db.models import Count, Q
 
 from core.models import Book, Genre
 
+from .books import find_duplicate
 from .external import ExternalBook
-from .google_books import book_key
 
 
 SORT_OPTIONS = {
@@ -57,6 +57,7 @@ def search_local(user, query: str, limit: int):
 
 
 def exclude_known(items: list[ExternalBook]) -> list[ExternalBook]:
+    """Прибирає з видачі книги, які вже є в каталозі: за id джерела, ISBN або назвою з автором."""
     if not items:
         return []
     known_ids = set(
@@ -64,7 +65,8 @@ def exclude_known(items: list[ExternalBook]) -> list[ExternalBook]:
             "google_books_id", flat=True
         )
     )
-    known_keys = set(
-        Book.objects.filter(search_key__in=[book_key(item) for item in items]).values_list("search_key", flat=True)
-    )
-    return [item for item in items if item.external_id not in known_ids and book_key(item) not in known_keys]
+    return [
+        item
+        for item in items
+        if item.external_id not in known_ids and find_duplicate(item.title, item.author, item.isbn) is None
+    ]

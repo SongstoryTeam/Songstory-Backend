@@ -5,12 +5,14 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 
 from core.models import Book
-from core.services import book_search
+from core.services import book_search, catalog
+from core.services.books import find_duplicate
 from core.services.apple_books import parse_result, search_apple_books
 from core.services.external import ExternalBook, ExternalSearch, looks_ukrainian
 from core.services.http import ExternalServiceError
 from core.services.open_library import parse_doc, search_open_library
-from tests.conftest_helpers import make_user
+from core.text import title_identity
+from tests.conftest_helpers import make_book, make_user
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
 
@@ -98,6 +100,31 @@ class AppleParseTests(SimpleTestCase):
         self.assertEqual(fetch.call_count, 1)
 
 
+class TitleIdentityTests(SimpleTestCase):
+    def test_first_volume_marker_is_ignored(self):
+        base = title_identity("Тюремна цілителька")
+        for title in ("Тюремна цілителька. Кн. 1", "Тюремна цілителька (Книга 1)", "Тюремна цілителька, том 1", "Тюремна цілителька. Книга перша"):
+            with self.subTest(title=title):
+                self.assertEqual(title_identity(title), base)
+
+    def test_other_volumes_stay_distinct(self):
+        self.assertNotEqual(title_identity("Тюремна цілителька. Кн. 2"), title_identity("Тюремна цілителька"))
+        self.assertNotEqual(title_identity("Хроніки Нарнії. Кн. 1"), title_identity("Хроніки Нарнії. Кн. 11"))
+
+
+class SeriesDuplicateTests(TestCase):
+    def test_book_with_volume_marker_is_found_as_duplicate_of_plain_title_and_back(self):
+        existing = make_book(None, title="Тюремна цілителька. Кн. 1", author="Лінет Ноні")
+        self.assertEqual(find_duplicate("Тюремна цілителька", "Лінет Ноні"), existing)
+        self.assertIsNone(find_duplicate("Тюремна цілителька. Кн. 2", "Лінет Ноні"))
+
+    def test_catalog_hides_external_book_that_is_already_imported_under_another_title_form(self):
+        make_book(None, title="Тюремна цілителька", author="Лінет Ноні")
+        item = book("g1", "Тюремна цілителька. Кн. 1", "Лінет Ноні")
+        other = book("g2", "Тюремна цілителька. Кн. 2", "Лінет Ноні")
+        self.assertEqual(catalog.exclude_known([item, other]), [other])
+
+
 @override_settings(CACHES=CACHES, BOOK_SOURCES=["google", "openlibrary", "apple"], GOOGLE_BOOKS_API_KEY="key")
 class AggregatorTests(SimpleTestCase):
     def setUp(self):
@@ -132,10 +159,45 @@ class AggregatorTests(SimpleTestCase):
         )
         self.assertEqual(len(result.books), 2)
 
+    def test_authorless_entry_merges_into_full_one_despite_volume_marker(self):
+        result = self.search(
+            "тюремна цілителька",
+            google=[book("g1", "Тюремна цілителька", year=2024)],
+            apple=[book("apple:1", "Тюремна цілителька. Кн. 1", "Лінет Ноні", cover="https://c/a.jpg", year=2024)],
+        )
+        self.assertEqual(len(result.books), 1)
+        self.assertEqual((result.books[0].author, bool(result.books[0].cover_url)), ("Лінет Ноні", True))
+
+    def test_second_volume_is_not_merged_with_first(self):
+        result = self.search(
+            "тюремна цілителька",
+            google=[book("g1", "Тюремна цілителька. Кн. 1", "Лінет Ноні"), book("g2", "Тюремна цілителька. Кн. 2", "Лінет Ноні")],
+        )
+        self.assertEqual(len(result.books), 2)
+
+    def test_same_isbn_merges_even_with_different_titles(self):
+        first = ExternalBook("g1", "Шістка воронів", "Лі Бардуго", None, "", "", "9789669171706")
+        second = ExternalBook("ol:1", "Six of Crows", "Leigh Bardugo", None, "https://c/x.jpg", "", "9789669171706", "Six of Crows")
+        result = self.search("шістка воронів", google=[first], library=[second])
+        self.assertEqual(len(result.books), 1)
+
+    def test_entries_without_author_rank_below_equal_entries_with_one(self):
+        result = self.search("кобзар", google=[book("g1", "Кобзар"), book("g2", "Кобзар", "Тарас Шевченко", year=1)])
+        self.assertEqual(result.books[0].external_id, "g2")
+
     def test_one_source_down_does_not_break_search(self):
         result = self.search(library=[book("ol:1", "Шістка воронів", "Leigh Bardugo")], google_down=True, apple_down=True)
         self.assertEqual([item.external_id for item in result.books], ["ol:1"])
         self.assertFalse(result.unavailable)
+
+    def test_partial_failure_is_reported_so_empty_result_is_not_mistaken_for_not_found(self):
+        result = self.search(google_down=True)
+        self.assertEqual(result.books, [])
+        self.assertFalse(result.unavailable)
+        self.assertEqual(result.failed, ("Google Books",))
+
+    def test_no_failures_means_empty_failed_list(self):
+        self.assertEqual(self.search().failed, ())
 
     def test_all_sources_down_reports_unavailable(self):
         result = self.search(google_down=True, library_down=True, apple_down=True)
@@ -223,3 +285,29 @@ class ImportFromOtherSourceTests(TestCase):
         self.assertEqual(response.status_code, 302)
         imported = Book.objects.get(google_books_id="ol:OL1W")
         self.assertEqual((imported.title, imported.author.name), ("Шістка воронів", "Leigh Bardugo"))
+
+
+@override_settings(CACHES=CACHES)
+class PartialFailureViewTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+    def test_search_page_warns_instead_of_claiming_nothing_was_found(self):
+        found = ExternalSearch([], failed=("Google Books",))
+        with mock.patch("core.views.catalog.search_books", return_value=found):
+            page = self.client.get(reverse("core:search"), {"q": "із крові й попелу"})
+        self.assertContains(page, "Google Books")
+        self.assertContains(page, "Спробувати ще раз")
+        self.assertNotContains(page, "Нових українських видань не знайдено")
+
+    def test_search_page_says_not_found_when_every_source_answered(self):
+        with mock.patch("core.views.catalog.search_books", return_value=ExternalSearch([])):
+            page = self.client.get(reverse("core:search"), {"q": "із крові й попелу"})
+        self.assertContains(page, "Нових українських видань не знайдено")
+
+    def test_suggest_payload_lists_failed_sources(self):
+        found = ExternalSearch([], failed=("Google Books",))
+        with mock.patch("core.views.catalog.search_books", return_value=found):
+            payload = self.client.get(reverse("core:search_suggest"), {"q": "із крові й попелу"}).json()
+        self.assertEqual(payload["external_failed"], ["Google Books"])

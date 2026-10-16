@@ -38,6 +38,8 @@ class ExternalBook:
 class ExternalSearch:
     books: list[ExternalBook]
     unavailable: bool = False
+    # Назви джерел, що не відповіли. Якщо частина джерел мовчить, «нічого не знайдено» — неправда: результати неповні.
+    failed: tuple[str, ...] = ()
 
 
 def has_cyrillic(text: str) -> bool:

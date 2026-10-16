@@ -111,8 +111,15 @@ window.Songstery.searchRenderer = (() => {
                 items.push(groupHeading('Можна додати з інтернету'));
                 external.forEach((result) => items.push(externalItem(result, index++)));
             }
+            const failed = payload.external_failed || [];
             if (!local.length && !external.length) {
-                items.push(message(payload.external_unavailable ? 'Пошук в інтернеті тимчасово недоступний' : 'Нічого не знайдено'));
+                if (payload.external_unavailable) {
+                    items.push(message('Пошук в інтернеті тимчасово недоступний'));
+                } else if (failed.length) {
+                    items.push(message(`Не відповіли: ${failed.join(', ')}. Спробуйте ще раз`));
+                } else {
+                    items.push(message('Нічого не знайдено'));
+                }
             }
             items.push(footerItem(payload, query, index));
             return items;

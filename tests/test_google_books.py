@@ -7,7 +7,7 @@ from django.core.cache import cache
 from django.core.management import call_command
 from django.test import SimpleTestCase, override_settings
 
-from core.services.google_books import _cache_key, search_google_books
+from core.services.google_books import _cache_key, parse_volume, search_google_books
 from core.services.http import ExternalServiceError, get_json, redact
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
@@ -72,7 +72,7 @@ class SearchCacheTests(SimpleTestCase):
         with mock.patch("core.services.google_books.get_json", return_value={"items": []}) as fetch:
             search_google_books("кобзар")
             search_google_books("кобзар")
-        self.assertEqual(fetch.call_count, 2)
+        self.assertEqual(fetch.call_count, 4)  # два пошуки, у кожному два проходи: з мовою і без
 
     def test_small_limit_does_not_truncate_cache_for_larger_limit(self):
         items = [volume(f"g{number}", f"Книга {number}") for number in range(8)]
@@ -129,11 +129,12 @@ class RetryTests(SimpleTestCase):
     def test_transient_503_is_retried_and_last_attempt_drops_language_params(self):
         outage = ExternalServiceError("HTTP 503", status=503)
         good = {"items": [volume("g1", "Тюремна цілителька", "Автор")]}
-        with mock.patch("core.services.google_books.get_json", side_effect=[outage, outage, good]) as fetch:
+        # Четвертий виклик — другий прохід без мови: знайшлася лише одна книга, тож пошук розширюється.
+        with mock.patch("core.services.google_books.get_json", side_effect=[outage, outage, good, {}]) as fetch:
             result = search_google_books("тюремна цілителька")
         self.assertFalse(result.unavailable)
         self.assertEqual([book.external_id for book in result.books], ["g1"])
-        self.assertEqual(fetch.call_count, 3)
+        self.assertEqual(fetch.call_count, 4)
         self.assertIn("langRestrict", fetch.call_args_list[0].args[1])
         self.assertNotIn("langRestrict", fetch.call_args_list[2].args[1])
         self.assertIn("key", fetch.call_args_list[2].args[1])
@@ -152,3 +153,62 @@ class RetryTests(SimpleTestCase):
                     result = search_google_books(f"кобзар {status}")
                 self.assertTrue(result.unavailable)
                 self.assertEqual(fetch.call_count, 1)
+
+
+def raw_volume(identifier, title, subtitle="", language="uk", authors=("Дженніфер Л. Арментраут",)):
+    info = {"title": title, "authors": list(authors), "language": language}
+    if subtitle:
+        info["subtitle"] = subtitle
+    return {"id": identifier, "volumeInfo": info}
+
+
+class VolumeParsingTests(SimpleTestCase):
+    def test_subtitle_becomes_part_of_title_for_series_editions(self):
+        parsed = parse_volume(raw_volume("g1", "Кров і попіл", "Книга 1. Із крові й попелу"))
+        self.assertEqual(parsed.title, "Кров і попіл. Книга 1. Із крові й попелу")
+
+    def test_generic_or_repeated_subtitles_are_ignored(self):
+        self.assertEqual(parse_volume(raw_volume("g1", "Тигролови", "Роман")).title, "Тигролови")
+        self.assertEqual(parse_volume(raw_volume("g2", "Кобзар. Вибране", "Вибране")).title, "Кобзар. Вибране")
+
+    def test_missing_language_is_accepted_for_ukrainian_looking_titles_only(self):
+        self.assertIsNotNone(parse_volume(raw_volume("g1", "Із крові й попелу", language="")))
+        self.assertIsNone(parse_volume(raw_volume("g2", "Мастер и Маргарита", language="")))
+        self.assertIsNone(parse_volume(raw_volume("g3", "From Blood and Ash", language="")))
+
+    def test_wrong_language_label_is_tolerated_only_with_ukrainian_letters(self):
+        self.assertIsNotNone(parse_volume(raw_volume("g1", "Із крові й попелу", language="ru")))
+        self.assertIsNone(parse_volume(raw_volume("g2", "Кобзар", language="ru")))
+        self.assertIsNone(parse_volume(raw_volume("g3", "Six of Crows", language="en")))
+
+
+@override_settings(CACHES=CACHES, GOOGLE_BOOKS_API_KEY=SECRET)
+class SecondPassTests(SimpleTestCase):
+    def setUp(self):
+        cache.clear()
+        self.addCleanup(cache.clear)
+
+    def test_sparse_results_trigger_search_without_language_restriction(self):
+        strict = {"items": []}
+        loose = {"items": [raw_volume("g1", "Кров і попіл", "Книга 1. Із крові й попелу", language="")]}
+        with mock.patch("core.services.google_books.get_json", side_effect=[strict, loose]) as fetch:
+            result = search_google_books("із крові й попелу")
+        self.assertEqual([book.external_id for book in result.books], ["g1"])
+        self.assertIn("langRestrict", fetch.call_args_list[0].args[1])
+        self.assertNotIn("langRestrict", fetch.call_args_list[1].args[1])
+
+    def test_enough_results_skip_second_pass(self):
+        items = [raw_volume(f"g{n}", f"Книга {n}") for n in range(4)]
+        with mock.patch("core.services.google_books.get_json", return_value={"items": items}) as fetch:
+            search_google_books("книга")
+        self.assertEqual(fetch.call_count, 1)
+
+    def test_failed_second_pass_keeps_first_results(self):
+        first = {"items": [raw_volume("g1", "Кобзар", authors=("Тарас Шевченко",))]}
+        with mock.patch(
+            "core.services.google_books.get_json",
+            side_effect=[first, ExternalServiceError("x", status=403)],
+        ):
+            result = search_google_books("кобзар")
+        self.assertFalse(result.unavailable)
+        self.assertEqual(len(result.books), 1)
