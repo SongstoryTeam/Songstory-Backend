@@ -43,6 +43,17 @@ def get_or_create_genre(name: str) -> Genre | None:
         return next((genre for genre in Genre.objects.all() if genre.name.casefold() == folded), None)
 
 
+def pending_books_count(user: User) -> int:
+    return Book.objects.filter(creator=user, is_approved=False).count()
+
+
+def pending_books_left(user: User) -> int | None:
+    """Скільки книжок користувач ще може надіслати на перевірку. None — без обмежень (персонал публікує одразу)."""
+    if user.is_staff:
+        return None
+    return max(settings.PENDING_BOOKS_LIMIT - pending_books_count(user), 0)
+
+
 def create_book(
     *,
     user: User,

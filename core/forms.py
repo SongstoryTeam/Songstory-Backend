@@ -4,13 +4,22 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.utils.functional import cached_property
 
-from .models import AuthorVerification, Platform, Track
-from .services.books import find_duplicate
+from .models import AuthorVerification, Genre, Platform, Track
+from .services.books import find_duplicate, pending_books_left
 from .services.normalize import (
+    COVER_URL_MAX,
+    DESCRIPTION_MAX,
+    GENRE_MAX,
+    ISBN_INPUT_MAX,
+    MIN_YEAR,
+    NAME_MAX,
+    TITLE_MAX,
     clean_cover_url,
     clean_description,
     clean_genre_name,
+    clean_isbn,
     clean_person_name,
     clean_title,
 )
@@ -151,14 +160,95 @@ class ProfileForm(StyledFormMixin, forms.ModelForm):
 
 
 class BookCreateForm(StyledFormMixin, forms.Form):
-    duplicate = None
+    GENRE_DATALIST_ID = "genre-options"
+    STEPS = (
+        {
+            "id": "book",
+            "title": "Книга",
+            "description": "За назвою й автором ми перевіримо, чи цієї книги ще немає в каталозі",
+            "icon": "search",
+            "fields": ("title", "author_name"),
+        },
+        {
+            "id": "details",
+            "title": "Подробиці",
+            "description": "Необов'язково, але з ними книгу легше знайти й не сплутати з іншим виданням",
+            "icon": "list-plus",
+            "fields": ("year", "genre_name", "isbn", "description"),
+        },
+        {
+            "id": "cover",
+            "title": "Обкладинка",
+            "description": "Вставте посилання на зображення, і ми покажемо, як книга виглядатиме в каталозі",
+            "icon": "book-open",
+            "fields": ("cover_url",),
+        },
+    )
 
-    title = forms.CharField(label="Назва", max_length=255)
-    author_name = forms.CharField(label="Автор", max_length=255)
-    year = forms.IntegerField(label="Рік видання", required=False, min_value=1)
-    genre_name = forms.CharField(label="Жанр", max_length=100, required=False)
-    cover_url = forms.URLField(label="Посилання на обкладинку", required=False, max_length=500)
-    description = forms.CharField(label="Опис", required=False, widget=forms.Textarea(attrs={"rows": 4}))
+    title = forms.CharField(
+        label="Назва",
+        max_length=TITLE_MAX,
+        widget=forms.TextInput(
+            attrs={"placeholder": "Наприклад, Тіні забутих предків", "autocomplete": "off", "autofocus": "autofocus"}
+        ),
+    )
+    author_name = forms.CharField(
+        label="Автор",
+        max_length=NAME_MAX,
+        widget=forms.TextInput(attrs={"placeholder": "Ім'я та прізвище", "autocomplete": "off"}),
+    )
+    year = forms.IntegerField(
+        label="Рік видання",
+        required=False,
+        min_value=MIN_YEAR,
+        widget=forms.NumberInput(attrs={"placeholder": "2020", "inputmode": "numeric"}),
+    )
+    genre_name = forms.CharField(
+        label="Жанр",
+        max_length=GENRE_MAX,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "list": GENRE_DATALIST_ID,
+                "autocomplete": "off",
+                "placeholder": "Оберіть зі списку або введіть свій",
+            }
+        ),
+    )
+    isbn = forms.CharField(
+        label="ISBN",
+        max_length=ISBN_INPUT_MAX,
+        required=False,
+        help_text="Знайдіть його на звороті обкладинки. Допомагає виявити дублікати.",
+        widget=forms.TextInput(attrs={"placeholder": "978-966-917-170-6", "inputmode": "numeric"}),
+    )
+    description = forms.CharField(
+        label="Опис",
+        required=False,
+        max_length=DESCRIPTION_MAX,
+        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Кілька речень про сюжет або настрій книги"}),
+    )
+    cover_url = forms.URLField(
+        label="Посилання на обкладинку",
+        required=False,
+        max_length=COVER_URL_MAX,
+        help_text="Пряме https-посилання на зображення (.jpg, .png, .webp).",
+        widget=forms.URLInput(attrs={"placeholder": "https://…", "autocomplete": "off"}),
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.duplicate = None
+        self.fields["year"].widget.attrs["max"] = date.today().year + 1
+
+    @cached_property
+    def genre_names(self) -> list[str]:
+        return list(Genre.objects.values_list("name", flat=True))
+
+    def steps_with_fields(self):
+        for step in self.STEPS:
+            yield {**step, "bound_fields": [self[name] for name in step["fields"]]}
 
     def clean_title(self):
         title = clean_title(self.cleaned_data["title"])
@@ -174,6 +264,13 @@ class BookCreateForm(StyledFormMixin, forms.Form):
 
     def clean_genre_name(self):
         return clean_genre_name(self.cleaned_data["genre_name"])
+
+    def clean_isbn(self):
+        raw = self.cleaned_data["isbn"]
+        code = clean_isbn(raw)
+        if raw.strip() and not code:
+            raise forms.ValidationError("ISBN має містити 10 або 13 цифр.")
+        return code
 
     def clean_description(self):
         return clean_description(self.cleaned_data["description"])
@@ -193,12 +290,17 @@ class BookCreateForm(StyledFormMixin, forms.Form):
 
     def clean(self):
         cleaned = super().clean()
+        if pending_books_left(self.user) == 0:
+            raise forms.ValidationError(
+                f"На перевірці вже {settings.PENDING_BOOKS_LIMIT} ваших книг. "
+                "Дочекайтесь рішення модератора, щоб додати нові."
+            )
         title, author = cleaned.get("title"), cleaned.get("author_name")
         if title and author:
-            duplicate = find_duplicate(title, author)
+            duplicate = find_duplicate(title, author, cleaned.get("isbn", ""))
             if duplicate:
                 self.duplicate = duplicate
-                raise forms.ValidationError("Така книга вже є в каталозі.")
+                raise forms.ValidationError("Така книга вже є в каталозі або очікує на перевірку.")
         return cleaned
 
 

@@ -1,37 +1,150 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Додати книгу — {{ SITE_NAME }}{% endblock %}
 {% block meta_robots %}noindex, nofollow{% endblock %}
 
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'core/css/book-wizard.css' %}">
+{% endblock %}
+
 {% block content %}
     <div class="content-pad">
-        <div class="form-box form-box--narrow">
-            <h1 class="page-title">Додати книгу</h1>
-            <p class="text-muted text-sm mb-16">
-                Спершу <a href="{% url 'core:search' %}" class="text-accent">знайдіть книгу через пошук</a> — так ми підтягнемо обкладинку й опис автоматично.
-                Якщо її там немає, додайте вручну.
-            </p>
-
-            {% if duplicate %}
-                <div class="alert alert--warning">
-                    Така книга вже є: <a href="{{ duplicate.get_absolute_url }}" class="text-accent">{{ duplicate.title }}</a>.
+        {% if pending_left == 0 %}
+            <div class="form-box book-wizard book-wizard--blocked">
+                <div class="empty-state">
+                    <div class="empty-state__title">Книги чекають на перевірку</div>
+                    <p class="empty-state__text">
+                        Ви надіслали {{ pending_limit }} книг, і вони ще не схвалені. Нові можна буде додати після рішення модератора.
+                        Тим часом перевірте, чи потрібної книги немає в каталозі або в інтернеті: її можна додати одним кліком.
+                    </p>
+                    <a href="{% url 'core:search' %}" class="btn btn-accent">Знайти книгу</a>
                 </div>
-            {% endif %}
+            </div>
+        {% else %}
+            <div class="form-box book-wizard"
+                 data-book-wizard
+                 data-check-url="{% url 'core:check_book' %}"
+                 data-suggest-url="{% url 'core:search_suggest' %}"
+                 data-min-length="{{ SEARCH_SUGGEST_MIN_LENGTH }}"
+                 data-debounce-ms="{{ SEARCH_SUGGEST_DEBOUNCE_MS }}">
+                <h1 class="form-box__title">Додати книгу</h1>
+                <p class="form-box__subtitle">Спершу перевіримо, чи її ще немає в каталозі. Це займе хвилину.</p>
 
-            <form method="post" novalidate>
-                {% csrf_token %}
+                <ol class="wizard-progress" role="list" aria-label="Кроки додавання книги">
+                    {% for step in form.steps_with_fields %}
+                        <li class="wizard-progress__step{% if forloop.first %} is-active{% endif %}"
+                            data-progress-step="{{ forloop.counter0 }}">
+                            <span class="wizard-progress__marker">
+                                <i data-lucide="{{ step.icon }}" class="wizard-progress__icon"></i>
+                                <i data-lucide="check" class="wizard-progress__icon wizard-progress__icon--done"></i>
+                            </span>
+                            <span class="wizard-progress__label">{{ step.title }}</span>
+                        </li>
+                    {% endfor %}
+                </ol>
+
                 {% if form.non_field_errors and not duplicate %}
-                    <div class="alert alert--error">{{ form.non_field_errors }}</div>
+                    <div class="alert alert--error mb-16">{{ form.non_field_errors.0 }}</div>
                 {% endif %}
-                {% for field in form %}
-                    <div class="form-group">
-                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                        {{ field }}
-                        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
-                    </div>
-                {% endfor %}
-                <button type="submit" class="btn btn-accent">Додати книгу</button>
-            </form>
-        </div>
+
+                <div class="book-wizard__layout">
+                    <form method="post" novalidate data-wizard-form class="book-wizard__form">
+                        {% csrf_token %}
+
+                        {% for step in form.steps_with_fields %}
+                            <fieldset class="wizard-step" data-wizard-step="{{ forloop.counter0 }}"
+                                      {% if not forloop.first %}data-wizard-hidden{% endif %}>
+                                <legend class="wizard-step__heading">
+                                    <span class="wizard-step__eyebrow">Крок {{ forloop.counter }} з {{ form.STEPS|length }}</span>
+                                    <span class="wizard-step__title">{{ step.title }}</span>
+                                    <span class="wizard-step__description">{{ step.description }}</span>
+                                </legend>
+
+                                {% if forloop.first %}
+                                    <div class="alert alert--warning" data-duplicate role="status"
+                                         {% if duplicate %}data-wizard-error{% else %}hidden{% endif %}>
+                                        {% if duplicate.url %}
+                                            Така книга вже є: <a href="{{ duplicate.url }}" class="text-accent">{{ duplicate.title }}</a>.
+                                        {% elif duplicate %}
+                                            Така книга вже надіслана на перевірку.
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+
+                                {% for field in step.bound_fields %}
+                                    <div class="form-group">
+                                        <label for="{{ field.id_for_label }}">
+                                            {{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}
+                                        </label>
+                                        {{ field }}
+                                        {% if field.name == 'genre_name' %}
+                                            <datalist id="{{ form.GENRE_DATALIST_ID }}">
+                                                {% for name in form.genre_names %}<option value="{{ name }}"></option>{% endfor %}
+                                            </datalist>
+                                        {% endif %}
+                                        {% if field.name == 'cover_url' %}
+                                            <span class="field-feedback" data-cover-feedback aria-live="polite"></span>
+                                        {% endif %}
+                                        {% for error in field.errors %}
+                                            <p class="field-error" data-wizard-error>{{ error }}</p>
+                                        {% endfor %}
+                                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                                    </div>
+                                {% endfor %}
+
+                                {% if forloop.first %}
+                                    <p class="visually-hidden" role="status" aria-live="polite" data-lookup-status></p>
+                                    <div class="book-lookup" data-lookup hidden>
+                                        <div data-lookup-results></div>
+                                    </div>
+                                {% endif %}
+
+                                {% if forloop.last %}
+                                    <div class="alert alert--info">
+                                        {% if pending_left is None %}
+                                            Книга з'явиться в каталозі одразу після додавання.
+                                        {% else %}
+                                            Книга з'явиться в каталозі після перевірки модератором, а до того її бачите лише ви.
+                                            Одночасно на перевірці може бути до {{ pending_limit }} ваших книг.
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            </fieldset>
+                        {% endfor %}
+
+                        <div class="wizard-nav" data-wizard-nav>
+                            <button type="button" class="btn btn-ghost" data-wizard-back data-wizard-hidden>
+                                <i data-lucide="arrow-left"></i> Назад
+                            </button>
+                            <button type="button" class="btn btn-accent" data-wizard-next>
+                                Далі <i data-lucide="arrow-right"></i>
+                            </button>
+                            <button type="submit" class="btn btn-accent" data-wizard-submit>Додати книгу</button>
+                        </div>
+                    </form>
+
+                    <aside class="book-preview" data-preview hidden aria-label="Так книга виглядатиме в каталозі">
+                        <div class="book-card book-card--static">
+                            <div class="book-card__spine-wrap">
+                                <div class="book-card__cover" data-preview-cover>
+                                    <div class="book-card__no-cover" data-preview-fallback></div>
+                                </div>
+                            </div>
+                            <div class="book-card__meta">
+                                <div class="book-card__title" data-preview-title></div>
+                                <div class="book-card__author" data-preview-author hidden></div>
+                                <div class="book-card__author" data-preview-meta hidden></div>
+                            </div>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+        {% endif %}
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'core/js/modules/wizard.js' %}" defer></script>
+    <script src="{% static 'core/js/book-wizard.js' %}" defer></script>
 {% endblock %}

@@ -10,6 +10,7 @@ urlpatterns = [
     path("search/", catalog.search, name="search"),
     path("search/suggest/", catalog.search_suggest, name="search_suggest"),
     path("book/create/", books.create_book, name="create_book"),
+    path("book/check/", books.check_book, name="check_book"),
     path("book/import/", books.import_book, name="import_book"),
     path("book/<slug:slug>/", books.book_detail, name="book_detail"),
     path("book/<slug:slug>/chapters/add/", books.add_chapters, name="add_chapters"),

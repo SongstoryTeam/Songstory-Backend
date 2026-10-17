@@ -1,117 +1,10 @@
 (() => {
   const wizard = document.querySelector('[data-wizard]');
-  if (!wizard) return;
+  const {createWizard} = window.Songstery || {};
+  if (!wizard || !createWizard || !createWizard(wizard)) return;
 
-  const form = wizard.querySelector('[data-wizard-form]');
-  const steps = Array.from(wizard.querySelectorAll('[data-wizard-step]'));
-  const progressSteps = Array.from(wizard.querySelectorAll('[data-progress-step]'));
-  const backBtn = wizard.querySelector('[data-wizard-back]');
-  const nextBtn = wizard.querySelector('[data-wizard-next]');
-  const submitBtn = wizard.querySelector('[data-wizard-submit]');
-
-  if (!form || !backBtn || !nextBtn || !submitBtn || steps.length < 2) return;
-
-  wizard.classList.add('wizard-js');
-
-  let current = 0;
   const checkTimers = new WeakMap();
   const checkUrl = wizard.dataset.checkUrl;
-
-  function fieldsOf(step) {
-    return Array.from(step.querySelectorAll('input, select, textarea')).filter((el) => el.name);
-  }
-
-  function isStepValid(step) {
-    return fieldsOf(step).every((el) => el.checkValidity());
-  }
-
-  function revealErrors(step) {
-    fieldsOf(step).some((el) => {
-      if (el.checkValidity()) return false;
-      el.reportValidity();
-      return true;
-    });
-  }
-
-  function announce(message) {
-    let live = wizard.querySelector('[data-wizard-live]');
-    if (!live) {
-      live = document.createElement('div');
-      live.setAttribute('data-wizard-live', '');
-      live.setAttribute('aria-live', 'polite');
-      live.className = 'visually-hidden';
-      wizard.appendChild(live);
-    }
-    live.textContent = message;
-  }
-
-  function goToStep(index) {
-    steps.forEach((step, i) => step.toggleAttribute('data-wizard-hidden', i !== index));
-    progressSteps.forEach((item, i) => {
-      item.classList.toggle('is-active', i === index);
-      item.classList.toggle('is-done', i < index);
-    });
-
-    backBtn.toggleAttribute('data-wizard-hidden', index === 0);
-    nextBtn.toggleAttribute('data-wizard-hidden', index === steps.length - 1);
-    submitBtn.toggleAttribute('data-wizard-hidden', index !== steps.length - 1);
-
-    current = index;
-
-    const firstField = steps[index].querySelector('input, select, textarea');
-    if (firstField) firstField.focus({ preventScroll: true });
-
-    announce(`Крок ${index + 1} з ${steps.length}`);
-  }
-
-  function goNext() {
-    const step = steps[current];
-    if (!isStepValid(step)) {
-      revealErrors(step);
-      return;
-    }
-    if (current < steps.length - 1) goToStep(current + 1);
-  }
-
-  function goBack() {
-    if (current > 0) goToStep(current - 1);
-  }
-
-  backBtn.addEventListener('click', goBack);
-  nextBtn.addEventListener('click', goNext);
-
-  form.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter' || event.target.tagName === 'TEXTAREA') return;
-    if (current !== steps.length - 1) {
-      event.preventDefault();
-      goNext();
-    }
-  });
-
-  progressSteps.forEach((item, index) => {
-    item.addEventListener('click', () => {
-      if (index === current) return;
-      if (index < current) {
-        goToStep(index);
-        return;
-      }
-      for (let i = current; i < index; i += 1) {
-        if (!isStepValid(steps[i])) {
-          revealErrors(steps[i]);
-          return;
-        }
-      }
-      goToStep(index);
-    });
-  });
-
-  form.addEventListener('submit', (event) => {
-    const firstInvalidStep = steps.findIndex((step) => !isStepValid(step));
-    if (firstInvalidStep === -1) return;
-    event.preventDefault();
-    goToStep(firstInvalidStep);
-    revealErrors(steps[firstInvalidStep]);
-  });
 
   async function checkAvailability(input, feedback) {
     if (!checkUrl) return;
@@ -214,6 +107,4 @@
       toggle.setAttribute('aria-label', willShow ? 'Приховати пароль' : 'Показати пароль');
     });
   });
-
-  goToStep(0);
 })();
