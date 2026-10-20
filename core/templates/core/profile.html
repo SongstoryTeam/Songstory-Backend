@@ -39,7 +39,11 @@
                         {{ item.track.title }}
                         <span class="text-muted">· <a href="{% if item.chapter %}{{ item.chapter.get_absolute_url }}{% else %}{{ item.book.get_absolute_url }}{% endif %}">{{ item.book.title }}{% if item.chapter %}, розд. {{ item.chapter.number }}{% endif %}</a></span>
                     </span>
-                    <form method="post" action="{% url 'core:recommendation_delete' item.pk %}" class="list-row__form" data-no-busy>
+                    <form method="post" action="{% url 'core:recommendation_delete' item.pk %}" class="list-row__form"
+                          data-confirm
+                          data-confirm-title="Прибрати рекомендацію?"
+                          data-confirm-message="Трек «{{ item.track.title }}» більше не буде у ваших рекомендаціях до {% if item.chapter %}цього розділу{% else %}цієї книги{% endif %}."
+                          data-confirm-action="Прибрати">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-ghost btn-sm">Прибрати</button>
                     </form>

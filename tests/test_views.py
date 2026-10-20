@@ -354,3 +354,39 @@ class AuthorVerificationTests(TestCase):
             self.assertEqual(self.client.get(url).status_code, 302)
             self.client.force_login(make_user("moderator", is_staff=True))
             self.assertEqual(self.client.get(url).status_code, 200)
+
+
+@override_settings(CACHES=CACHES)
+class RecommendationConfirmMarkupTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.book = make_book(self.user)
+        self.chapter = make_chapter(self.book)
+        self.track = make_track(title="Motion Sickness")
+
+    def test_own_recommendation_is_guarded_by_confirmation(self):
+        recommendation = Recommendation.objects.create(user=self.user, track=self.track, book=self.book)
+        self.client.force_login(self.user)
+        response = self.client.get(self.book.get_absolute_url())
+        self.assertContains(response, "data-confirm-dialog")
+        self.assertContains(response, 'data-confirm-title="Прибрати рекомендацію?"')
+        self.assertContains(response, "Motion Sickness")
+        self.assertContains(response, reverse("core:recommendation_delete", args=[recommendation.pk]))
+
+    def test_chapter_message_refers_to_chapter(self):
+        Recommendation.objects.create(user=self.user, track=self.track, book=self.book, chapter=self.chapter)
+        self.client.force_login(self.user)
+        response = self.client.get(self.chapter.get_absolute_url())
+        self.assertContains(response, "до цього розділу")
+        self.assertNotContains(response, "до цієї книги")
+
+    def test_foreign_recommendation_has_no_removal_control(self):
+        Recommendation.objects.create(user=make_user("other"), track=self.track, book=self.book)
+        self.client.force_login(self.user)
+        response = self.client.get(self.book.get_absolute_url())
+        self.assertNotContains(response, "recommend-toggle")
+
+    def test_anonymous_visitor_sees_no_removal_control(self):
+        Recommendation.objects.create(user=self.user, track=self.track, book=self.book)
+        response = self.client.get(self.book.get_absolute_url())
+        self.assertNotContains(response, "recommend-toggle")

@@ -26,10 +26,20 @@
         {% if user.is_authenticated %}
             <div class="track-card__actions">
                 {% if group.mine %}
-                    <form method="post" action="{% url 'core:recommendation_delete' group.mine.pk %}" data-no-busy>
+                    <form method="post" action="{% url 'core:recommendation_delete' group.mine.pk %}" class="recommend-toggle"
+                          data-confirm
+                          data-confirm-title="Прибрати рекомендацію?"
+                          data-confirm-message="Трек «{{ group.track.title }}» більше не буде у ваших рекомендаціях до {% if chapter %}цього розділу{% else %}цієї книги{% endif %}."
+                          data-confirm-action="Прибрати">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-ghost btn-sm" title="Прибрати мою рекомендацію">
-                            <i data-lucide="check" size="14" aria-hidden="true"></i> Ви радите
+                        <button type="submit" class="btn btn-ghost btn-sm recommend-toggle__button"
+                                aria-label="Ви радите цей трек. Прибрати рекомендацію">
+                            <span class="recommend-toggle__state recommend-toggle__state--active">
+                                <i data-lucide="check" size="14" aria-hidden="true"></i> Ви радите
+                            </span>
+                            <span class="recommend-toggle__state recommend-toggle__state--remove" aria-hidden="true">
+                                <i data-lucide="x" size="14"></i> Прибрати
+                            </span>
                         </button>
                     </form>
                 {% else %}

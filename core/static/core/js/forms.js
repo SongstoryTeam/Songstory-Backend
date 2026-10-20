@@ -5,6 +5,7 @@ document.addEventListener('submit', (event) => {
     if (!(form instanceof HTMLFormElement) || form.hasAttribute('data-no-busy')) return;
 
     window.setTimeout(() => {
+        if (event.defaultPrevented) return;
         form.querySelectorAll('button[type="submit"]').forEach((button) => {
             button.disabled = true;
             button.setAttribute('aria-busy', 'true');

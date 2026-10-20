@@ -1,0 +1,103 @@
+.confirm-dialog {
+    width: min(420px, calc(100vw - 2 * var(--gutter)));
+    margin: auto;
+    padding: 0;
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    background: var(--clr-surface);
+    color: var(--clr-ink);
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(10px) scale(.98);
+    transition:
+        opacity var(--dur-scrim) var(--ease-panel),
+        transform var(--dur-panel) var(--ease-panel),
+        overlay var(--dur-panel) allow-discrete,
+        display var(--dur-panel) allow-discrete;
+}
+
+.confirm-dialog[open] {
+    opacity: 1;
+    transform: none;
+}
+
+@starting-style {
+    .confirm-dialog[open] {
+        opacity: 0;
+        transform: translateY(10px) scale(.98);
+    }
+}
+
+.confirm-dialog::backdrop {
+    background: var(--clr-scrim);
+    opacity: 0;
+    transition:
+        opacity var(--dur-scrim) var(--ease-panel),
+        overlay var(--dur-scrim) allow-discrete,
+        display var(--dur-scrim) allow-discrete;
+}
+
+.confirm-dialog[open]::backdrop {
+    opacity: 1;
+}
+
+@starting-style {
+    .confirm-dialog[open]::backdrop {
+        opacity: 0;
+    }
+}
+
+body:has(.confirm-dialog[open]) {
+    overflow: hidden;
+}
+
+.confirm-dialog__panel {
+    display: grid;
+    gap: 10px;
+    padding: 24px;
+}
+
+.confirm-dialog__title {
+    font-family: var(--ff-display);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    letter-spacing: var(--tracking-tight);
+    line-height: 1.3;
+}
+
+.confirm-dialog__message {
+    color: var(--clr-muted);
+    overflow-wrap: anywhere;
+}
+
+.confirm-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.btn-danger-solid {
+    background: var(--clr-danger);
+    color: var(--clr-on-danger);
+}
+
+.btn-danger-solid:hover {
+    background: var(--clr-danger-dk);
+}
+
+.btn-danger-solid:focus-visible {
+    outline: 2px solid var(--clr-danger);
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .confirm-dialog__actions {
+        flex-direction: column-reverse;
+    }
+
+    .confirm-dialog__actions .btn {
+        justify-content: center;
+        padding-block: 12px;
+    }
+}
