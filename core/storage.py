@@ -25,11 +25,6 @@ class PrivateMediaStorage(FileSystemStorage):
 
 
 class TolerantManifestStaticFilesStorage(CompressedManifestStaticFilesStorage):
-    """Manifest-сховище, яке не валить сторінку через відсутній статичний файл.
-
-    Стандартне поведінка — ValueError (HTTP 500 разом із сторінкою 500, бо вона
-    теж наслідує base.html). Тут пишемо попередження в лог і віддаємо URL без хеша.
-    """
 
     manifest_strict = False
 

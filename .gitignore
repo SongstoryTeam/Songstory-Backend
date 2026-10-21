@@ -1,17 +1,12 @@
-# Byte-compiled / cache
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-
-# Django
 staticfiles/
 media/
 db.sqlite3
 db.sqlite3-journal
 local_settings.py
-
-# Environments
 .env
 .venv
 env/
@@ -19,33 +14,20 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
-# Distribution / packaging
 build/
 dist/
 *.egg-info/
 .eggs/
-
-# Testing / coverage
 .coverage
 .coverage.*
 .pytest_cache/
 htmlcov/
-
-# IDE
 .idea/
 .vscode/
 *.iml
-
-# Logs
 *.log
-
-# OS
 .DS_Store
 Thumbs.db
-
-# mypy / ruff
 .mypy_cache/
 .ruff_cache/
-
 repomix-output.xmlprivate_media/

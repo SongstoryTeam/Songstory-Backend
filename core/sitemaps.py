@@ -3,9 +3,13 @@ from django.urls import reverse
 
 from .models import Book, Chapter
 
+STATIC_PRIORITY = 1.0
+BOOK_PRIORITY = 0.8
+CHAPTER_PRIORITY = 0.6
+
 
 class StaticViewSitemap(Sitemap):
-    priority = 1.0
+    priority = STATIC_PRIORITY
     changefreq = "daily"
 
     def items(self):
@@ -17,7 +21,7 @@ class StaticViewSitemap(Sitemap):
 
 class BookSitemap(Sitemap):
     changefreq = "weekly"
-    priority = 0.8
+    priority = BOOK_PRIORITY
 
     def items(self):
         return Book.objects.filter(is_approved=True)
@@ -28,7 +32,7 @@ class BookSitemap(Sitemap):
 
 class ChapterSitemap(Sitemap):
     changefreq = "monthly"
-    priority = 0.6
+    priority = CHAPTER_PRIORITY
 
     def items(self):
         return Chapter.objects.filter(book__is_approved=True).select_related("book")

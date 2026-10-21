@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 
+from core import limits
 from core.text import search_form, search_terms
 
 from .book import Book, Chapter
@@ -26,13 +27,13 @@ class TrackQuerySet(models.QuerySet):
 
 
 class Track(models.Model):
-    platform = models.CharField("Платформа", max_length=20, choices=Platform.choices)
-    external_id = models.CharField(max_length=100)
-    title = models.CharField("Назва", max_length=255)
-    artist = models.CharField("Виконавець", max_length=255, blank=True)
+    platform = models.CharField("Платформа", max_length=limits.CODE_MAX_LENGTH, choices=Platform.choices)
+    external_id = models.CharField(max_length=limits.EXTERNAL_ID_MAX_LENGTH)
+    title = models.CharField("Назва", max_length=limits.TEXT_MAX_LENGTH)
+    artist = models.CharField("Виконавець", max_length=limits.TEXT_MAX_LENGTH, blank=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+")
     created_at = models.DateTimeField(auto_now_add=True)
-    search_key = models.CharField(max_length=520, editable=False, default="")
+    search_key = models.CharField(max_length=limits.TRACK_SEARCH_KEY_MAX_LENGTH, editable=False, default="")
 
     objects = TrackQuerySet.as_manager()
 
@@ -46,7 +47,7 @@ class Track(models.Model):
         return f"{self.artist} — {self.title}" if self.artist else self.title
 
     def save(self, *args, **kwargs) -> None:
-        self.search_key = search_form(f"{self.title} {self.artist}")[:520]
+        self.search_key = search_form(f"{self.title} {self.artist}")[: limits.TRACK_SEARCH_KEY_MAX_LENGTH]
         update_fields = kwargs.get("update_fields")
         if update_fields is not None:
             kwargs["update_fields"] = {*update_fields, "search_key"}
@@ -72,7 +73,7 @@ class Recommendation(models.Model):
         Chapter, on_delete=models.CASCADE, null=True, blank=True, related_name="recommendations"
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recommendations")
-    comment = models.CharField("Коментар", max_length=500, blank=True)
+    comment = models.CharField("Коментар", max_length=limits.RECOMMENDATION_NOTE_MAX_LENGTH, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -101,7 +102,7 @@ class Recommendation(models.Model):
 class Playlist(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="playlists")
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="playlists")
-    title = models.CharField("Назва", max_length=255)
+    title = models.CharField("Назва", max_length=limits.TEXT_MAX_LENGTH)
     description = models.TextField("Опис", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     tracks = models.ManyToManyField(Track, through="PlaylistItem", related_name="playlists")

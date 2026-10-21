@@ -6,6 +6,7 @@ from core.services.http import ExternalServiceError, get_json
 
 KEY_PREVIEW_HEAD = 4
 KEY_PREVIEW_TAIL = 2
+SAMPLE_SIZE = 3
 DEFAULT_QUERY = "Кобзар"
 
 
@@ -55,5 +56,5 @@ class Command(BaseCommand):
         parsed = [book for book in map(parse_volume, items) if book]
         line = f"[{label}] OK: від Google {len(items)}, після фільтра мови {len(parsed)}"
         self.stdout.write(self.style.SUCCESS(line))
-        for book in parsed[:3]:
+        for book in parsed[:SAMPLE_SIZE]:
             self.stdout.write(f"    {book.title} — {book.author or '—'} ({book.year or '—'})")

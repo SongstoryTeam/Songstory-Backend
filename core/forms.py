@@ -4,26 +4,26 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from django.utils.functional import cached_property
 
-from .models import AuthorVerification, Genre, Platform, Track
-from .services.books import find_duplicate, pending_books_left
+from . import limits
+from .models import AuthorVerification, Platform, Track, UserProfile
+from .services.books import find_duplicate
 from .services.normalize import (
-    COVER_URL_MAX,
-    DESCRIPTION_MAX,
-    GENRE_MAX,
-    ISBN_INPUT_MAX,
-    MIN_YEAR,
-    NAME_MAX,
-    TITLE_MAX,
     clean_cover_url,
     clean_description,
     clean_genre_name,
-    clean_isbn,
     clean_person_name,
     clean_title,
 )
 from .services.music_links import parse_link
+
+
+USERNAME_MIN_LENGTH = 3
+USERNAME_MAX_LENGTH = User._meta.get_field("username").max_length
+PERSON_NAME_MAX_LENGTH = User._meta.get_field("first_name").max_length
+TEXTAREA_ROWS_COMPACT = 2
+TEXTAREA_ROWS_SHORT = 3
+TEXTAREA_ROWS_DEFAULT = 4
 
 
 class StyledFormMixin:
@@ -63,8 +63,8 @@ class SignUpForm(StyledFormMixin, UserCreationForm):
     )
 
     username = forms.CharField(
-        min_length=3,
-        max_length=150,
+        min_length=USERNAME_MIN_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         help_text="Тільки латинські літери, цифри та символи ./+/-/_",
         widget=forms.TextInput(
             attrs={
@@ -82,19 +82,19 @@ class SignUpForm(StyledFormMixin, UserCreationForm):
     )
     first_name = forms.CharField(
         required=False,
-        max_length=150,
+        max_length=PERSON_NAME_MAX_LENGTH,
         label="Ім'я",
         widget=forms.TextInput(attrs={"placeholder": "Олена", "autocomplete": "given-name"}),
     )
     last_name = forms.CharField(
         required=False,
-        max_length=150,
+        max_length=PERSON_NAME_MAX_LENGTH,
         label="Прізвище",
         widget=forms.TextInput(attrs={"placeholder": "Коваленко", "autocomplete": "family-name"}),
     )
     phone = forms.CharField(
         required=False,
-        max_length=20,
+        max_length=limits.PHONE_MAX_LENGTH,
         label="Телефон",
         widget=forms.TextInput(attrs={"placeholder": "+380 XX XXX XX XX", "autocomplete": "tel"}),
     )
@@ -127,13 +127,14 @@ class SignUpForm(StyledFormMixin, UserCreationForm):
     def save(self, commit: bool = True) -> User:
         user = super().save(commit=commit)
         if commit:
-            user.profile.phone = self.cleaned_data.get("phone", "")
-            user.profile.save(update_fields=["phone"])
+            profile = UserProfile.objects.for_user(user)
+            profile.phone = self.cleaned_data.get("phone", "")
+            profile.save(update_fields=["phone"])
         return user
 
 
 class ProfileForm(StyledFormMixin, forms.ModelForm):
-    bio = forms.CharField(label="Про себе", required=False, widget=forms.Textarea(attrs={"rows": 4}))
+    bio = forms.CharField(label="Про себе", required=False, widget=forms.Textarea(attrs={"rows": TEXTAREA_ROWS_DEFAULT}))
 
     class Meta:
         model = User
@@ -143,7 +144,7 @@ class ProfileForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
-            self.fields["bio"].initial = self.instance.profile.bio
+            self.fields["bio"].initial = UserProfile.objects.for_user(self.instance).bio
 
     def clean_email(self) -> str:
         email = self.cleaned_data["email"]
@@ -154,101 +155,21 @@ class ProfileForm(StyledFormMixin, forms.ModelForm):
     def save(self, commit: bool = True) -> User:
         user = super().save(commit=commit)
         if commit:
-            user.profile.bio = self.cleaned_data["bio"]
-            user.profile.save(update_fields=["bio"])
+            profile = UserProfile.objects.for_user(user)
+            profile.bio = self.cleaned_data["bio"]
+            profile.save(update_fields=["bio"])
         return user
 
 
 class BookCreateForm(StyledFormMixin, forms.Form):
-    GENRE_DATALIST_ID = "genre-options"
-    STEPS = (
-        {
-            "id": "book",
-            "title": "Книга",
-            "description": "За назвою й автором ми перевіримо, чи цієї книги ще немає в каталозі",
-            "icon": "search",
-            "fields": ("title", "author_name"),
-        },
-        {
-            "id": "details",
-            "title": "Подробиці",
-            "description": "Необов'язково, але з ними книгу легше знайти й не сплутати з іншим виданням",
-            "icon": "list-plus",
-            "fields": ("year", "genre_name", "isbn", "description"),
-        },
-        {
-            "id": "cover",
-            "title": "Обкладинка",
-            "description": "Вставте посилання на зображення, і ми покажемо, як книга виглядатиме в каталозі",
-            "icon": "book-open",
-            "fields": ("cover_url",),
-        },
-    )
+    duplicate = None
 
-    title = forms.CharField(
-        label="Назва",
-        max_length=TITLE_MAX,
-        widget=forms.TextInput(
-            attrs={"placeholder": "Наприклад, Тіні забутих предків", "autocomplete": "off", "autofocus": "autofocus"}
-        ),
-    )
-    author_name = forms.CharField(
-        label="Автор",
-        max_length=NAME_MAX,
-        widget=forms.TextInput(attrs={"placeholder": "Ім'я та прізвище", "autocomplete": "off"}),
-    )
-    year = forms.IntegerField(
-        label="Рік видання",
-        required=False,
-        min_value=MIN_YEAR,
-        widget=forms.NumberInput(attrs={"placeholder": "2020", "inputmode": "numeric"}),
-    )
-    genre_name = forms.CharField(
-        label="Жанр",
-        max_length=GENRE_MAX,
-        required=False,
-        widget=forms.TextInput(
-            attrs={
-                "list": GENRE_DATALIST_ID,
-                "autocomplete": "off",
-                "placeholder": "Оберіть зі списку або введіть свій",
-            }
-        ),
-    )
-    isbn = forms.CharField(
-        label="ISBN",
-        max_length=ISBN_INPUT_MAX,
-        required=False,
-        help_text="Знайдіть його на звороті обкладинки. Допомагає виявити дублікати.",
-        widget=forms.TextInput(attrs={"placeholder": "978-966-917-170-6", "inputmode": "numeric"}),
-    )
-    description = forms.CharField(
-        label="Опис",
-        required=False,
-        max_length=DESCRIPTION_MAX,
-        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "Кілька речень про сюжет або настрій книги"}),
-    )
-    cover_url = forms.URLField(
-        label="Посилання на обкладинку",
-        required=False,
-        max_length=COVER_URL_MAX,
-        help_text="Пряме https-посилання на зображення (.jpg, .png, .webp).",
-        widget=forms.URLInput(attrs={"placeholder": "https://…", "autocomplete": "off"}),
-    )
-
-    def __init__(self, *args, user, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.user = user
-        self.duplicate = None
-        self.fields["year"].widget.attrs["max"] = date.today().year + 1
-
-    @cached_property
-    def genre_names(self) -> list[str]:
-        return list(Genre.objects.values_list("name", flat=True))
-
-    def steps_with_fields(self):
-        for step in self.STEPS:
-            yield {**step, "bound_fields": [self[name] for name in step["fields"]]}
+    title = forms.CharField(label="Назва", max_length=limits.TEXT_MAX_LENGTH)
+    author_name = forms.CharField(label="Автор", max_length=limits.TEXT_MAX_LENGTH)
+    year = forms.IntegerField(label="Рік видання", required=False, min_value=1)
+    genre_name = forms.CharField(label="Жанр", max_length=limits.GENRE_NAME_MAX_LENGTH, required=False)
+    cover_url = forms.URLField(label="Посилання на обкладинку", required=False, max_length=limits.URL_MAX_LENGTH)
+    description = forms.CharField(label="Опис", required=False, widget=forms.Textarea(attrs={"rows": TEXTAREA_ROWS_DEFAULT}))
 
     def clean_title(self):
         title = clean_title(self.cleaned_data["title"])
@@ -264,13 +185,6 @@ class BookCreateForm(StyledFormMixin, forms.Form):
 
     def clean_genre_name(self):
         return clean_genre_name(self.cleaned_data["genre_name"])
-
-    def clean_isbn(self):
-        raw = self.cleaned_data["isbn"]
-        code = clean_isbn(raw)
-        if raw.strip() and not code:
-            raise forms.ValidationError("ISBN має містити 10 або 13 цифр.")
-        return code
 
     def clean_description(self):
         return clean_description(self.cleaned_data["description"])
@@ -290,17 +204,12 @@ class BookCreateForm(StyledFormMixin, forms.Form):
 
     def clean(self):
         cleaned = super().clean()
-        if pending_books_left(self.user) == 0:
-            raise forms.ValidationError(
-                f"На перевірці вже {settings.PENDING_BOOKS_LIMIT} ваших книг. "
-                "Дочекайтесь рішення модератора, щоб додати нові."
-            )
         title, author = cleaned.get("title"), cleaned.get("author_name")
         if title and author:
-            duplicate = find_duplicate(title, author, cleaned.get("isbn", ""))
+            duplicate = find_duplicate(title, author)
             if duplicate:
                 self.duplicate = duplicate
-                raise forms.ValidationError("Така книга вже є в каталозі або очікує на перевірку.")
+                raise forms.ValidationError("Така книга вже є в каталозі.")
         return cleaned
 
 
@@ -317,9 +226,9 @@ class CommentField(forms.CharField):
     def __init__(self, **kwargs):
         super().__init__(
             required=False,
-            max_length=settings.RECOMMENDATION_COMMENT_MAX_LENGTH,
+            max_length=limits.RECOMMENDATION_NOTE_MAX_LENGTH,
             label="Чому цей трек підходить (необов'язково)",
-            widget=forms.Textarea(attrs={"rows": 2}),
+            widget=forms.Textarea(attrs={"rows": TEXTAREA_ROWS_COMPACT}),
             **kwargs,
         )
 
@@ -344,15 +253,15 @@ class TrackLinkForm(StyledFormMixin, forms.Form):
 
 class TrackDraftForm(StyledFormMixin, forms.Form):
     platform = forms.ChoiceField(choices=Platform.choices, widget=forms.HiddenInput)
-    external_id = forms.CharField(max_length=100, widget=forms.HiddenInput)
-    title = forms.CharField(label="Назва треку", max_length=255)
-    artist = forms.CharField(label="Виконавець", max_length=255, required=False)
+    external_id = forms.CharField(max_length=limits.EXTERNAL_ID_MAX_LENGTH, widget=forms.HiddenInput)
+    title = forms.CharField(label="Назва треку", max_length=limits.TEXT_MAX_LENGTH)
+    artist = forms.CharField(label="Виконавець", max_length=limits.TEXT_MAX_LENGTH, required=False)
     comment = CommentField()
 
 
 class PlaylistForm(StyledFormMixin, forms.Form):
-    title = forms.CharField(label="Назва", max_length=255)
-    description = forms.CharField(label="Опис", required=False, widget=forms.Textarea(attrs={"rows": 3}))
+    title = forms.CharField(label="Назва", max_length=limits.TEXT_MAX_LENGTH)
+    description = forms.CharField(label="Опис", required=False, widget=forms.Textarea(attrs={"rows": TEXTAREA_ROWS_SHORT}))
     tracks = forms.ModelMultipleChoiceField(
         label="Треки з рекомендацій до цієї книги",
         queryset=Track.objects.none(),
@@ -382,6 +291,6 @@ class AuthorVerificationForm(StyledFormMixin, forms.ModelForm):
         model = AuthorVerification
         fields = ["proof_document", "proof_authorship", "publisher_url", "additional_notes"]
         widgets = {
-            "additional_notes": forms.Textarea(attrs={"rows": 4}),
+            "additional_notes": forms.Textarea(attrs={"rows": TEXTAREA_ROWS_DEFAULT}),
             "publisher_url": forms.URLInput(attrs={"placeholder": "https://publisher.com/book/…"}),
         }

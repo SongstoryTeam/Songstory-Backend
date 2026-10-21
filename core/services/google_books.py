@@ -16,12 +16,10 @@ INSECURE_SCHEME = "http://"
 SECURE_SCHEME = "https://"
 CURL_PARAMETER = "&edge=curl"
 SERVER_ERROR_FROM = 500
+UNDETERMINED_LANGUAGES = ("", "und")
 RETRY_DELAY = 0.4
-# Параметри, без яких Google іноді відповідає там, де з ними дає 503.
 OPTIONAL_PARAMS = ("langRestrict", "printType")
-# Якщо з langRestrict знайшлося менше книг, шукаємо ще раз без нього: Google часто не ставить мову або ставить хибну.
 SPARSE_RESULTS = 3
-# Підзаголовки-жанри не є частиною назви: «Тигролови. Роман» мало б збігатися з «Тигролови».
 GENERIC_SUBTITLES = frozenset(
     {"роман", "повість", "оповідання", "збірка", "поезії", "вірші", "поема", "казка", "казки", "п єса", "novel", "a novel", "stories", "poems"}
 )
@@ -47,7 +45,6 @@ def _parse_isbn(info: dict) -> str:
 
 
 def _full_title(info: dict) -> str:
-    """Українські видання серій записують так: title «Кров і попіл», subtitle «Книга 1. Із крові й попелу»."""
     title = (info.get("title") or "").strip()
     subtitle = (info.get("subtitle") or "").strip()
     folded = search_form(subtitle)
@@ -60,9 +57,8 @@ def _is_ukrainian_volume(info: dict, title: str) -> bool:
     language = info.get("language") or ""
     if language == settings.CATALOG_LANGUAGE:
         return True
-    if language in ("", "und"):
+    if language in UNDETERMINED_LANGUAGES:
         return looks_ukrainian(title)
-    # Мова позначена хибно (наприклад, «ru»), але в назві є суто українські літери: це українське видання.
     return has_ukrainian_letters(title) and looks_ukrainian(title)
 
 
@@ -97,13 +93,11 @@ def _dedupe(books: list[ExternalBook]) -> list[ExternalBook]:
 
 
 def _cache_key(query: str) -> str:
-    digest = hashlib.sha1(search_form(query).encode("utf-8")).hexdigest()
+    digest = hashlib.sha1(search_form(query).encode("utf-8"), usedforsecurity=False).hexdigest()
     return f"google_books:{settings.CATALOG_LANGUAGE}:{digest}"
 
 
 def _fetch_with_retry(params: dict) -> dict:
-    """Google Books час від часу віддає 503 backendFailed без причини. Повторюємо запит, а останню спробу робимо без
-    langRestrict/printType: мову все одно перевіряє parse_volume. Помилки клієнта (400, 403, 429) не повторюємо."""
     fallback = {name: value for name, value in params.items() if name not in OPTIONAL_PARAMS}
     attempts = [params, params, fallback]
     for index, attempt in enumerate(attempts):
@@ -147,7 +141,6 @@ def search_google_books(query: str, limit: int | None = None) -> ExternalSearch:
 
 
 def _search_without_language(params: dict) -> list[ExternalBook]:
-    """Другий прохід без langRestrict. Мову все одно перевіряє parse_volume, тож чужі книги не пролізуть."""
     loose = {name: value for name, value in params.items() if name != "langRestrict"}
     try:
         payload = _fetch_with_retry(loose)

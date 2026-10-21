@@ -47,7 +47,6 @@ class Command(BaseCommand):
             self.stdout.write(f"    {book.title} — {book.author or '—'} ({book.year or '—'}), {cover}, id={book.external_id}")
 
     def dump_google_raw(self, query: str) -> None:
-        """Сирі відповіді Google до будь-яких наших фільтрів: видно, які мови й підзаголовки він віддає насправді."""
         if not settings.GOOGLE_BOOKS_API_KEY:
             return
         params = {"q": query, "printType": "books", "maxResults": 10, "key": settings.GOOGLE_BOOKS_API_KEY}

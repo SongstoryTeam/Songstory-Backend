@@ -1,4 +1,3 @@
-"""Єдиний зовнішній пошук книг: опитує кілька безкоштовних джерел паралельно, зливає дублікати й ранжує результати."""
 
 import logging
 from concurrent.futures import ThreadPoolExecutor, wait
@@ -7,7 +6,7 @@ from dataclasses import replace
 from django.conf import settings
 from django.core.cache import cache
 
-from core.text import search_terms, title_identity
+from core.text import clean_query, search_terms, title_identity
 
 from .apple_books import search_apple_books
 from .external import ExternalBook, ExternalSearch, has_cyrillic, has_ukrainian_letters, loose_form
@@ -17,6 +16,8 @@ from .open_library import search_open_library
 logger = logging.getLogger(__name__)
 
 SHORT_TERM = 4
+MIN_AUTHOR_TOKEN_LENGTH = 3
+PARALLEL_GRACE_SECONDS = 2
 INFLECTION_TAIL = 2
 EXACT_TITLE_SCORE = 100
 PREFIX_TITLE_SCORE = 70
@@ -32,7 +33,6 @@ SOURCE_LABELS = {"google": "Google Books", "openlibrary": "Open Library", "apple
 
 
 def _providers() -> list[tuple[str, callable]]:
-    """Список (назва, функція пошуку) у порядку з BOOK_SOURCES. Google без ключа пропускаємо."""
     available = {"google": search_google_books, "openlibrary": search_open_library, "apple": search_apple_books}
     selected = []
     for name in settings.BOOK_SOURCES:
@@ -45,27 +45,25 @@ def _providers() -> list[tuple[str, callable]]:
 
 
 def _run_parallel(providers: list[tuple[str, callable]], query: str) -> list[ExternalSearch | None]:
-    """Опитує всі джерела одночасно, тож час відповіді дорівнює найповільнішому, а не сумі. Збій одного не ламає решту."""
     pool = ThreadPoolExecutor(max_workers=len(providers))
     futures = [pool.submit(function, query) for _, function in providers]
-    done, _ = wait(futures, timeout=settings.EXTERNAL_HTTP_TIMEOUT + 2)
+    done, _ = wait(futures, timeout=settings.EXTERNAL_HTTP_TIMEOUT + PARALLEL_GRACE_SECONDS)
     pool.shutdown(wait=False, cancel_futures=True)
     results: list[ExternalSearch | None] = []
-    for (name, _), future in zip(providers, futures):
+    for (name, _), future in zip(providers, futures, strict=True):
         if future not in done:
             logger.warning("Book source %s timed out", name)
             results.append(None)
             continue
         try:
             results.append(future.result())
-        except Exception:  # noqa: BLE001 — один зламаний провайдер не повинен ламати весь пошук
+        except Exception:
             logger.exception("Book source %s crashed", name)
             results.append(None)
     return results
 
 
 def _stem(term: str) -> str:
-    """Грубе відсікання закінчення, щоб «воронів» знаходило «Ворони», а «шістка» — «Шістку»."""
     return term if len(term) <= SHORT_TERM else term[:-INFLECTION_TAIL]
 
 
@@ -107,11 +105,10 @@ def _score(book: ExternalBook, terms: list[str]) -> int:
 
 
 def _authors_compatible(first: str, second: str) -> bool:
-    """Автори збігаються, якщо порожні, мають спільне слово або записані різними абетками («Лі Бардуго» і «Leigh Bardugo»)."""
     if not first or not second:
         return True
-    first_tokens = {token for token in loose_form(first).split() if len(token) > 2}
-    second_tokens = {token for token in loose_form(second).split() if len(token) > 2}
+    first_tokens = {token for token in loose_form(first).split() if len(token) >= MIN_AUTHOR_TOKEN_LENGTH}
+    second_tokens = {token for token in loose_form(second).split() if len(token) >= MIN_AUTHOR_TOKEN_LENGTH}
     if first_tokens & second_tokens:
         return True
     return has_cyrillic(first) != has_cyrillic(second)
@@ -123,7 +120,6 @@ def _quality(book: ExternalBook) -> tuple[bool, bool, bool]:
 
 def _merge(first: ExternalBook, second: ExternalBook) -> ExternalBook:
     primary, other = (first, second) if _quality(first) >= _quality(second) else (second, first)
-    # Назва кирилицею важливіша за якість запису: читач шукає українською. Іншу назву лишаємо як оригінальну.
     title, alternative = primary.title, other.title
     if has_cyrillic(other.title) and not has_cyrillic(primary.title):
         title, alternative = other.title, primary.title
@@ -143,7 +139,6 @@ def _merge(first: ExternalBook, second: ExternalBook) -> ExternalBook:
 
 
 def _same_book(first: ExternalBook, second: ExternalBook) -> bool:
-    """Той самий ISBN, або та сама назва (з точністю до «Кн. 1») і сумісні автори."""
     if first.isbn and first.isbn == second.isbn:
         return True
     return title_identity(first.title) == title_identity(second.title) and _authors_compatible(first.author, second.author)
@@ -179,23 +174,24 @@ def search_books(query: str, limit: int | None = None) -> ExternalSearch:
     results = _run_parallel(providers, query)
     collected = [book for result in results if result for book in result.books]
     candidates = [book for book in _merge_duplicates(collected) if _is_relevant(book, terms)]
-    # sorted() стабільний: за однакового балу лишається порядок джерел із налаштувань.
     ranked = sorted(candidates, key=lambda book: -_score(book, terms))[:limit]
     _remember(ranked)
     failed = tuple(
-        SOURCE_LABELS[name] for (name, _), result in zip(providers, results) if result is None or result.unavailable
+        SOURCE_LABELS[name] for (name, _), result in zip(providers, results, strict=True) if result is None or result.unavailable
     )
     all_failed = len(failed) == len(providers)
     return ExternalSearch(books=ranked, unavailable=all_failed and not ranked, failed=failed)
 
 
-def get_external_book(external_id: str) -> ExternalBook | None:
-    """Книга для імпорту: спершу з кешу пошуку (працює для всіх джерел), інакше напряму з Google за «голим» id."""
+def get_external_book(external_id: str, query: str = "") -> ExternalBook | None:
     if not external_id:
         return None
     cached = cache.get(_book_cache_key(external_id))
     if cached is not None:
         return cached
     if EXTERNAL_ID_SEPARATOR in external_id:
-        return None
+        if not clean_query(query):
+            return None
+        search_books(clean_query(query))
+        return cache.get(_book_cache_key(external_id))
     return get_google_book(external_id)

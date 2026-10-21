@@ -1,5 +1,3 @@
-"""Єдині правила очищення даних книги. Їх застосовують модель, форма додавання та імпорт, тож записи в базі однакові
-незалежно від того, звідки прийшли."""
 
 import re
 import unicodedata
@@ -8,22 +6,16 @@ from datetime import date
 from django.core.exceptions import ValidationError
 from django.core.validators import URLValidator
 
+from core import limits
+
 from .external import strip_html
 
-TITLE_MAX = 255
-NAME_MAX = 255
-GENRE_MAX = 100
-DESCRIPTION_MAX = 5000
-COVER_URL_MAX = 500
-EXTERNAL_ID_MAX = 50
 MIN_YEAR = 1
-ISBN_INPUT_MAX = 20
 ISBN_10_LENGTH = 10
 ISBN_13_LENGTH = 13
 TYPOGRAPHIC_APOSTROPHE = "’"
 
 _INVISIBLE = dict.fromkeys(map(ord, "\u200b\u200c\u200d\u2060\ufeff\u00ad"), None)
-# NUL та інші керівні символи Postgres не приймає зовсім; \n і \t лишаємо для обробки пробілів.
 _CONTROL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _SPACES = re.compile(r"[^\S\n]+")
 _BLANK_LINES = re.compile(r"\n{3,}")
@@ -38,34 +30,35 @@ def _base(value) -> str:
     text = unicodedata.normalize("NFC", str(value or "")).translate(_INVISIBLE)
     return _CONTROL.sub("", text).replace("\r\n", "\n").replace("\r", "\n")
 
+INSECURE_SCHEME = "http://"
+SECURE_SCHEME = "https://"
+
 
 def clean_text(value, max_length: int | None = None) -> str:
-    """Один рядок: без невидимих символів, з одним пробілом між словами та єдиним апострофом у словах."""
     text = _APOSTROPHE.sub(TYPOGRAPHIC_APOSTROPHE, _WHITESPACE.sub(" ", _base(value)).strip())
     return text[:max_length].rstrip() if max_length else text
 
 
 def clean_title(value) -> str:
-    return clean_text(value, TITLE_MAX)
+    return clean_text(value, limits.TEXT_MAX_LENGTH)
 
 
 def clean_person_name(value) -> str:
-    """«тарас  шевченко» і «ТАРАС ШЕВЧЕНКО» стають «Тарас Шевченко». Змішаний регістр не чіпаємо: «ван Гог» лишається."""
     name = _COMMA_SPACING.sub(", ", clean_text(value)).strip(", ")
     if name and (name == name.lower() or name == name.upper()):
         name = _LETTERS.sub(lambda match: match.group().capitalize(), name.lower())
-    return name[:NAME_MAX].rstrip()
+    return name[: limits.TEXT_MAX_LENGTH].rstrip()
 
 
 def clean_genre_name(value) -> str:
-    name = clean_text(value, GENRE_MAX)
+    name = clean_text(value, limits.GENRE_NAME_MAX_LENGTH)
     return name[:1].upper() + name[1:]
 
 
 def clean_description(value) -> str:
     text = strip_html_keep_lines(value)
-    if len(text) > DESCRIPTION_MAX:
-        text = text[:DESCRIPTION_MAX].rsplit(" ", 1)[0].rstrip()
+    if len(text) > limits.DESCRIPTION_MAX_LENGTH:
+        text = text[: limits.DESCRIPTION_MAX_LENGTH].rsplit(" ", 1)[0].rstrip()
     return text
 
 
@@ -85,9 +78,9 @@ def clean_year(value) -> int | None:
 
 def clean_cover_url(value) -> str:
     url = clean_text(value)
-    if url.startswith("http://"):
-        url = "https://" + url[len("http://"):]
-    if not url or len(url) > COVER_URL_MAX:
+    if url.startswith(INSECURE_SCHEME):
+        url = SECURE_SCHEME + url[len(INSECURE_SCHEME) :]
+    if not url or len(url) > limits.URL_MAX_LENGTH:
         return ""
     try:
         _URL_VALIDATOR(url)
@@ -107,4 +100,4 @@ def clean_isbn(value) -> str:
 
 def clean_external_id(value) -> str | None:
     identifier = clean_text(value)
-    return identifier if identifier and len(identifier) <= EXTERNAL_ID_MAX else None
+    return identifier if identifier and len(identifier) <= limits.GOOGLE_BOOKS_ID_MAX_LENGTH else None

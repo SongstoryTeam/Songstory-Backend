@@ -12,7 +12,6 @@ def _flush(model, batch: list) -> list:
 
 
 def rebuild_search_keys(apps, schema_editor):
-    """Перебудовує search_key після уніфікації апострофів у core.text.normalize."""
     Book = apps.get_model("core", "Book")
     Track = apps.get_model("core", "Track")
 

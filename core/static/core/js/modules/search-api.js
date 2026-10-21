@@ -1,9 +1,5 @@
 window.Songstery = window.Songstery || {};
 
-/**
- * Клієнт підказок пошуку: скасування застарілих запитів, коротке кешування
- * та типізовані помилки, щоб UI міг показати зрозуміле повідомлення.
- */
 window.Songstery.searchApi = (() => {
     const CACHE_LIMIT = 30;
 
@@ -16,6 +12,8 @@ window.Songstery.searchApi = (() => {
 
     const ERROR_KINDS = Object.freeze({RATE_LIMITED: 'rate_limited', SERVER: 'server', NETWORK: 'network'});
 
+    const HTTP_TOO_MANY_REQUESTS = 429;
+
     function csrfToken() {
         const field = document.querySelector('input[name="csrfmiddlewaretoken"]');
         if (field) return field.value;
@@ -23,9 +21,10 @@ window.Songstery.searchApi = (() => {
         return match ? decodeURIComponent(match[1]) : '';
     }
 
-    async function importBook(url, externalId) {
+    async function importBook(url, externalId, query) {
         const body = new FormData();
         body.append('external_id', externalId);
+        body.append('query', query);
         let response;
         try {
             response = await fetch(url, {
@@ -73,7 +72,7 @@ window.Songstery.searchApi = (() => {
                 throw new SearchError(ERROR_KINDS.NETWORK, error.message);
             }
 
-            if (response.status === 429) throw new SearchError(ERROR_KINDS.RATE_LIMITED, 'Too many requests');
+            if (response.status === HTTP_TOO_MANY_REQUESTS) throw new SearchError(ERROR_KINDS.RATE_LIMITED, 'Too many requests');
             if (!response.ok) throw new SearchError(ERROR_KINDS.SERVER, String(response.status));
 
             const payload = await response.json();

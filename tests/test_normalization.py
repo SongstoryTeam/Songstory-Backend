@@ -154,18 +154,19 @@ class ImportRobustnessTests(TestCase):
         def create_after_race(**kwargs):
             raise IntegrityError("duplicate google_books_id")
 
-        with mock.patch("core.services.books.find_duplicate", return_value=None), \
-                mock.patch.object(Book.objects, "create", side_effect=create_after_race):
-            with mock.patch("core.services.books.Book.objects.filter") as lookup:
-                lookup.return_value.first.side_effect = [None, winner]
-                book, created = book_service.import_external_book(external, user)
+        with (
+            mock.patch("core.services.books.find_duplicate", return_value=None),
+            mock.patch.object(Book.objects, "create", side_effect=create_after_race),
+            mock.patch("core.services.books.Book.objects.filter") as lookup,
+        ):
+            lookup.return_value.first.side_effect = [None, winner]
+            book, created = book_service.import_external_book(external, user)
         self.assertEqual((book, created), (winner, False))
         self.assertIsNotNone(real_create)
 
 
 class NormalizeCatalogTests(TestCase):
     def setUp(self):
-        # bulk_create обходить save(), тож це імітація «брудних» даних, що були в базі до нормалізації.
         Author.objects.bulk_create(
             [
                 Author(name="тарас  шевченко", slug="a1"),

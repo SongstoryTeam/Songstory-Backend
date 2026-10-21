@@ -2,6 +2,8 @@ from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html
 
+from core import limits
+
 from .models import (
     Author,
     AuthorVerification,
@@ -104,7 +106,7 @@ class CommentAdmin(admin.ModelAdmin):
 
     @admin.display(description="Текст")
     def short_text(self, obj):
-        return obj.text[:60]
+        return obj.text[: limits.ADMIN_PREVIEW_LENGTH]
 
 
 @admin.register(UserProfile)

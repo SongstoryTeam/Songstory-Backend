@@ -1,9 +1,5 @@
 window.Songstery = window.Songstery || {};
 
-/**
- * Відмальовування вмісту панелі пошуку. Весь текст вставляється через
- * textContent, тому дані з сервера не можуть внести розмітку (XSS).
- */
 window.Songstery.searchRenderer = (() => {
     const OPTION_PREFIX = 'site-search-option-';
     const SKELETON_ROWS = 3;

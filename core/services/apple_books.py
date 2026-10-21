@@ -19,7 +19,6 @@ def _cover(url: str) -> str:
 
 
 def parse_result(item: dict) -> ExternalBook | None:
-    """Apple не повертає мову книги, тому українськість визначаємо за назвою: кирилиця без російських літер."""
     title = (item.get("trackName") or "").strip()
     track_id = item.get("trackId")
     if not title or not track_id or not looks_ukrainian(title):
@@ -49,4 +48,4 @@ def search_apple_books(query: str, limit: int | None = None) -> ExternalSearch:
         payload = get_json(settings.APPLE_BOOKS_API_URL, params)
         return [book for book in map(parse_result, payload.get("results", [])) if book]
 
-    return cached_search("apple_books:ua", query, fetch, limit=limit)
+    return cached_search(f"apple_books:{settings.APPLE_BOOKS_COUNTRY}", query, fetch, limit=limit)

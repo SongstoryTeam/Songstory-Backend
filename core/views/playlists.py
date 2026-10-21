@@ -27,7 +27,7 @@ def playlist_create(request, slug: str):
     pool = book_tracks(book)
     form = PlaylistForm(request.POST or None, track_queryset=pool)
     if request.method == "POST" and form.is_valid():
-        selected = set(track.pk for track in form.cleaned_data["tracks"])
+        selected = {track.pk for track in form.cleaned_data["tracks"]}
         with transaction.atomic():
             playlist = Playlist.objects.create(
                 book=book,

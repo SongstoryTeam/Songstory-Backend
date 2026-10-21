@@ -57,7 +57,6 @@ def search_local(user, query: str, limit: int):
 
 
 def exclude_known(items: list[ExternalBook]) -> list[ExternalBook]:
-    """Прибирає з видачі книги, які вже є в каталозі: за id джерела, ISBN або назвою з автором."""
     if not items:
         return []
     known_ids = set(

@@ -5,7 +5,7 @@
 
 {% block content %}
     <div class="form-wrap form-wrap--wizard">
-        <div class="form-box wizard" data-wizard data-check-url="{% url 'signup_check' %}">
+        <div class="form-box auth-wizard" data-wizard data-check-url="{% url 'signup_check' %}">
             <div class="form-box__title">Приєднатись до {{ SITE_NAME }}</div>
             <p class="form-box__subtitle">Створіть безкоштовний акаунт і починайте ділитись музикою</p>
 
@@ -68,7 +68,7 @@
                                 {% endif %}
 
                                 {% if field.errors %}
-                                    <span class="form-error" data-wizard-error>{{ field.errors.0 }}</span>
+                                    <span class="form-error">{{ field.errors.0 }}</span>
                                 {% endif %}
                                 {% if field.help_text %}
                                     <small>{{ field.help_text }}</small>
@@ -93,7 +93,7 @@
 
             {% if GOOGLE_AUTH_ENABLED %}{% include 'includes/_social_auth.html' with cta_label="Зареєструватись через Google" %}{% endif %}
 
-            <p class="text-sm text-muted mt-16" style="text-align:center;">
+            <p class="text-sm text-muted text-center mt-16">
                 Вже є акаунт?
                 <a href="{% url 'login' %}" class="text-accent">Увійти</a>
             </p>
@@ -102,6 +102,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="{% static 'core/js/modules/wizard.js' %}" defer></script>
     <script src="{% static 'core/js/signup-wizard.js' %}" defer></script>
 {% endblock %}

@@ -1,12 +1,14 @@
 from django.db import models
 from slugify import slugify
 
+from core import limits
+
 DEFAULT_SLUG = "item"
 
 
 def generate_unique_slug(model: type[models.Model], text: str, instance: models.Model | None = None) -> str:
     field = model._meta.get_field("slug")
-    base = (slugify(text) or DEFAULT_SLUG)[: field.max_length - 6].strip("-") or DEFAULT_SLUG
+    base = (slugify(text) or DEFAULT_SLUG)[: field.max_length - limits.SLUG_SUFFIX_RESERVE].strip("-") or DEFAULT_SLUG
     queryset = model._default_manager.all()
     if instance is not None and instance.pk:
         queryset = queryset.exclude(pk=instance.pk)

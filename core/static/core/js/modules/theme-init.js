@@ -1,14 +1,5 @@
 window.Songstery = window.Songstery || {};
 
-/**
- * Модуль теми. Підключається синхронно в <head>, щоб тема застосувалась до
- * першого малювання сторінки (без «мигання»).
- *
- * Збережена перевага: 'light' | 'dark' | 'system' (за замовчуванням — 'system').
- * На <html> завжди виставляються:
- *   data-theme            — фактична тема ('light' | 'dark'), її читає CSS;
- *   data-theme-preference — вибір користувача ('light' | 'dark' | 'system').
- */
 window.Songstery.theme = (() => {
     const STORAGE_KEY = 'songstery:theme';
     const CHANGE_EVENT = 'songstery:themechange';
@@ -31,7 +22,7 @@ window.Songstery.theme = (() => {
             if (preference === PREFERENCES.SYSTEM) window.localStorage.removeItem(STORAGE_KEY);
             else window.localStorage.setItem(STORAGE_KEY, preference);
         } catch {
-            // Сховище недоступне (приватний режим) — тема діє лише на цій сторінці.
+
         }
     }
 

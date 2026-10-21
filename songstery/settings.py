@@ -1,4 +1,3 @@
-import sys
 from pathlib import Path
 
 import environ
@@ -8,14 +7,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR / ".env")
 
+
+def env_value(name: str, default: str) -> str:
+    return env.str(name, default="").strip() or default
+
+
 SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
-SITE_NAME = env("SITE_NAME", default="Songstery")
-SITE_DOMAIN = env("SITE_DOMAIN", default="localhost:8000")
-SITE_URL = env("SITE_URL", default="http://localhost:8000")
+SITE_NAME = env_value("SITE_NAME", "Songstery")
+SITE_DOMAIN = env_value("SITE_DOMAIN", "localhost:8000")
+SITE_URL = env_value("SITE_URL", "http://localhost:8000")
 SITE_CONTACT_EMAIL = env("SITE_CONTACT_EMAIL", default="")
 SITE_ID = 1
 
@@ -68,7 +72,7 @@ TEMPLATES = [
     },
 ]
 
-DATABASES = {"default": env.db("DATABASE_URL", default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}")}
+DATABASES = {"default": env.db_url_config(env_value("DATABASE_URL", f"sqlite:///{BASE_DIR / 'db.sqlite3'}"))}
 _database = DATABASES["default"]
 if _database["ENGINE"] == "django.db.backends.postgresql":
     _database["CONN_MAX_AGE"] = env.int("DB_CONN_MAX_AGE", default=60)
@@ -98,8 +102,9 @@ else:
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 
+TEST_RUNNER = "core.testing.IsolatedTestRunner"
+
 RATELIMIT_USE_CACHE = "default"
-# Кількість довірених reverse-proxy перед застосунком (для коректного IP у лімітах).
 TRUSTED_PROXY_COUNT = env.int("TRUSTED_PROXY_COUNT", default=0 if DEBUG else 1)
 RATELIMIT_IP_META_KEY = "core.ratelimits.client_ip"
 RATE_LIMITS = {
@@ -108,8 +113,6 @@ RATE_LIMITS = {
     "search": "60/m",
     "search_suggest": "180/m",
     "import_book": "20/h",
-    "create_book": "10/h",
-    "book_check": "60/m",
     "recommend": "30/h",
     "comment": "10/m",
     "playlist": "20/h",
@@ -136,7 +139,7 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-PRIVATE_MEDIA_ROOT = Path(env("PRIVATE_MEDIA_ROOT", default=str(BASE_DIR / "private_media")))
+PRIVATE_MEDIA_ROOT = Path(env_value("PRIVATE_MEDIA_ROOT", str(BASE_DIR / "private_media")))
 
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
@@ -174,8 +177,18 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION", default="")
+GOOGLE_SITE_VERIFICATION_FILE = env_value("GOOGLE_SITE_VERIFICATION_FILE", "googlef9b06c02e8f2e7fc.html")
+
+SITE_DESCRIPTION = "Музичні рекомендації до книг і окремих розділів"
+PWA_THEME_COLOR = "#C4622D"
+PWA_BACKGROUND_COLOR = "#F7F3EE"
+PWA_CACHE_VERSION = "v2"
+PWA_ICON_PATH = "icons/icon-{size}.png"
+PWA_ICON_SIZES = (192, 512)
+PWA_FAVICON_SIZE = 192
 
 CATALOG_LANGUAGE = "uk"
+CATALOG_LANGUAGE_ISO3 = "ukr"
 HOME_SHELF_SIZE = 12
 CATALOG_PAGE_SIZE = 24
 SEARCH_PAGE_SIZE = 24
@@ -186,35 +199,32 @@ SEARCH_SUGGEST_EXTERNAL_MIN_LENGTH = 3
 SEARCH_SUGGEST_EXTERNAL_LIMIT = 5
 TRACK_SEARCH_LIMIT = 12
 BULK_CHAPTERS_MAX = 100
-PENDING_BOOKS_LIMIT = 5
 COMMENT_MAX_LENGTH = 2000
-RECOMMENDATION_COMMENT_MAX_LENGTH = 500
 
 EXTERNAL_HTTP_TIMEOUT = 5
 EXTERNAL_SEARCH_LIMIT = 10
 EXTERNAL_SEARCH_CACHE_TTL = 60 * 60 * 24
-GOOGLE_BOOKS_API_URL = env("GOOGLE_BOOKS_API_URL", default="https://www.googleapis.com/books/v1/volumes")
+GOOGLE_BOOKS_API_URL = env_value("GOOGLE_BOOKS_API_URL", "https://www.googleapis.com/books/v1/volumes")
 GOOGLE_BOOKS_API_KEY = env("GOOGLE_BOOKS_API_KEY", default="").strip().strip("\"'")
 
-# Джерела зовнішнього пошуку книг. Google Books без ключа не використовується: спільна квота без ключа майже завжди вичерпана.
-BOOK_SOURCES = [] if "test" in sys.argv else env.list("BOOK_SOURCES", default=["google", "openlibrary", "apple"])
-OPEN_LIBRARY_API_URL = env("OPEN_LIBRARY_API_URL", default="https://openlibrary.org/search.json")
-APPLE_BOOKS_API_URL = env("APPLE_BOOKS_API_URL", default="https://itunes.apple.com/search")
+BOOK_SOURCES = [name for name in env.list("BOOK_SOURCES", default=[]) if name] or ["google", "openlibrary", "apple"]
+OPEN_LIBRARY_API_URL = env_value("OPEN_LIBRARY_API_URL", "https://openlibrary.org/search.json")
+APPLE_BOOKS_API_URL = env_value("APPLE_BOOKS_API_URL", "https://itunes.apple.com/search")
 APPLE_BOOKS_COUNTRY = "ua"
-EXTERNAL_HTTP_USER_AGENT = env("EXTERNAL_HTTP_USER_AGENT", default=f"{SITE_NAME}/1.0 ({SITE_URL})")
+EXTERNAL_HTTP_USER_AGENT = env_value("EXTERNAL_HTTP_USER_AGENT", f"{SITE_NAME}/1.0 ({SITE_URL})")
 EXTERNAL_FAILURE_COOLDOWN = 60
 EXTERNAL_BOOK_CACHE_TTL = 60 * 60 * 24
 
 VERIFICATION_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
 VERIFICATION_ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"]
 
-EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+EMAIL_BACKEND = env_value("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
 EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
-DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=f"noreply@{SITE_DOMAIN.split(':')[0]}")
+DEFAULT_FROM_EMAIL = env_value("DEFAULT_FROM_EMAIL", f"noreply@{SITE_DOMAIN.split(':')[0]}")
 ADMIN_EMAIL = env("ADMIN_EMAIL", default="")
 ADMINS = [("Admin", ADMIN_EMAIL)] if ADMIN_EMAIL else []
 MANAGERS = ADMINS
@@ -234,7 +244,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "formatters": {"verbose": {"format": "[{asctime}] {levelname} {name}: {message}", "style": "{"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "verbose"}},
-    "root": {"handlers": ["console"], "level": env("DJANGO_LOG_LEVEL", default="INFO")},
+    "root": {"handlers": ["console"], "level": env_value("DJANGO_LOG_LEVEL", "INFO")},
 }
 
 SENTRY_DSN = env("SENTRY_DSN", default="")
@@ -245,5 +255,5 @@ if SENTRY_DSN and not DEBUG:
         dsn=SENTRY_DSN,
         traces_sample_rate=0.1,
         send_default_pii=False,
-        environment=env("SENTRY_ENVIRONMENT", default="production"),
+        environment=env_value("SENTRY_ENVIRONMENT", "production"),
     )

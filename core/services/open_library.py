@@ -5,7 +5,6 @@ from django.conf import settings
 from .external import ExternalBook, ExternalSearch, cached_search
 from .http import get_json
 
-LANGUAGE_FILTER = "language:ukr"
 SOLR_SPECIAL = re.compile(r'[:"()\[\]{}^~*?\\/!+\-]')
 COVER_URL = "https://covers.openlibrary.org/b/id/{cover_id}-M.jpg"
 FIELDS = "key,title,author_name,first_publish_year,cover_i,isbn,language,editions"
@@ -14,7 +13,7 @@ MAX_AUTHORS = 3
 
 def _query(text: str) -> str:
     cleaned = " ".join(SOLR_SPECIAL.sub(" ", text).split())
-    return f"{cleaned} {LANGUAGE_FILTER}"
+    return f"{cleaned} language:{settings.CATALOG_LANGUAGE_ISO3}"
 
 
 def _first(values) -> str:
@@ -33,8 +32,6 @@ def _year(edition: dict, doc: dict) -> int | None:
 
 
 def parse_doc(doc: dict) -> ExternalBook | None:
-    """Open Library шукає по «роботах» (works). Завдяки `language:ukr` у запиті в `editions` лежить саме українське видання,
-    тож назва береться з нього: «Шістка воронів», а не оригінальна «Six of Crows»."""
     work_key = (doc.get("key") or "").rsplit("/", 1)[-1]
     editions = (doc.get("editions") or {}).get("docs") or []
     edition = editions[0] if editions else {}
@@ -59,8 +56,8 @@ def search_open_library(query: str, limit: int | None = None) -> ExternalSearch:
     limit = limit or settings.EXTERNAL_SEARCH_LIMIT
 
     def fetch() -> list[ExternalBook]:
-        params = {"q": _query(query), "fields": FIELDS, "limit": settings.EXTERNAL_SEARCH_LIMIT, "lang": "uk"}
+        params = {"q": _query(query), "fields": FIELDS, "limit": settings.EXTERNAL_SEARCH_LIMIT, "lang": settings.CATALOG_LANGUAGE}
         payload = get_json(settings.OPEN_LIBRARY_API_URL, params)
         return [book for book in map(parse_doc, payload.get("docs", [])) if book]
 
-    return cached_search("open_library:uk", query, fetch, limit=limit)
+    return cached_search(f"open_library:{settings.CATALOG_LANGUAGE}", query, fetch, limit=limit)

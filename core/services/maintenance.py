@@ -1,10 +1,10 @@
-"""Одноразове приведення вже наявних даних до єдиного формату (див. команду normalize_catalog)."""
 
 from dataclasses import dataclass, field
 
 from django.db import transaction
 from django.db.models import Count
 
+from core import limits
 from core.models import Author, Book
 from core.services.normalize import clean_person_name
 from core.text import name_key, search_form
@@ -34,7 +34,7 @@ def _merge_authors(report: CatalogReport) -> None:
             if keeper.name != cleaned:
                 report.authors_renamed += 1
             keeper.name = cleaned
-            keeper.save()  # перебудовує name_key і search_key усіх книг автора
+            keeper.save()
 
 
 def _normalize_books(report: CatalogReport) -> None:
@@ -42,7 +42,7 @@ def _normalize_books(report: CatalogReport) -> None:
     for book in Book.objects.select_related("author").iterator():
         before = {name: getattr(book, name) for name in tracked}
         book.normalize_fields()
-        stale_keys = book.search_key != book.build_search_key() or book.title_key != search_form(book.title)[:255]
+        stale_keys = book.search_key != book.build_search_key() or book.title_key != search_form(book.title)[: limits.TEXT_MAX_LENGTH]
         if stale_keys or any(getattr(book, name) != before[name] for name in tracked):
             book.save()
             report.books_updated += 1
@@ -60,7 +60,6 @@ def _find_duplicate_books(report: CatalogReport) -> None:
 
 @transaction.atomic
 def normalize_catalog(*, dry_run: bool = False) -> CatalogReport:
-    """Зливає авторів-дублікати, чистить назви й описи. Дублікати книг лише повідомляє: до них прив'язані рекомендації."""
     report = CatalogReport()
     _merge_authors(report)
     _normalize_books(report)

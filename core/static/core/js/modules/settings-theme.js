@@ -1,7 +1,3 @@
-/**
- * Перемикач теми на сторінці налаштувань: синхронізує радіо-кнопки зі станом
- * Songstery.theme (у т.ч. зі змінами з інших вкладок і системної теми).
- */
 (() => {
     const picker = document.querySelector('[data-theme-picker]');
     const theme = window.Songstery?.theme;

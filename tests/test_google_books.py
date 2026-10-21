@@ -1,5 +1,6 @@
 import io
 import logging
+from http import HTTPStatus
 from unittest import mock
 
 import requests
@@ -11,12 +12,12 @@ from core.services.google_books import _cache_key, parse_volume, search_google_b
 from core.services.http import ExternalServiceError, get_json, redact
 
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
-SECRET = "AIzaSyFAKEKEY1234567890"
+API_KEY_FIXTURE = "AIzaSyFAKEKEY1234567890"
 
 
-def fake_response(status=200, payload=None, text=""):
+def fake_response(status=HTTPStatus.OK, payload=None, text=""):
     response = mock.Mock(spec=requests.Response)
-    response.ok = status < 400
+    response.ok = status < HTTPStatus.BAD_REQUEST
     response.status_code = status
     response.text = text
     response.json.return_value = payload if payload is not None else {}
@@ -29,37 +30,40 @@ def volume(identifier, title, author="Автор"):
 
 class RedactTests(SimpleTestCase):
     def test_key_is_masked_in_urls(self):
-        text = f"403 Client Error for url: https://x.test/volumes?q=a&key={SECRET}&maxResults=5"
+        text = f"403 Client Error for url: https://x.test/volumes?q=a&key={API_KEY_FIXTURE}&maxResults=5"
         cleaned = redact(text)
-        self.assertNotIn(SECRET, cleaned)
+        self.assertNotIn(API_KEY_FIXTURE, cleaned)
         self.assertIn("key=***&maxResults=5", cleaned)
 
 
 class GetJsonTests(SimpleTestCase):
     def test_http_error_exposes_status_and_google_message(self):
         payload = {"error": {"message": "API key not valid. Please pass a valid API key."}}
-        with mock.patch("core.services.http.requests.get", return_value=fake_response(400, payload)):
-            with self.assertRaises(ExternalServiceError) as context:
-                get_json("https://x.test", {"key": SECRET})
+        response = fake_response(HTTPStatus.BAD_REQUEST, payload)
+        with mock.patch("core.services.http.requests.get", return_value=response), self.assertRaises(
+            ExternalServiceError
+        ) as context:
+            get_json("https://x.test", {"key": API_KEY_FIXTURE})
         self.assertEqual(context.exception.status, 400)
         self.assertIn("API key not valid", context.exception.detail)
 
     def test_network_error_never_leaks_key_to_logs_or_exception(self):
-        error = requests.ConnectionError(f"Max retries exceeded with url: /v1?q=a&key={SECRET}")
-        with mock.patch("core.services.http.requests.get", side_effect=error):
-            with self.assertLogs("core.services.http", level=logging.WARNING) as logs:
-                with self.assertRaises(ExternalServiceError) as context:
-                    get_json("https://x.test", {"key": SECRET})
-        self.assertNotIn(SECRET, "\n".join(logs.output))
-        self.assertNotIn(SECRET, str(context.exception))
+        error = requests.ConnectionError(f"Max retries exceeded with url: /v1?q=a&key={API_KEY_FIXTURE}")
+        with (
+            mock.patch("core.services.http.requests.get", side_effect=error),
+            self.assertLogs("core.services.http", level=logging.WARNING) as logs,
+            self.assertRaises(ExternalServiceError) as context,
+        ):
+            get_json("https://x.test", {"key": API_KEY_FIXTURE})
+        self.assertNotIn(API_KEY_FIXTURE, "\n".join(logs.output))
+        self.assertNotIn(API_KEY_FIXTURE, str(context.exception))
         self.assertIsNone(context.exception.__cause__)
 
     def test_invalid_json_is_reported(self):
         response = fake_response(200)
         response.json.side_effect = ValueError("bad")
-        with mock.patch("core.services.http.requests.get", return_value=response):
-            with self.assertRaises(ExternalServiceError):
-                get_json("https://x.test")
+        with mock.patch("core.services.http.requests.get", return_value=response), self.assertRaises(ExternalServiceError):
+            get_json("https://x.test")
 
 
 @override_settings(CACHES=CACHES)
@@ -72,7 +76,7 @@ class SearchCacheTests(SimpleTestCase):
         with mock.patch("core.services.google_books.get_json", return_value={"items": []}) as fetch:
             search_google_books("кобзар")
             search_google_books("кобзар")
-        self.assertEqual(fetch.call_count, 4)  # два пошуки, у кожному два проходи: з мовою і без
+        self.assertEqual(fetch.call_count, 4)
 
     def test_small_limit_does_not_truncate_cache_for_larger_limit(self):
         items = [volume(f"g{number}", f"Книга {number}") for number in range(8)]
@@ -89,7 +93,7 @@ class SearchCacheTests(SimpleTestCase):
         self.assertIsNone(cache.get(_cache_key("кобзар")))
 
 
-@override_settings(GOOGLE_BOOKS_API_KEY=SECRET)
+@override_settings(GOOGLE_BOOKS_API_KEY=API_KEY_FIXTURE)
 class CheckCommandTests(SimpleTestCase):
     def run_command(self, side_effect):
         out = io.StringIO()
@@ -99,7 +103,7 @@ class CheckCommandTests(SimpleTestCase):
 
     def test_reports_masked_key_and_results(self):
         output = self.run_command([{"items": [volume("1", "Кобзар", "Шевченко")]}] * 2)
-        self.assertNotIn(SECRET, output)
+        self.assertNotIn(API_KEY_FIXTURE, output)
         self.assertIn("AIza", output)
         self.assertIn("[без ключа] OK", output)
         self.assertIn("[з ключем] OK: від Google 1, після фільтра мови 1", output)
@@ -117,7 +121,7 @@ class CheckCommandTests(SimpleTestCase):
         self.assertNotIn("[з ключем]", output)
 
 
-@override_settings(CACHES=CACHES, GOOGLE_BOOKS_API_KEY=SECRET)
+@override_settings(CACHES=CACHES, GOOGLE_BOOKS_API_KEY=API_KEY_FIXTURE)
 class RetryTests(SimpleTestCase):
     def setUp(self):
         cache.clear()
@@ -129,7 +133,6 @@ class RetryTests(SimpleTestCase):
     def test_transient_503_is_retried_and_last_attempt_drops_language_params(self):
         outage = ExternalServiceError("HTTP 503", status=503)
         good = {"items": [volume("g1", "Тюремна цілителька", "Автор")]}
-        # Четвертий виклик — другий прохід без мови: знайшлася лише одна книга, тож пошук розширюється.
         with mock.patch("core.services.google_books.get_json", side_effect=[outage, outage, good, {}]) as fetch:
             result = search_google_books("тюремна цілителька")
         self.assertFalse(result.unavailable)
@@ -182,7 +185,7 @@ class VolumeParsingTests(SimpleTestCase):
         self.assertIsNone(parse_volume(raw_volume("g3", "Six of Crows", language="en")))
 
 
-@override_settings(CACHES=CACHES, GOOGLE_BOOKS_API_KEY=SECRET)
+@override_settings(CACHES=CACHES, GOOGLE_BOOKS_API_KEY=API_KEY_FIXTURE)
 class SecondPassTests(SimpleTestCase):
     def setUp(self):
         cache.clear()

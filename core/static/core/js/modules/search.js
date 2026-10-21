@@ -1,7 +1,3 @@
-/**
- * Контролер пошуку в топбарі (ARIA combobox): дебаунс, клавіатурна навігація,
- * стани завантаження/помилки. Мережа — у search-api.js, DOM — у search-renderer.js.
- */
 (() => {
     const form = document.querySelector('[data-site-search]');
     const {searchApi, searchRenderer} = window.Songstery || {};
@@ -13,8 +9,8 @@
     const clearButton = form.querySelector('[data-site-search-clear]');
     const status = form.querySelector('[data-site-search-status]');
 
-    const minLength = Number(form.dataset.minLength) || 2;
-    const debounceMs = Number(form.dataset.debounceMs) || 250;
+    const minLength = Number(form.dataset.minLength);
+    const debounceMs = Number(form.dataset.debounceMs);
     const SKELETON_DELAY_MS = 120;
 
     const MESSAGES = {
@@ -105,7 +101,7 @@
         button.classList.add('is-busy');
         button.setAttribute('aria-busy', 'true');
         try {
-            window.location.assign(await searchApi.importBook(lastPayload.import_url, button.dataset.externalId));
+            window.location.assign(await searchApi.importBook(lastPayload.import_url, button.dataset.externalId, lastQuery));
         } catch (error) {
             button.classList.remove('is-busy');
             button.removeAttribute('aria-busy');

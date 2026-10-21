@@ -52,6 +52,7 @@
                                     <form method="post" action="{% url 'core:import_book' %}">
                                         {% csrf_token %}
                                         <input type="hidden" name="external_id" value="{{ item.external_id }}">
+                                        <input type="hidden" name="query" value="{{ query }}">
                                         <button type="submit" class="btn btn-accent btn-sm">Додати до каталогу</button>
                                     </form>
                                 {% else %}
@@ -77,7 +78,7 @@
                 <p class="text-sm text-muted mt-16">
                     Не знайшли потрібну книгу?
                     {% if user.is_authenticated %}
-                        <a href="{% url 'core:create_book' %}?title={{ query|urlencode }}" class="text-accent">Додайте її вручну</a>.
+                        <a href="{% url 'core:create_book' %}" class="text-accent">Додайте її вручну</a>.
                     {% else %}
                         <a href="{% url 'login' %}" class="text-accent">Увійдіть</a>, щоб додати її вручну.
                     {% endif %}

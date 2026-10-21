@@ -1,5 +1,3 @@
-/* ── Сторінка налаштувань ─────────────────────────────────────────────── */
-
 .settings-header {
   margin-bottom: 28px;
 }
@@ -28,8 +26,6 @@
     align-items: start;
   }
 }
-
-/* Навігація по розділах */
 
 .settings-nav {
   display: flex;
@@ -88,8 +84,6 @@
   }
 }
 
-/* Секція та картка */
-
 .settings-section__head {
   margin-bottom: 14px;
 }
@@ -123,8 +117,6 @@
 .settings-card > * + * {
   border-top: 1px solid var(--clr-border);
 }
-
-/* Рядки */
 
 .settings-row {
   display: flex;
@@ -208,8 +200,6 @@
 .settings-row-form {
   display: block;
 }
-
-/* Вибір теми */
 
 .theme-picker {
   display: grid;
@@ -308,9 +298,6 @@
   color: var(--clr-muted);
 }
 
-/* Міні-макет інтерфейсу. Кольори навмисно зафіксовані (дзеркалять tokens.css),
-   щоб превʼю світлої й темної тем виглядали однаково за будь-якої активної теми. */
-
 .theme-option__preview {
   position: relative;
   display: block;
@@ -331,19 +318,19 @@
 }
 
 .theme-mock--light {
-  --m-bg: #F7F4EF;
-  --m-surface: #FFFFFF;
-  --m-line: #E2DDD6;
-  --m-muted: #C8BFB0;
-  --m-accent: #C4622D;
+  --m-bg: var(--preview-light-bg);
+  --m-surface: var(--preview-light-surface);
+  --m-line: var(--preview-light-line);
+  --m-muted: var(--preview-light-muted);
+  --m-accent: var(--preview-light-accent);
 }
 
 .theme-mock--dark {
-  --m-bg: #14110F;
-  --m-surface: #1C1917;
-  --m-line: #2E2924;
-  --m-muted: #4A423A;
-  --m-accent: #D9733F;
+  --m-bg: var(--preview-dark-bg);
+  --m-surface: var(--preview-dark-surface);
+  --m-line: var(--preview-dark-line);
+  --m-muted: var(--preview-dark-muted);
+  --m-accent: var(--preview-dark-accent);
 }
 
 .theme-mock--half {

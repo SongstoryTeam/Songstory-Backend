@@ -5,10 +5,12 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from core import limits
 from core.storage import get_private_storage
 from core.validators import validate_upload_size
 
 from .book import Book
+from .profile import UserProfile
 
 
 def proof_upload_path(instance, filename: str) -> str:
@@ -43,7 +45,7 @@ class AuthorVerification(models.Model):
     )
     publisher_url = models.URLField("Сторінка книги на сайті видавця", blank=True)
     additional_notes = models.TextField("Додаткова інформація", blank=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True)
+    status = models.CharField(max_length=limits.CODE_MAX_LENGTH, choices=Status.choices, default=Status.PENDING, db_index=True)
     admin_note = models.TextField("Нотатка адміністратора", blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
@@ -72,7 +74,7 @@ class AuthorVerification(models.Model):
         self._close(self.Status.APPROVED, reviewer, note)
         self.book.verified_author = self.user
         self.book.save(update_fields=["verified_author"])
-        profile = self.user.profile
+        profile = UserProfile.objects.for_user(self.user)
         profile.is_verified_author = True
         profile.save(update_fields=["is_verified_author"])
         emails.send_verification_approved(self)

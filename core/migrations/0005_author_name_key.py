@@ -13,7 +13,6 @@ def _flush(model, batch: list, fields: list[str]) -> list:
 
 
 def fill_keys(apps, schema_editor):
-    """Заповнює name_key авторів і перебудовує ключі пошуку, бо search_form тепер зводить «ґ» до «г»."""
     Author = apps.get_model("core", "Author")
     Book = apps.get_model("core", "Book")
 

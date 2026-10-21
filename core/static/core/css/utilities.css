@@ -23,6 +23,7 @@
 .mb-32 { margin-bottom: 32px; }
 
 .text-muted  { color: var(--clr-muted); }
+.text-center { text-align: center; }
 .text-accent { color: var(--clr-accent); }
 .text-sm     { font-size: var(--text-sm); }
 .text-xs     { font-size: var(--text-xs); }

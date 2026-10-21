@@ -1,0 +1,14 @@
+{% load static %}{
+  "name": "{{ SITE_NAME|escapejs }}",
+  "short_name": "{{ SITE_NAME|escapejs }}",
+  "description": "{{ SITE_DESCRIPTION|escapejs }}",
+  "start_url": "{% url 'core:home' %}",
+  "scope": "{% url 'core:home' %}",
+  "display": "standalone",
+  "background_color": "{{ PWA_BACKGROUND_COLOR }}",
+  "theme_color": "{{ PWA_THEME_COLOR }}",
+  "lang": "uk",
+  "icons": [
+{% for icon in PWA_ICONS %}    {"src": "{% static icon.path %}", "sizes": "{{ icon.sizes }}", "type": "image/png", "purpose": "any maskable"}{% if not forloop.last %},{% endif %}
+{% endfor %}  ]
+}

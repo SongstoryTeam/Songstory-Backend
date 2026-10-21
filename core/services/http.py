@@ -30,7 +30,6 @@ def _error_detail(response: requests.Response) -> str:
 
 
 def _headers() -> dict:
-    # Open Library просить представлятися у User-Agent; іншим джерелам це не шкодить.
     return {"User-Agent": settings.EXTERNAL_HTTP_USER_AGENT, "Accept": "application/json"}
 
 

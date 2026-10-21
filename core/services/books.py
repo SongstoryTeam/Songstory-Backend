@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db import IntegrityError, transaction
 from django.db.models import Max
 
+from core import limits
 from core.models import Author, Book, Chapter, Genre
 from core.text import name_key, title_identity
 
@@ -11,7 +12,6 @@ from .normalize import clean_external_id, clean_genre_name, clean_isbn, clean_pe
 
 
 def get_or_create_author(name: str) -> Author | None:
-    """Автор шукається за ключем (регістр, порядок слів, ґ/г), тож «Шевченко Тарас» не створює другого запису."""
     cleaned = clean_person_name(name)
     if not cleaned:
         return None
@@ -23,7 +23,6 @@ def get_or_create_author(name: str) -> Author | None:
         with transaction.atomic():
             return Author.objects.create(name=cleaned)
     except IntegrityError:
-        # Хтось створив такого самого автора одночасно з нами.
         return Author.objects.filter(name_key=key).order_by("pk").first() or Author.objects.filter(name=cleaned).first()
 
 
@@ -31,7 +30,6 @@ def get_or_create_genre(name: str) -> Genre | None:
     cleaned = clean_genre_name(name)
     if not cleaned:
         return None
-    # Порівнюємо в Python: iexact у SQLite не розрізняє регістр кирилиці.
     folded = cleaned.casefold()
     existing = next((genre for genre in Genre.objects.all() if genre.name.casefold() == folded), None)
     if existing:
@@ -41,17 +39,6 @@ def get_or_create_genre(name: str) -> Genre | None:
             return Genre.objects.create(name=cleaned)
     except IntegrityError:
         return next((genre for genre in Genre.objects.all() if genre.name.casefold() == folded), None)
-
-
-def pending_books_count(user: User) -> int:
-    return Book.objects.filter(creator=user, is_approved=False).count()
-
-
-def pending_books_left(user: User) -> int | None:
-    """Скільки книжок користувач ще може надіслати на перевірку. None — без обмежень (персонал публікує одразу)."""
-    if user.is_staff:
-        return None
-    return max(settings.PENDING_BOOKS_LIMIT - pending_books_count(user), 0)
 
 
 def create_book(
@@ -100,7 +87,6 @@ def import_external_book(external: ExternalBook, user: User) -> tuple[Book, bool
                 is_approved=True,
             )
     except IntegrityError:
-        # Ту саму книгу імпортували паралельно: віддаємо вже створену замість помилки 500.
         existing = external_id and Book.objects.filter(google_books_id=external_id).first()
         if existing:
             return existing, False
@@ -109,7 +95,6 @@ def import_external_book(external: ExternalBook, user: User) -> tuple[Book, bool
 
 
 def find_duplicate(title: str, author_name: str, isbn: str = "") -> Book | None:
-    """Та сама книга: збігається ISBN або (назва + автор) з урахуванням регістру, апострофів, ґ/г та порядку слів у імені."""
     code = clean_isbn(isbn)
     if code:
         by_isbn = Book.objects.filter(isbn=code).first()
@@ -119,8 +104,7 @@ def find_duplicate(title: str, author_name: str, isbn: str = "") -> Book | None:
     if not identity:
         return None
     author_key = name_key(clean_person_name(author_name))
-    # startswith використовує індекс title_key; точне порівняння робимо вже в Python, щоб «Кн. 1» збігалося з назвою без неї.
-    for candidate in Book.objects.filter(title_key__startswith=identity[:255]).select_related("author").order_by("pk"):
+    for candidate in Book.objects.filter(title_key__startswith=identity[: limits.TEXT_MAX_LENGTH]).select_related("author").order_by("pk"):
         candidate_key = candidate.author.name_key if candidate.author_id else ""
         if candidate_key == author_key and title_identity(candidate.title) == identity:
             return candidate

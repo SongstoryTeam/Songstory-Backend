@@ -10,9 +10,10 @@ function applyIconSizes() {
 async function setupServiceWorker() {
     if (!('serviceWorker' in navigator)) return;
 
+    const {serviceWorkerUrl, cachePrefix} = document.documentElement.dataset;
     try {
-        if (document.documentElement.dataset.serviceWorker === 'on') {
-            await navigator.serviceWorker.register('/sw.js');
+        if (serviceWorkerUrl) {
+            await navigator.serviceWorker.register(serviceWorkerUrl);
             return;
         }
 
@@ -21,7 +22,7 @@ async function setupServiceWorker() {
 
         if ('caches' in window) {
             const keys = await caches.keys();
-            await Promise.all(keys.filter((key) => key.startsWith('songstery-')).map((key) => caches.delete(key)));
+            await Promise.all(keys.filter((key) => key.startsWith(cachePrefix)).map((key) => caches.delete(key)));
         }
     } catch (error) {
         return;

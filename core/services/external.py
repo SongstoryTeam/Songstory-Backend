@@ -1,4 +1,3 @@
-"""Спільні типи та допоміжні функції для зовнішніх джерел книжок (Google Books, Open Library, Apple Books)."""
 
 import hashlib
 import html
@@ -14,10 +13,8 @@ from core.text import search_form
 from .http import ExternalServiceError
 
 CYRILLIC = re.compile(r"[\u0400-\u04FF]")
-# Літери, яких немає в українській абетці, але є в російській. Книга з такими літерами в назві — не українська.
 NON_UKRAINIAN_LETTERS = re.compile(r"[ыэъёЫЭЪЁ]")
 UKRAINIAN_ONLY_LETTERS = re.compile(r"[іїєґІЇЄҐ]")
-# Службові слова, яких немає в українській: ловлять «Мастер и Маргарита», навіть коли в назві немає суто російських літер.
 RUSSIAN_FUNCTION_WORDS = frozenset({"и", "что", "как", "это", "или", "они", "его", "мне", "всё", "ещё", "который"})
 HTML_TAG = re.compile(r"<[^>]+>")
 
@@ -38,7 +35,6 @@ class ExternalBook:
 class ExternalSearch:
     books: list[ExternalBook]
     unavailable: bool = False
-    # Назви джерел, що не відповіли. Якщо частина джерел мовчить, «нічого не знайдено» — неправда: результати неповні.
     failed: tuple[str, ...] = ()
 
 
@@ -51,8 +47,6 @@ def has_ukrainian_letters(text: str) -> bool:
 
 
 def looks_ukrainian(text: str) -> bool:
-    """Назва кирилицею без суто російських літер і слів. Евристика для джерел, що не вказують мову книги:
-    назву на кшталт «Шесть ворон» вона пропустить, бо за самими літерами її не відрізнити від української."""
     if not has_cyrillic(text) or NON_UKRAINIAN_LETTERS.search(text):
         return False
     return not RUSSIAN_FUNCTION_WORDS & set(text.casefold().split())
@@ -63,15 +57,13 @@ def strip_html(text: str) -> str:
 
 
 def loose_form(text: str) -> str:
-    """Форма для порівняння між різними джерелами: «Бардуґо» і «Бардуго» — те саме."""
     return search_form(text)
 
 
 def cached_search(
     namespace: str, query: str, fetch: Callable[[], list[ExternalBook]], *, limit: int
 ) -> ExternalSearch:
-    """Кешує результати джерела, а після збою ненадовго «відпочиває», щоб не бомбардувати сервіс запитами."""
-    digest = hashlib.sha1(search_form(query).encode("utf-8")).hexdigest()
+    digest = hashlib.sha1(search_form(query).encode("utf-8"), usedforsecurity=False).hexdigest()
     key = f"{namespace}:{digest}"
     cooldown_key = f"{namespace}:cooldown"
     cached = cache.get(key)

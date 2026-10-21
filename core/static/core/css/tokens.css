@@ -20,7 +20,6 @@
     --clr-danger: #C0392B;
     --clr-danger-lt: #FDF1F0;
     --clr-danger-dk: #962D22;
-    --clr-on-danger: #FFFFFF;
 
     --clr-white: #FFFFFF;
     --clr-ink-dk: #3A3228;
@@ -131,7 +130,6 @@
     --clr-danger: #E5604F;
     --clr-danger-lt: #2B1916;
     --clr-danger-dk: #F08A7C;
-    --clr-on-danger: #14110F;
 
     --clr-on-ink: #14110F;
     --clr-ink-dk: #E2DAD0;
@@ -209,4 +207,17 @@ button {
 
 [hidden] {
     display: none !important;
+}
+
+:root {
+    --preview-light-bg: #F7F4EF;
+    --preview-light-surface: #FFFFFF;
+    --preview-light-line: #E2DDD6;
+    --preview-light-muted: #C8BFB0;
+    --preview-light-accent: #C4622D;
+    --preview-dark-bg: #14110F;
+    --preview-dark-surface: #1C1917;
+    --preview-dark-line: #2E2924;
+    --preview-dark-muted: #4A423A;
+    --preview-dark-accent: #D9733F;
 }

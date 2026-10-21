@@ -1,10 +1,11 @@
-const CACHE_VERSION = 'v2';
-const STATIC_CACHE = `songstery-static-${CACHE_VERSION}`;
-const PAGE_CACHE = `songstery-pages-${CACHE_VERSION}`;
-const OFFLINE_URL = '/offline/';
-const STATIC_PREFIX = '/static/';
+{% load static %}const CACHE_PREFIX = '{{ CACHE_PREFIX|escapejs }}';
+const CACHE_VERSION = '{{ PWA_CACHE_VERSION|escapejs }}';
+const STATIC_CACHE = `${CACHE_PREFIX}static-${CACHE_VERSION}`;
+const PAGE_CACHE = `${CACHE_PREFIX}pages-${CACHE_VERSION}`;
+const OFFLINE_URL = '{% url "offline" %}';
+const STATIC_PREFIX = '{% get_static_prefix %}';
 const HASHED_ASSET = /\.[0-9a-f]{8,}\.[a-z0-9]+$/i;
-const PRECACHE_URLS = [OFFLINE_URL, '/static/icons/icon-192.png', '/static/icons/icon-512.png'];
+const PRECACHE_URLS = [OFFLINE_URL{% for icon in PWA_ICONS %}, '{% static icon.path %}'{% endfor %}];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(

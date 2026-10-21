@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.sitemaps.views import sitemap
@@ -27,10 +28,15 @@ urlpatterns = [
     path("robots.txt", pages.robots_txt, name="robots_txt"),
     path("sitemap.xml", sitemap, {"sitemaps": sitemaps}, name="sitemap"),
     path("sw.js", pages.service_worker, name="service_worker"),
+    path("manifest.webmanifest", pages.manifest, name="manifest"),
     path("offline/", pages.offline, name="offline"),
-    path(
-        "googlef9b06c02e8f2e7fc.html",
-        RedirectView.as_view(url=staticfiles_storage.url("googlef9b06c02e8f2e7fc.html")),
-    ),
     path("", include("core.urls")),
 ]
+
+if settings.GOOGLE_SITE_VERIFICATION_FILE:
+    urlpatterns.append(
+        path(
+            settings.GOOGLE_SITE_VERIFICATION_FILE,
+            RedirectView.as_view(url=staticfiles_storage.url(settings.GOOGLE_SITE_VERIFICATION_FILE)),
+        )
+    )

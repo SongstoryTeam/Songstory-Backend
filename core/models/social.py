@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
+from core import limits
+
 from .book import Book, Chapter
 from .music import Playlist
 
@@ -32,7 +34,7 @@ class Comment(models.Model):
         verbose_name_plural = "Коментарі"
 
     def __str__(self) -> str:
-        return f"{self.user}: {self.text[:40]}"
+        return f"{self.user}: {self.text[: limits.STR_PREVIEW_LENGTH]}"
 
     def clean(self) -> None:
         if self.parent_id and self.parent.parent_id:

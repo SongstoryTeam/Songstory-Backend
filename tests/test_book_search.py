@@ -210,11 +210,13 @@ class AggregatorTests(SimpleTestCase):
         def boom(query):
             raise RuntimeError("boom")
 
-        with mock.patch.object(book_search, "search_google_books", boom), \
-                mock.patch.object(book_search, "search_open_library", lambda q: ExternalSearch([book("ol:1", "Шістка воронів")])), \
-                mock.patch.object(book_search, "search_apple_books", lambda q: ExternalSearch([])):
-            with self.assertLogs("core.services.book_search", level="ERROR"):
-                result = book_search.search_books("шістка воронів")
+        with (
+            mock.patch.object(book_search, "search_google_books", boom),
+            mock.patch.object(book_search, "search_open_library", lambda q: ExternalSearch([book("ol:1", "Шістка воронів")])),
+            mock.patch.object(book_search, "search_apple_books", lambda q: ExternalSearch([])),
+            self.assertLogs("core.services.book_search", level="ERROR"),
+        ):
+            result = book_search.search_books("шістка воронів")
         self.assertEqual(len(result.books), 1)
 
     def test_exact_title_with_cover_ranks_first_and_irrelevant_results_are_dropped(self):

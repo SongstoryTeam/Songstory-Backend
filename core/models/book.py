@@ -11,12 +11,13 @@ from core.services.normalize import (
     clean_title,
     clean_year,
 )
+from core import limits
 from core.text import name_key, search_form, search_terms
 from core.utils.slugs import generate_unique_slug
 
 
 class Genre(models.Model):
-    name = models.CharField("Назва", max_length=100, unique=True)
+    name = models.CharField("Назва", max_length=limits.GENRE_NAME_MAX_LENGTH, unique=True)
     slug = models.SlugField(unique=True, blank=True)
 
     class Meta:
@@ -34,9 +35,9 @@ class Genre(models.Model):
 
 
 class Author(models.Model):
-    name = models.CharField("Ім'я", max_length=255, unique=True)
+    name = models.CharField("Ім'я", max_length=limits.TEXT_MAX_LENGTH, unique=True)
     slug = models.SlugField(unique=True, blank=True)
-    name_key = models.CharField(max_length=255, editable=False, default="", db_index=True)
+    name_key = models.CharField(max_length=limits.TEXT_MAX_LENGTH, editable=False, default="", db_index=True)
 
     class Meta:
         ordering = ["name"]
@@ -90,7 +91,7 @@ class BookQuerySet(models.QuerySet):
 
 
 class Book(models.Model):
-    title = models.CharField("Назва", max_length=255)
+    title = models.CharField("Назва", max_length=limits.TEXT_MAX_LENGTH)
     description = models.TextField("Опис", blank=True)
     slug = models.SlugField(unique=True, blank=True)
     author = models.ForeignKey(
@@ -100,9 +101,9 @@ class Book(models.Model):
         Genre, on_delete=models.SET_NULL, null=True, blank=True, related_name="books", verbose_name="Жанр"
     )
     year = models.PositiveSmallIntegerField("Рік", null=True, blank=True)
-    cover_url = models.URLField("Посилання на обкладинку", blank=True, max_length=500)
-    isbn = models.CharField("ISBN", max_length=20, blank=True)
-    google_books_id = models.CharField(max_length=50, unique=True, null=True, blank=True, editable=False)
+    cover_url = models.URLField("Посилання на обкладинку", blank=True, max_length=limits.URL_MAX_LENGTH)
+    isbn = models.CharField("ISBN", max_length=limits.ISBN_MAX_LENGTH, blank=True)
+    google_books_id = models.CharField(max_length=limits.GOOGLE_BOOKS_ID_MAX_LENGTH, unique=True, null=True, blank=True, editable=False)
     creator = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="created_books", verbose_name="Додав"
     )
@@ -116,8 +117,8 @@ class Book(models.Model):
     )
     is_approved = models.BooleanField("Схвалено", default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    search_key = models.CharField(max_length=600, editable=False, default="")
-    title_key = models.CharField(max_length=255, editable=False, default="", db_index=True)
+    search_key = models.CharField(max_length=limits.BOOK_SEARCH_KEY_MAX_LENGTH, editable=False, default="")
+    title_key = models.CharField(max_length=limits.TEXT_MAX_LENGTH, editable=False, default="", db_index=True)
 
     objects = BookQuerySet.as_manager()
 
@@ -130,31 +131,30 @@ class Book(models.Model):
     def __str__(self) -> str:
         return self.title
 
+    def save(self, *args, **kwargs) -> None:
+        self.normalize_fields()
+        if not self.slug:
+            self.slug = generate_unique_slug(Book, self.title, self)
+        self.search_key = self.build_search_key()
+        self.title_key = search_form(self.title)[: limits.TEXT_MAX_LENGTH]
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "title" in update_fields:
+            kwargs["update_fields"] = {*update_fields, "search_key", "title_key"}
+        super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        return reverse("core:book_detail", kwargs={"slug": self.slug})
+
     def normalize_fields(self) -> None:
-        """Єдині правила для всіх записів: що б не передали (форма, імпорт, адмінка, shell), у базу піде однаковий вигляд."""
         self.title = clean_title(self.title)
         self.description = clean_description(self.description)
         self.cover_url = clean_cover_url(self.cover_url)
         self.isbn = clean_isbn(self.isbn)
         self.year = clean_year(self.year)
 
-    def save(self, *args, **kwargs) -> None:
-        self.normalize_fields()
-        if not self.slug:
-            self.slug = generate_unique_slug(Book, self.title, self)
-        self.search_key = self.build_search_key()
-        self.title_key = search_form(self.title)[:255]
-        update_fields = kwargs.get("update_fields")
-        if update_fields is not None and "title" in update_fields:
-            kwargs["update_fields"] = {*update_fields, "search_key", "title_key"}
-        super().save(*args, **kwargs)
-
     def build_search_key(self) -> str:
         author_name = self.author.name if self.author_id else ""
-        return search_form(f"{self.title} {author_name}")[:600]
-
-    def get_absolute_url(self) -> str:
-        return reverse("core:book_detail", kwargs={"slug": self.slug})
+        return search_form(f"{self.title} {author_name}")[: limits.BOOK_SEARCH_KEY_MAX_LENGTH]
 
     def is_visible_to(self, user) -> bool:
         if self.is_approved:
@@ -168,7 +168,7 @@ class Book(models.Model):
 class Chapter(models.Model):
     book = models.ForeignKey(Book, on_delete=models.CASCADE, related_name="chapters")
     number = models.PositiveIntegerField("Номер")
-    title = models.CharField("Назва", max_length=255, blank=True)
+    title = models.CharField("Назва", max_length=limits.TEXT_MAX_LENGTH, blank=True)
 
     class Meta:
         ordering = ["number"]
@@ -179,9 +179,9 @@ class Chapter(models.Model):
     def __str__(self) -> str:
         return f"{self.book.title}: {self.display_title}"
 
+    def get_absolute_url(self) -> str:
+        return reverse("core:chapter_detail", kwargs={"slug": self.book.slug, "number": self.number})
+
     @property
     def display_title(self) -> str:
         return self.title or f"Розділ {self.number}"
-
-    def get_absolute_url(self) -> str:
-        return reverse("core:chapter_detail", kwargs={"slug": self.book.slug, "number": self.number})
