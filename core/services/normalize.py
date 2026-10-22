@@ -11,6 +11,7 @@ from core import limits
 from .external import strip_html
 
 MIN_YEAR = 1
+ISBN_INPUT_MAX = 20
 ISBN_10_LENGTH = 10
 ISBN_13_LENGTH = 13
 TYPOGRAPHIC_APOSTROPHE = "’"

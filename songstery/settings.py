@@ -113,6 +113,8 @@ RATE_LIMITS = {
     "search": "60/m",
     "search_suggest": "180/m",
     "import_book": "20/h",
+    "create_book": "10/h",
+    "book_check": "60/m",
     "recommend": "30/h",
     "comment": "10/m",
     "playlist": "20/h",
@@ -199,6 +201,7 @@ SEARCH_SUGGEST_EXTERNAL_MIN_LENGTH = 3
 SEARCH_SUGGEST_EXTERNAL_LIMIT = 5
 TRACK_SEARCH_LIMIT = 12
 BULK_CHAPTERS_MAX = 100
+PENDING_BOOKS_LIMIT = 5
 COMMENT_MAX_LENGTH = 2000
 
 EXTERNAL_HTTP_TIMEOUT = 5

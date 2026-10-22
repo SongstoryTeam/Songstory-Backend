@@ -1,11 +1,5 @@
 window.Songstery = window.Songstery || {};
 
-/**
- * Рушій покрокової форми: прогрес, навігація, перевірка валідності кроків і клавіатура.
- * Розмітка відповідає за вміст кроків, а специфічну поведінку сторінки підключають хуки:
- * beforeLeave(index, step) -> Promise<boolean> може зупинити перехід далі, onEnter(index, step) викликається після переходу.
- * Без JS усі кроки показані одним списком, а сервер перевіряє форму повністю.
- */
 window.Songstery.createWizard = (root, hooks = {}) => {
     const STEP_ANNOUNCEMENT = (index, total) => `Крок ${index + 1} з ${total}`;
     const FIELD_SELECTOR = 'input, select, textarea';

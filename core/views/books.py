@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
@@ -10,10 +11,11 @@ from django.views.decorators.http import require_POST
 
 from core.forms import BookCreateForm, ChapterCountForm, CommentForm
 from core.models import AuthorVerification, Book, Comment
-from core.ratelimits import rate_limited
+from core.ratelimits import IP, rate_limited
 from core.seo import book_json_ld
 from core.services import books as book_service
 from core.services.book_search import get_external_book
+from core.services.normalize import clean_person_name, clean_title
 from core.services.recommendations import grouped_recommendations
 
 
@@ -88,9 +90,22 @@ def chapter_detail(request, slug: str, number: int):
     )
 
 
+def describe_duplicate(book: Book | None, user) -> dict | None:
+    if book is None:
+        return None
+    if book.is_visible_to(user):
+        return {"title": book.title, "url": book.get_absolute_url()}
+    return {"pending": True}
+
+
+def create_book_prefill(request) -> dict:
+    return {"title": clean_title(request.GET.get("title", ""))}
+
+
 @login_required
+@rate_limited("create_book")
 def create_book(request):
-    form = BookCreateForm(request.POST or None)
+    form = BookCreateForm(request.POST or None, initial=create_book_prefill(request), user=request.user)
     if request.method == "POST" and form.is_valid():
         book = book_service.create_book(user=request.user, **form.cleaned_data)
         if book.is_approved:
@@ -98,7 +113,25 @@ def create_book(request):
         else:
             messages.info(request, "Книгу надіслано на перевірку. Ви бачите її лише ви, доки її не схвалять.")
         return redirect(book)
-    return render(request, "core/create_book.html", {"form": form, "duplicate": form.duplicate})
+    return render(
+        request,
+        "core/create_book.html",
+        {
+            "form": form,
+            "duplicate": describe_duplicate(form.duplicate, request.user),
+            "pending_left": book_service.pending_books_left(request.user),
+            "pending_limit": settings.PENDING_BOOKS_LIMIT,
+        },
+    )
+
+
+@login_required
+@rate_limited("book_check", key=IP, methods=("GET",), json=True)
+def check_book(request):
+    title = clean_title(request.GET.get("title", ""))
+    author = clean_person_name(request.GET.get("author", ""))
+    duplicate = book_service.find_duplicate(title, author) if title and author else None
+    return JsonResponse({"duplicate": describe_duplicate(duplicate, request.user)})
 
 
 def wants_json(request) -> bool:

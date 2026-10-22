@@ -1,8 +1,3 @@
-/**
- * Додавання книги: покроковий майстер із живим пошуком схожих книг, імпортом в один клік,
- * блокуванням точних дублікатів і попереднім переглядом картки. Мережа — у search-api.js,
- * кроки — у wizard.js. Увесь текст з сервера вставляється через textContent.
- */
 (() => {
     const root = document.querySelector('[data-book-wizard]');
     const {createWizard, searchApi} = window.Songstery || {};
@@ -53,7 +48,7 @@
     const previewMeta = root.querySelector('[data-preview-meta]');
 
     const minLength = Number(root.dataset.minLength) || 2;
-    const debounceMs = Number(root.dataset.debounceMs) || 350;
+    const debounceMs = Number(root.dataset.debounceMs);
     const client = searchApi.createClient(root.dataset.suggestUrl);
 
     let lookupTimer = null;
@@ -75,8 +70,6 @@
         coverFeedback.textContent = text;
         coverFeedback.className = modifier ? `${FEEDBACK_BASE} ${FEEDBACK_BASE}--${modifier}` : FEEDBACK_BASE;
     }
-
-    /* ---------- Пошук схожих книг ---------- */
 
     function lookupQuery() {
         return [titleInput.value, authorInput.value]
@@ -201,8 +194,6 @@
         if (button) importExternal(button);
     });
 
-    /* ---------- Захист від дублікатів ---------- */
-
     function hideDuplicate() {
         duplicateAlert.hidden = true;
         duplicateAlert.removeAttribute('data-wizard-error');
@@ -237,8 +228,6 @@
             return true;
         }
     }
-
-    /* ---------- Попередній перегляд ---------- */
 
     function normalizedCoverUrl(value) {
         try {
@@ -304,8 +293,6 @@
         window.clearTimeout(coverTimer);
         coverTimer = window.setTimeout(checkCover, COVER_CHECK_DELAY_MS);
     }
-
-    /* ---------- Збірка ---------- */
 
     if (!createWizard(root, {beforeLeave: (index) => (index === 0 ? hasNoDuplicate() : Promise.resolve(true))})) return;
 

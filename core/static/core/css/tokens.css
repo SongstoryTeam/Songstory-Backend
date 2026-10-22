@@ -20,6 +20,7 @@
     --clr-danger: #C0392B;
     --clr-danger-lt: #FDF1F0;
     --clr-danger-dk: #962D22;
+    --clr-on-danger: #FFFFFF;
 
     --clr-white: #FFFFFF;
     --clr-ink-dk: #3A3228;
@@ -130,6 +131,7 @@
     --clr-danger: #E5604F;
     --clr-danger-lt: #2B1916;
     --clr-danger-dk: #F08A7C;
+    --clr-on-danger: #14110F;
 
     --clr-on-ink: #14110F;
     --clr-ink-dk: #E2DAD0;
