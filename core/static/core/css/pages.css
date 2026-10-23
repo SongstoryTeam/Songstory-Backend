@@ -68,41 +68,6 @@
     flex-wrap: wrap;
 }
 
-.chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin: 4px 0 20px;
-}
-
-.chip {
-    padding: 6px 14px;
-    border: 1px solid var(--clr-border);
-    border-radius: 100px;
-    font-size: var(--text-sm);
-    color: var(--clr-muted);
-    background: var(--clr-surface);
-    transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.chip:hover {
-    border-color: var(--clr-accent);
-    color: var(--clr-accent);
-}
-
-.chip--active {
-    background: var(--clr-ink);
-    border-color: var(--clr-ink);
-    color: var(--clr-on-ink);
-}
-
-.books-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 28px 20px;
-    margin-top: 16px;
-}
-
 .shelf .books-grid {
     display: flex;
     gap: 20px;
@@ -537,19 +502,6 @@ a.list-row:hover {
     margin-top: 8px;
 }
 
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    margin-top: 32px;
-}
-
-.pagination__info {
-    font-size: var(--text-sm);
-    color: var(--clr-muted);
-}
-
 .error-page {
     display: flex;
     flex-direction: column;
@@ -591,11 +543,6 @@ a.list-row:hover {
 
     .book-hero__cover {
         max-width: 160px;
-    }
-
-    .books-grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-        gap: 22px 14px;
     }
 
     .track-card__row {

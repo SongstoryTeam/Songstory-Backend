@@ -1,4 +1,5 @@
 from django import template
+from django.utils.http import urlencode
 
 register = template.Library()
 
@@ -28,3 +29,19 @@ def uk_plural(number, forms: str) -> str:
     if count % 10 in FEW_ENDINGS:
         return few
     return many
+
+
+@register.simple_tag(takes_context=True)
+def query_url(context, *, anchor: str = "", reset: str = "page", **changes) -> str:
+    request = context["request"]
+    params = request.GET.copy()
+    for key in filter(None, reset.split(",")):
+        params.pop(key, None)
+    for key, value in changes.items():
+        if value in (None, ""):
+            params.pop(key, None)
+        else:
+            params[key] = value
+    query = urlencode(params, doseq=True)
+    suffix = f"#{anchor}" if anchor else ""
+    return f"{request.path}?{query}{suffix}" if query else f"{request.path}{suffix}"

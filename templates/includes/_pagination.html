@@ -1,11 +1,39 @@
+{% load core_extras %}
 {% if page.has_other_pages %}
     <nav class="pagination" aria-label="Сторінки">
         {% if page.has_previous %}
-            <a class="btn btn-ghost btn-sm" href="?{{ query_string }}page={{ page.previous_page_number }}">← Назад</a>
+            <a class="pagination__step" rel="prev" aria-label="Попередня сторінка"
+               href="{% query_url page=page.previous_page_number reset='' anchor=anchor %}">
+                <i data-lucide="chevron-left" size="18" aria-hidden="true"></i>
+            </a>
+        {% else %}
+            <span class="pagination__step" aria-disabled="true"><i data-lucide="chevron-left" size="18" aria-hidden="true"></i></span>
         {% endif %}
+
         <span class="pagination__info">{{ page.number }} з {{ page.paginator.num_pages }}</span>
+
+        <ol class="pagination__pages">
+            {% for item in page_range %}
+                <li>
+                    {% if item == page.paginator.ELLIPSIS %}
+                        <span class="pagination__gap" aria-hidden="true">{{ item }}</span>
+                    {% elif item == page.number %}
+                        <span class="pagination__page" aria-current="page">{{ item }}</span>
+                    {% else %}
+                        <a class="pagination__page" href="{% query_url page=item reset='' anchor=anchor %}"
+                           aria-label="Сторінка {{ item }}">{{ item }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+
         {% if page.has_next %}
-            <a class="btn btn-ghost btn-sm" href="?{{ query_string }}page={{ page.next_page_number }}">Далі →</a>
+            <a class="pagination__step" rel="next" aria-label="Наступна сторінка"
+               href="{% query_url page=page.next_page_number reset='' anchor=anchor %}">
+                <i data-lucide="chevron-right" size="18" aria-hidden="true"></i>
+            </a>
+        {% else %}
+            <span class="pagination__step" aria-disabled="true"><i data-lucide="chevron-right" size="18" aria-hidden="true"></i></span>
         {% endif %}
     </nav>
 {% endif %}

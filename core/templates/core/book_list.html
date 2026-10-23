@@ -1,28 +1,66 @@
 {% extends 'base.html' %}
+{% load static %}
+{% load core_extras %}
 
-{% block title %}Каталог — {{ SITE_NAME }}{% endblock %}
+{% block title %}Каталог{% if result.page.number > 1 %} — сторінка {{ result.page.number }}{% endif %} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}{% if result.is_filtered %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
 
 {% block content %}
-    <div class="content-pad">
-        <h1 class="page-title">Каталог</h1>
+    <div class="content-pad catalog">
+        <header class="catalog__head">
+            <h1 class="page-title">Каталог</h1>
+            <p class="catalog__summary">{{ catalog_total }} {{ catalog_total|uk_plural:"книга,книги,книг" }} у каталозі</p>
+        </header>
 
         {% if genres %}
-            <nav class="chips" aria-label="Жанри">
-                <a class="chip {% if not active_genre %}chip--active{% endif %}" href="?sort={{ active_sort }}">Усі</a>
+            <nav class="chips chips--scroll" aria-label="Жанри">
+                <a class="chip" href="{% query_url genre='' %}"{% if not result.genre %} aria-current="true"{% endif %}>
+                    Усі <span class="chip__count">{{ catalog_total }}</span>
+                </a>
                 {% for genre in genres %}
-                    <a class="chip {% if genre.slug == active_genre %}chip--active{% endif %}"
-                       href="?genre={{ genre.slug }}&sort={{ active_sort }}">{{ genre.name }}</a>
+                    <a class="chip" href="{% query_url genre=genre.slug %}"{% if genre.slug == result.genre %} aria-current="true"{% endif %}>
+                        {{ genre.name }} <span class="chip__count">{{ genre.books_total }}</span>
+                    </a>
                 {% endfor %}
             </nav>
         {% endif %}
 
-        <div class="sort-bar">
-            <span class="sort-bar__label">Сортування</span>
-            {% for key, label in sort_options %}
-                <a class="sort-btn {% if key == active_sort %}sort-btn--active{% endif %}"
-                   href="?{% if active_genre %}genre={{ active_genre }}&{% endif %}sort={{ key }}">{{ label }}</a>
-            {% endfor %}
-        </div>
+        <form class="toolbar" id="catalog-results" method="get" action="{{ request.path }}" data-catalog-filters data-no-busy>
+            {% if result.genre %}<input type="hidden" name="{{ params.genre }}" value="{{ result.genre }}">{% endif %}
+
+            <p class="toolbar__count" role="status" aria-live="polite">
+                {% if page.paginator.num_pages > 1 %}
+                    Показано {{ page.start_index }}–{{ page.end_index }} з {{ result.total }}
+                {% else %}
+                    {{ result.total }} {{ result.total|uk_plural:"книга,книги,книг" }}
+                {% endif %}
+            </p>
+
+            <div class="toolbar__controls">
+                {% if result.is_filtered %}
+                    <a class="toolbar__reset" href="{% query_url genre='' music='' %}">
+                        <i data-lucide="x" size="14" aria-hidden="true"></i> Скинути
+                    </a>
+                {% endif %}
+
+                <label class="switch">
+                    <input class="switch__input" type="checkbox" name="{{ params.music }}" value="{{ music_enabled }}"{% if result.with_music %} checked{% endif %}>
+                    <span class="switch__track" aria-hidden="true"></span>
+                    <span class="switch__label">З музикою</span>
+                </label>
+
+                <label class="select">
+                    <span class="select__label">Сортування</span>
+                    <select class="select__control" name="{{ params.sort }}">
+                        {% for key, label in sort_options %}
+                            <option value="{{ key }}"{% if key == result.sort %} selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <noscript><button type="submit" class="btn btn-ghost btn-sm">Застосувати</button></noscript>
+            </div>
+        </form>
 
         {% if page.object_list %}
             <div class="books-grid">
@@ -30,12 +68,24 @@
                     {% include 'includes/_book_card.html' with book=book show_count=True %}
                 {% endfor %}
             </div>
-            {% include 'includes/_pagination.html' with query_string=pagination_query %}
+            {% include 'includes/_pagination.html' with page_range=result.page_range anchor='catalog-results' %}
         {% else %}
             <div class="empty-state">
-                <div class="empty-state__title">Книг не знайдено</div>
-                <p class="empty-state__text">Спробуйте інший жанр або додайте книгу самі.</p>
+                <div class="empty-state__icon"><i data-lucide="library" size="22" aria-hidden="true"></i></div>
+                <div class="empty-state__title">Нічого не знайдено</div>
+                <p class="empty-state__text">
+                    {% if result.is_filtered %}За вибраними фільтрами книг немає. Спробуйте послабити умови.{% else %}У каталозі ще немає книг. Знайдіть першу через пошук.{% endif %}
+                </p>
+                {% if result.is_filtered %}
+                    <a class="btn btn-ghost" href="{% query_url genre='' music='' %}">Скинути фільтри</a>
+                {% else %}
+                    <a class="btn btn-accent" href="{% url 'core:search' %}">Знайти книгу</a>
+                {% endif %}
             </div>
         {% endif %}
     </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'core/js/catalog.js' %}" defer></script>
 {% endblock %}

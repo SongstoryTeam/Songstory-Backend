@@ -390,3 +390,52 @@ class RecommendationConfirmMarkupTests(TestCase):
         Recommendation.objects.create(user=self.user, track=self.track, book=self.book)
         response = self.client.get(self.book.get_absolute_url())
         self.assertNotContains(response, "recommend-toggle")
+
+
+@override_settings(CACHES=CACHES)
+class CatalogTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.with_music = make_book(self.user, title="З музикою")
+        self.without_music = make_book(self.user, title="Без музики", author="Леся Українка")
+        Recommendation.objects.create(
+            user=self.user, book=self.with_music, track=make_track(), chapter=None
+        )
+        self.url = reverse("core:book_list")
+
+    def titles(self, response):
+        return [book.title for book in response.context["page"].object_list]
+
+    def test_default_lists_all_visible_books(self):
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["result"].total, 2)
+        self.assertContains(response, "Каталог")
+
+    def test_music_filter_keeps_only_recommended_books(self):
+        response = self.client.get(self.url, {"music": "1"})
+        self.assertEqual(self.titles(response), ["З музикою"])
+        self.assertTrue(response.context["result"].is_filtered)
+
+    def test_empty_filter_result_offers_reset(self):
+        response = self.client.get(self.url, {"genre": "none"})
+        self.assertContains(response, "Нічого не знайдено")
+        self.assertContains(response, "Скинути фільтри")
+
+    def test_unknown_sort_falls_back_to_default(self):
+        response = self.client.get(self.url, {"sort": "bogus"})
+        self.assertEqual(response.context["result"].sort, "new")
+
+    def test_invalid_page_does_not_fail(self):
+        for value in ("0", "-1", "abc", "9999"):
+            with self.subTest(page=value):
+                self.assertEqual(self.client.get(self.url, {"page": value}).status_code, 200)
+
+    @override_settings(CATALOG_PAGE_SIZE=1)
+    def test_pagination_links_preserve_filters(self):
+        response = self.client.get(self.url, {"sort": "title"})
+        self.assertContains(response, "sort=title&amp;page=2#catalog-results")
+        self.assertContains(response, 'aria-current="page"')
+
+    def test_filtered_catalog_is_not_indexed(self):
+        self.assertContains(self.client.get(self.url, {"music": "1"}), "noindex")
+        self.assertNotContains(self.client.get(self.url), "noindex")

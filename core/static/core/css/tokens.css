@@ -69,6 +69,13 @@
     --text-xl: 22px;
     --text-2xl: 26px;
 
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 40px;
+
     --radius-sm: 6px;
     --radius-md: 12px;
     --radius-lg: 20px;
@@ -92,6 +99,10 @@
     --control-h: 44px;
     --search-w: 400px;
     --rail-card-w: 164px;
+    --book-min-w: 150px;
+    --book-min-w-sm: 120px;
+    --chip-h: 36px;
+    --focus-outline: 2px solid var(--clr-accent);
     --rail-inset: 10px;
     --mq-drawer: (max-width: 960px);
 

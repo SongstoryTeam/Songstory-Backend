@@ -12,6 +12,11 @@ from core.services.external import ExternalBook
 from core.text import clean_query, search_form
 
 MIN_EXTERNAL_QUERY_LENGTH = 2
+GENRE_PARAM = "genre"
+SORT_PARAM = "sort"
+MUSIC_PARAM = "music"
+PAGE_PARAM = "page"
+MUSIC_ENABLED = "1"
 
 
 def home(request):
@@ -23,23 +28,24 @@ def home(request):
 
 
 def book_list(request):
-    genre_slug = request.GET.get("genre", "")
-    page, sort_key = catalog.catalog_page(
+    result = catalog.catalog_page(
         request.user,
-        genre_slug=genre_slug,
-        sort=request.GET.get("sort", ""),
-        page_number=request.GET.get("page", 1),
+        genre_slug=request.GET.get(GENRE_PARAM, ""),
+        sort=request.GET.get(SORT_PARAM, ""),
+        with_music=request.GET.get(MUSIC_PARAM) == MUSIC_ENABLED,
+        page_number=request.GET.get(PAGE_PARAM, 1),
     )
     return render(
         request,
         "core/book_list.html",
         {
-            "page": page,
+            "result": result,
+            "page": result.page,
             "genres": catalog.genres_in_use(),
-            "active_genre": genre_slug,
-            "active_sort": sort_key,
+            "catalog_total": catalog.approved_total(),
             "sort_options": [(key, label) for key, (label, _) in catalog.SORT_OPTIONS.items()],
-            "pagination_query": urlencode({k: v for k, v in (("genre", genre_slug), ("sort", sort_key)) if v}) + "&",
+            "params": {"genre": GENRE_PARAM, "sort": SORT_PARAM, "music": MUSIC_PARAM, "page": PAGE_PARAM},
+            "music_enabled": MUSIC_ENABLED,
         },
     )
 
