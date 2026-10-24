@@ -438,13 +438,52 @@ a.list-row:hover {
 .profile-header {
     display: flex;
     align-items: center;
-    gap: 18px;
+    gap: var(--space-5);
+    padding: var(--space-5);
+    border: 1px solid var(--clr-border);
+    border-radius: var(--radius-lg);
+    background:
+        radial-gradient(120% 160% at 0% 0%, var(--clr-accent-lt), transparent 65%),
+        var(--clr-surface);
+}
+
+.profile-header__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-header__bio {
+    margin-top: var(--space-2);
+    max-width: 60ch;
+    color: var(--clr-text-secondary);
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    overflow: hidden;
+}
+
+.profile-header__action {
+    flex-shrink: 0;
 }
 
 .user-avatar--lg {
-    width: 64px;
-    height: 64px;
-    font-size: 26px;
+    width: 72px;
+    height: 72px;
+    font-size: 30px;
+    box-shadow: 0 0 0 3px var(--clr-surface), 0 0 0 5px var(--clr-accent);
+}
+
+@media (max-width: 600px) {
+    .profile-header {
+        flex-wrap: wrap;
+        padding: var(--space-4);
+    }
+
+    .profile-header__body {
+        flex-basis: calc(100% - 72px - var(--space-5));
+    }
 }
 
 .form-box--narrow {

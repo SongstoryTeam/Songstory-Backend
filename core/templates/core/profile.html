@@ -6,13 +6,19 @@
 {% block content %}
     <div class="content-pad">
         <header class="profile-header">
-            <div class="user-avatar user-avatar--lg" aria-hidden="true">{{ user.username|first|upper }}</div>
-            <div>
+            {% include 'includes/_avatar.html' with person=user size='lg' %}
+            <div class="profile-header__body">
                 <h1 class="page-title">{{ user.username }}</h1>
                 {% if user.profile.is_verified_author %}
                     <span class="verified-badge"><i data-lucide="badge-check" aria-hidden="true"></i> Підтверджений автор</span>
                 {% endif %}
+                {% if user.profile.bio %}
+                    <p class="profile-header__bio">{{ user.profile.bio|linebreaksbr }}</p>
+                {% endif %}
             </div>
+            <a href="{% url 'core:settings' %}#appearance" class="btn btn-ghost btn-sm profile-header__action">
+                <i data-lucide="palette" size="16" aria-hidden="true"></i> Мій колір
+            </a>
         </header>
 
         <section class="form-box form-box--narrow mt-24" aria-labelledby="profile-edit">

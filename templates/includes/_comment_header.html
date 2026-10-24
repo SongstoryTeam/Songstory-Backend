@@ -1,5 +1,5 @@
 <div class="comment-card__header">
-    <span class="user-avatar user-avatar--sm" aria-hidden="true">{{ comment.user.username|first|upper }}</span>
+    {% include 'includes/_avatar.html' with person=comment.user size='sm' %}
     <strong class="text-sm">{{ comment.user.username }}</strong>
     <span class="text-muted text-xs">{{ comment.created_at|timesince }} тому</span>
     {% if user == comment.user or user.is_staff %}

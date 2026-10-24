@@ -27,5 +27,6 @@ urlpatterns = [
     path("comments/<int:pk>/delete/", comments.delete_comment, name="delete_comment"),
     path("profile/", accounts.profile, name="profile"),
     path("settings/", preferences.settings_page, name="settings"),
+    path("settings/accent/", preferences.update_accent, name="accent_update"),
     path("verification/<int:pk>/<str:field>/", verification.proof_download, name="proof_download"),
 ]

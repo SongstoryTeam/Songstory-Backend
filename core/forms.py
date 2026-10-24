@@ -166,6 +166,13 @@ class ProfileForm(StyledFormMixin, forms.ModelForm):
         return user
 
 
+class AccentForm(forms.ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ["accent"]
+        widgets = {"accent": forms.RadioSelect(attrs={"class": "accent-option__input", "data-accent-option": ""})}
+
+
 class BookCreateForm(StyledFormMixin, forms.Form):
     GENRE_DATALIST_ID = "genre-options"
     STEPS = (

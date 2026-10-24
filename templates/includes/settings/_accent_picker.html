@@ -1,0 +1,17 @@
+<form method="post" action="{% url 'core:accent_update' %}" class="accent-picker" data-accent-form data-no-busy>
+    {% csrf_token %}
+    <fieldset class="accent-picker__options">
+        <legend class="visually-hidden">Акцентний колір</legend>
+        {% for radio in form.accent %}
+            <label class="accent-option" title="{{ radio.choice_label }}" data-label="{{ radio.choice_label }}">
+                {{ radio.tag }}
+                <span class="accent-option__swatch" data-accent="{{ radio.data.value }}" aria-hidden="true">
+                    <i data-lucide="check" size="14" class="accent-option__check"></i>
+                </span>
+                <span class="visually-hidden">{{ radio.choice_label }}</span>
+            </label>
+        {% endfor %}
+    </fieldset>
+    <button type="submit" class="btn btn-accent btn-sm" data-accent-submit>Зберегти колір</button>
+    <p class="visually-hidden" role="status" aria-live="polite" data-accent-status></p>
+</form>

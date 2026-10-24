@@ -1,0 +1,46 @@
+:root {
+    --accent-l: .604;
+    --accent-c: .141;
+    --accent-dk-l: .56;
+    --accent-dk-c: .137;
+    --accent-lt-l: .937;
+    --accent-lt-c: .025;
+    --accent-tint-l: .965;
+    --accent-tint-c: .02;
+    --accent-ring: 12%;
+    --accent-shadow: 30%;
+    --accent-shadow-hover: 40%;
+}
+
+:root[data-theme="dark"] {
+    --accent-l: .663;
+    --accent-c: .144;
+    --accent-dk-l: .719;
+    --accent-dk-c: .133;
+    --accent-lt-l: .25;
+    --accent-lt-c: .03;
+    --accent-tint-l: .228;
+    --accent-tint-c: .025;
+    --accent-ring: 24%;
+}
+
+[data-accent="terracotta"] { --accent-h: 46; --accent-shift: 0; }
+[data-accent="rose"] { --accent-h: 5; --accent-shift: 0; }
+[data-accent="amber"] { --accent-h: 78; --accent-shift: -.01; }
+[data-accent="forest"] { --accent-h: 150; --accent-shift: -.03; }
+[data-accent="teal"] { --accent-h: 195; --accent-shift: -.045; }
+[data-accent="ocean"] { --accent-h: 245; --accent-shift: -.015; }
+[data-accent="indigo"] { --accent-h: 275; --accent-shift: 0; }
+[data-accent="violet"] { --accent-h: 315; --accent-shift: 0; }
+
+@supports (color: oklch(0 0 0)) and (color: color-mix(in oklab, red, blue)) {
+    :is(:root, body *)[data-accent] {
+        --clr-accent: oklch(calc(var(--accent-l) + var(--accent-shift, 0)) var(--accent-c) var(--accent-h, 46));
+        --clr-accent-dk: oklch(calc(var(--accent-dk-l) + var(--accent-shift, 0)) var(--accent-dk-c) var(--accent-h, 46));
+        --clr-accent-lt: oklch(var(--accent-lt-l) var(--accent-lt-c) var(--accent-h, 46));
+        --clr-accent-tint: oklch(var(--accent-tint-l) var(--accent-tint-c) var(--accent-h, 46));
+        --clr-focus-ring: color-mix(in oklab, var(--clr-accent) var(--accent-ring), transparent);
+        --shadow-accent: 0 2px 8px color-mix(in oklab, var(--clr-accent) var(--accent-shadow), transparent);
+        --shadow-accent-hover: 0 4px 12px color-mix(in oklab, var(--clr-accent) var(--accent-shadow-hover), transparent);
+    }
+}

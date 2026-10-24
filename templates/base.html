@@ -1,6 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="uk" data-service-worker-url="{% if SERVICE_WORKER_ENABLED %}{% url 'service_worker' %}{% endif %}" data-cache-prefix="{{ CACHE_PREFIX }}">
+<html lang="uk"{% if user.profile.accent %} data-accent="{{ user.profile.accent }}"{% endif %} data-service-worker-url="{% if SERVICE_WORKER_ENABLED %}{% url 'service_worker' %}{% endif %}" data-cache-prefix="{{ CACHE_PREFIX }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">

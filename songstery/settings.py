@@ -118,6 +118,7 @@ RATE_LIMITS = {
     "recommend": "30/h",
     "comment": "10/m",
     "playlist": "20/h",
+    "accent": "30/m",
 }
 
 AUTH_PASSWORD_VALIDATORS = [

@@ -111,8 +111,8 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "phone", "is_verified_author")
-    list_filter = ("is_verified_author",)
+    list_display = ("user", "phone", "accent", "is_verified_author")
+    list_filter = ("is_verified_author", "accent")
     search_fields = ("user__username", "user__email")
     raw_id_fields = ("user",)
 

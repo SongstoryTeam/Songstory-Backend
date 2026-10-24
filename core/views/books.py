@@ -29,8 +29,8 @@ def get_visible_book(request, slug: str) -> Book:
 def threaded_comments(**target):
     return (
         Comment.objects.filter(parent__isnull=True, **target)
-        .select_related("user")
-        .prefetch_related("replies__user")
+        .select_related("user__profile")
+        .prefetch_related("replies__user__profile")
     )
 
 

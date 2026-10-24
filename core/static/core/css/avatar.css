@@ -6,7 +6,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: var(--clr-accent);
+    background: linear-gradient(135deg, var(--clr-accent), var(--clr-accent-dk));
     color: var(--clr-white);
     font-size: var(--text-sm);
     font-weight: 500;

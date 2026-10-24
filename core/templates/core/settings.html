@@ -8,7 +8,7 @@
     <div class="content-pad">
         <header class="settings-header">
             <h1 class="page-title">Налаштування</h1>
-            <p class="settings-header__lead">Зміни застосовуються одразу й зберігаються в цьому браузері.</p>
+            <p class="settings-header__lead">Зміни застосовуються одразу. Тема зберігається в цьому браузері, акцентний колір — у вашому акаунті.</p>
         </header>
 
         <div class="settings">
@@ -27,4 +27,5 @@
 
 {% block extra_js %}
     <script src="{% static 'core/js/modules/settings-theme.js' %}" defer></script>
+    {% if accent_form %}<script src="{% static 'core/js/modules/settings-accent.js' %}" defer></script>{% endif %}
 {% endblock %}

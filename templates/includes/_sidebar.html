@@ -35,7 +35,7 @@
             <a href="{{ profile_url }}"
                class="sidebar__user{% if profile_active %} is-active{% endif %}"
                {% if profile_active %}aria-current="page"{% endif %}>
-                <span class="user-avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
+                {% include 'includes/_avatar.html' with person=user %}
                 <span class="sidebar__user-text">
                     <span class="sidebar__user-name">{{ user.username }}</span>
                     <span class="sidebar__user-role">{% if user.profile.is_verified_author %}Підтверджений автор{% else %}Учасник{% endif %}</span>

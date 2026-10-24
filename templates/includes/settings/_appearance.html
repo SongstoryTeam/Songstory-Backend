@@ -12,5 +12,17 @@
             </div>
             {% include 'includes/settings/_theme_picker.html' %}
         </div>
+        {% if accent_form %}
+            <div class="settings-row settings-row--stack">
+                <div class="settings-row__text">
+                    <h3 class="settings-row__title">Акцентний колір</h3>
+                    <p class="settings-row__desc" data-accent-summary>Колір кнопок, посилань і вашого аватара — його бачитимуть і в коментарях.</p>
+                </div>
+                {% include 'includes/settings/_accent_picker.html' with form=accent_form %}
+            </div>
+        {% else %}
+            {% url 'login' as login_url %}
+            {% include 'includes/settings/_link_row.html' with href=login_url icon='palette' title='Власний колір' desc='Увійдіть, щоб обрати акцентний колір і персоналізувати аватар' %}
+        {% endif %}
     </div>
 </section>
