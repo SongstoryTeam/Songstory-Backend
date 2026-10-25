@@ -2,6 +2,7 @@ from .book import Author, Book, Chapter, Genre
 from .music import Platform, Playlist, PlaylistItem, Recommendation, Track
 from .profile import Accent, UserProfile
 from .social import Comment
+from .suggestion import BookEditSuggestion
 from .verification import AuthorVerification
 
 __all__ = [
@@ -9,6 +10,7 @@ __all__ = [
     "Author",
     "AuthorVerification",
     "Book",
+    "BookEditSuggestion",
     "Chapter",
     "Comment",
     "Genre",

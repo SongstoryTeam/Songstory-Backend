@@ -56,18 +56,7 @@
                         <a href="{% url 'core:playlist_create' book.slug %}" class="btn btn-ghost">
                             <i data-lucide="list-music" size="16" aria-hidden="true"></i> Створити плейлист
                         </a>
-                        {% if can_manage %}
-                            <a href="{% url 'core:add_chapters' book.slug %}" class="btn btn-ghost">
-                                <i data-lucide="list-plus" size="16" aria-hidden="true"></i> Додати розділи
-                            </a>
-                        {% endif %}
-                        {% if verification_state == 'available' %}
-                            <a href="{% url 'core:apply_author' book.slug %}" class="btn btn-ghost">
-                                <i data-lucide="badge-check" size="16" aria-hidden="true"></i> Я автор
-                            </a>
-                        {% elif verification_state == 'pending' %}
-                            <span class="btn btn-ghost is-disabled">Заявка розглядається</span>
-                        {% endif %}
+                        {% include 'includes/_book_menu.html' %}
                     {% else %}
                         <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-accent">Увійдіть, щоб радити музику</a>
                     {% endif %}

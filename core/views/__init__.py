@@ -1,4 +1,4 @@
-from . import accounts, books, catalog, comments, music, pages, playlists, preferences, verification
+from . import accounts, books, catalog, comments, music, pages, playlists, preferences, suggestions, verification
 
 __all__ = [
     "accounts",
@@ -9,5 +9,6 @@ __all__ = [
     "pages",
     "playlists",
     "preferences",
+    "suggestions",
     "verification",
 ]

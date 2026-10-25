@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Запропонувати зміни — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+    <div class="content-pad">
+        <div class="form-box form-box--narrow">
+            <h1 class="page-title">Запропонувати зміни</h1>
+            <p class="text-muted text-sm mb-16">
+                Книга «{{ book.title }}». Змініть лише те, що потрібно виправити.
+                {% if user.is_staff %}
+                    Зміни буде застосовано одразу.
+                {% else %}
+                    Зміни з'являться на сайті після перевірки модератором.
+                {% endif %}
+            </p>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert--error mb-16" role="alert">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">
+                            {{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}
+                        </label>
+                        {{ field }}
+                        {% if field.name == 'genre_name' %}
+                            <datalist id="{{ form.GENRE_DATALIST_ID }}">
+                                {% for name in form.genre_names %}<option value="{{ name }}"></option>{% endfor %}
+                            </datalist>
+                        {% endif %}
+                        {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-accent">{% if user.is_staff %}Застосувати{% else %}Надіслати на розгляд{% endif %}</button>
+                <a href="{{ book.get_absolute_url }}" class="btn btn-ghost">Скасувати</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}

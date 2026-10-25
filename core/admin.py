@@ -1,13 +1,15 @@
 from django.contrib import admin, messages
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 from core import limits
+from core.services import suggestions as suggestion_service
 
 from .models import (
     Author,
     AuthorVerification,
     Book,
+    BookEditSuggestion,
     Chapter,
     Comment,
     Genre,
@@ -178,3 +180,84 @@ class AuthorVerificationAdmin(admin.ModelAdmin):
         for verification in pending:
             verification.reject(request.user)
         self.message_user(request, f"Відхилено заявок: {len(pending)}.", messages.SUCCESS)
+
+
+@admin.register(BookEditSuggestion)
+class BookEditSuggestionAdmin(admin.ModelAdmin):
+    list_display = ("book", "user", "changed_fields", "status", "submitted_at", "reviewed_by")
+    list_filter = ("status",)
+    list_select_related = ("book", "user", "reviewed_by")
+    search_fields = ("book__title", "user__username")
+    fields = (
+        "book",
+        "user",
+        "changes_table",
+        "reason",
+        "status",
+        "admin_note",
+        "submitted_at",
+        "reviewed_at",
+        "reviewed_by",
+    )
+    actions = ["approve_selected", "reject_selected"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def get_readonly_fields(self, request, obj=None):
+        readonly = ["book", "user", "changes_table", "reason", "submitted_at", "reviewed_at", "reviewed_by"]
+        if obj is not None and not obj.is_pending:
+            readonly += ["status", "admin_note"]
+        return readonly
+
+    @admin.display(description="Що змінено")
+    def changed_fields(self, obj):
+        return ", ".join(obj.field_labels)
+
+    @admin.display(description="Зміни")
+    def changes_table(self, obj):
+        if not obj.pk:
+            return "—"
+        rows = format_html_join(
+            "",
+            "<tr><th>{}</th><td>{}</td><td>{}</td></tr>",
+            ((row.label, row.old, row.new) for row in obj.change_rows()),
+        )
+        return format_html(
+            "<table><thead><tr><th></th><th>Було</th><th>Стане</th></tr></thead><tbody>{}</tbody></table>",
+            rows,
+        )
+
+    def save_model(self, request, obj, form, change):
+        decision = obj.status if change and "status" in form.changed_data else None
+        reviewers = {
+            BookEditSuggestion.Status.APPROVED: suggestion_service.approve_suggestion,
+            BookEditSuggestion.Status.REJECTED: suggestion_service.reject_suggestion,
+        }
+        if decision in reviewers:
+            obj.status = BookEditSuggestion.Status.PENDING
+        super().save_model(request, obj, form, change)
+        if decision in reviewers:
+            self._review(request, obj, reviewers[decision])
+
+    @admin.action(description="Прийняти вибрані пропозиції")
+    def approve_selected(self, request, queryset):
+        reviewed = self._review_pending(request, queryset, suggestion_service.approve_suggestion)
+        self.message_user(request, f"Прийнято пропозицій: {reviewed}.", messages.SUCCESS)
+
+    @admin.action(description="Відхилити вибрані пропозиції")
+    def reject_selected(self, request, queryset):
+        reviewed = self._review_pending(request, queryset, suggestion_service.reject_suggestion)
+        self.message_user(request, f"Відхилено пропозицій: {reviewed}.", messages.SUCCESS)
+
+    def _review_pending(self, request, queryset, review) -> int:
+        pending = queryset.filter(status=BookEditSuggestion.Status.PENDING).select_related("user", "book")
+        return sum(self._review(request, suggestion, review) for suggestion in pending)
+
+    def _review(self, request, suggestion, review) -> bool:
+        try:
+            review(suggestion, request.user, suggestion.admin_note)
+        except suggestion_service.SuggestionError as error:
+            self.message_user(request, f"{suggestion.book}: {error}", messages.ERROR)
+            return False
+        return True

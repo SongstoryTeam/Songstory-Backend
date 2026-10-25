@@ -1,0 +1,13 @@
+Нова пропозиція змін до книги.
+
+Користувач: {{ suggestion.user.username }} ({{ suggestion.user.email }})
+Книга: {{ suggestion.book.title }}
+Дата подачі: {{ suggestion.submitted_at|date:"d.m.Y H:i" }}
+
+Зміни:
+{% for row in suggestion.change_rows %}- {{ row.label }}: {{ row.old|truncatechars:80 }} → {{ row.new|truncatechars:80 }}
+{% endfor %}{% if suggestion.reason %}
+Пояснення: {{ suggestion.reason }}
+{% endif %}
+Переглянути в адмін-панелі:
+{{ site_url }}{% url 'admin:core_bookeditsuggestion_change' suggestion.pk %}

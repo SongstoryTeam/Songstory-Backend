@@ -106,6 +106,7 @@
     --rail-inset: 10px;
     --mq-drawer: (max-width: 960px);
 
+    --z-menu: 20;
     --z-topbar: 50;
     --z-scrim: 200;
     --z-sidebar: 210;

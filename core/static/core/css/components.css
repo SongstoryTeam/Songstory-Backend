@@ -56,6 +56,7 @@
 }
 
 .btn-sm  { padding: 6px 14px; font-size: var(--text-xs); }
+.btn-icon { padding: 8px; }
 .btn-lg  { padding: 12px 28px; font-size: var(--text-base); }
 
 .like-btn {

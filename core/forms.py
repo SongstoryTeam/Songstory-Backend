@@ -8,6 +8,7 @@ from django.utils.functional import cached_property
 
 from . import limits
 from .models import AuthorVerification, Genre, Platform, Track, UserProfile
+from .services import suggestions as suggestion_service
 from .services.books import find_duplicate, pending_books_left
 from .services.normalize import (
     ISBN_INPUT_MAX,
@@ -173,31 +174,8 @@ class AccentForm(forms.ModelForm):
         widgets = {"accent": forms.RadioSelect(attrs={"class": "accent-option__input", "data-accent-option": ""})}
 
 
-class BookCreateForm(StyledFormMixin, forms.Form):
+class BookFieldsForm(StyledFormMixin, forms.Form):
     GENRE_DATALIST_ID = "genre-options"
-    STEPS = (
-        {
-            "id": "book",
-            "title": "Книга",
-            "description": "За назвою й автором ми перевіримо, чи цієї книги ще немає в каталозі",
-            "icon": "search",
-            "fields": ("title", "author_name"),
-        },
-        {
-            "id": "details",
-            "title": "Подробиці",
-            "description": "Необов'язково, але з ними книгу легше знайти й не сплутати з іншим виданням",
-            "icon": "list-plus",
-            "fields": ("year", "genre_name", "isbn", "description"),
-        },
-        {
-            "id": "cover",
-            "title": "Обкладинка",
-            "description": "Вставте посилання на зображення, і ми покажемо, як книга виглядатиме в каталозі",
-            "icon": "book-open",
-            "fields": ("cover_url",),
-        },
-    )
 
     title = forms.CharField(
         label="Назва",
@@ -250,19 +228,13 @@ class BookCreateForm(StyledFormMixin, forms.Form):
         widget=forms.URLInput(attrs={"placeholder": "https://…", "autocomplete": "off"}),
     )
 
-    def __init__(self, *args, user, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.user = user
-        self.duplicate = None
         self.fields["year"].widget.attrs["max"] = date.today().year + 1
 
     @cached_property
     def genre_names(self) -> list[str]:
         return list(Genre.objects.values_list("name", flat=True))
-
-    def steps_with_fields(self):
-        for step in self.STEPS:
-            yield {**step, "bound_fields": [self[name] for name in step["fields"]]}
 
     def clean_title(self):
         title = clean_title(self.cleaned_data["title"])
@@ -272,7 +244,7 @@ class BookCreateForm(StyledFormMixin, forms.Form):
 
     def clean_author_name(self):
         author = clean_person_name(self.cleaned_data["author_name"])
-        if not author:
+        if not author and self.fields["author_name"].required:
             raise forms.ValidationError("Вкажіть автора.")
         return author
 
@@ -302,6 +274,41 @@ class BookCreateForm(StyledFormMixin, forms.Form):
             raise forms.ValidationError("Рік не може бути у далекому майбутньому.")
         return year
 
+
+class BookCreateForm(BookFieldsForm):
+    STEPS = (
+        {
+            "id": "book",
+            "title": "Книга",
+            "description": "За назвою й автором ми перевіримо, чи цієї книги ще немає в каталозі",
+            "icon": "search",
+            "fields": ("title", "author_name"),
+        },
+        {
+            "id": "details",
+            "title": "Подробиці",
+            "description": "Необов'язково, але з ними книгу легше знайти й не сплутати з іншим виданням",
+            "icon": "list-plus",
+            "fields": ("year", "genre_name", "isbn", "description"),
+        },
+        {
+            "id": "cover",
+            "title": "Обкладинка",
+            "description": "Вставте посилання на зображення, і ми покажемо, як книга виглядатиме в каталозі",
+            "icon": "book-open",
+            "fields": ("cover_url",),
+        },
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.duplicate = None
+
+    def steps_with_fields(self):
+        for step in self.STEPS:
+            yield {**step, "bound_fields": [self[name] for name in step["fields"]]}
+
     def clean(self):
         cleaned = super().clean()
         if pending_books_left(self.user) == 0:
@@ -315,6 +322,43 @@ class BookCreateForm(StyledFormMixin, forms.Form):
             if duplicate:
                 self.duplicate = duplicate
                 raise forms.ValidationError("Така книга вже є в каталозі або очікує на перевірку.")
+        return cleaned
+
+
+class BookEditSuggestionForm(BookFieldsForm):
+    reason = forms.CharField(
+        label="Чому ви пропонуєте ці зміни (необов'язково)",
+        required=False,
+        max_length=limits.SUGGESTION_REASON_MAX_LENGTH,
+        widget=forms.Textarea(
+            attrs={"rows": TEXTAREA_ROWS_SHORT, "placeholder": "Наприклад, виправлено помилку в назві видання"}
+        ),
+    )
+
+    def __init__(self, *args, book, user, **kwargs):
+        kwargs.setdefault("initial", suggestion_service.book_snapshot(book))
+        super().__init__(*args, **kwargs)
+        self.book = book
+        self.user = user
+        self.changes: dict = {}
+        self.fields["author_name"].required = bool(book.author_id)
+
+    def clean(self):
+        cleaned = super().clean()
+        if self.errors:
+            return cleaned
+        if suggestion_service.pending_suggestions_left(self.user) == 0:
+            raise forms.ValidationError(
+                f"На розгляді вже {settings.PENDING_SUGGESTIONS_LIMIT} ваших пропозицій. "
+                "Дочекайтесь рішення модератора, щоб надіслати нові."
+            )
+        self.changes = suggestion_service.compute_changes(self.book, cleaned)
+        if not self.changes:
+            raise forms.ValidationError("Ви нічого не змінили.")
+        if suggestion_service.touches_identity(self.changes) and suggestion_service.find_conflicting_book(
+            self.book, cleaned
+        ):
+            raise forms.ValidationError("Така книга вже є в каталозі або очікує на перевірку.")
         return cleaned
 
 

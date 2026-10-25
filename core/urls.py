@@ -1,6 +1,6 @@
 from django.urls import path
 
-from core.views import accounts, books, catalog, comments, music, playlists, preferences, verification
+from core.views import accounts, books, catalog, comments, music, playlists, preferences, suggestions, verification
 
 app_name = "core"
 
@@ -15,6 +15,7 @@ urlpatterns = [
     path("book/<slug:slug>/", books.book_detail, name="book_detail"),
     path("book/<slug:slug>/chapters/add/", books.add_chapters, name="add_chapters"),
     path("book/<slug:slug>/chapter/<int:number>/", books.chapter_detail, name="chapter_detail"),
+    path("book/<slug:slug>/suggest/", suggestions.suggest_edit, name="suggest_edit"),
     path("book/<slug:slug>/recommend/", music.recommend, name="recommend"),
     path("book/<slug:slug>/playlists/new/", playlists.playlist_create, name="playlist_create"),
     path("book/<slug:slug>/author/apply/", verification.apply_author, name="apply_author"),

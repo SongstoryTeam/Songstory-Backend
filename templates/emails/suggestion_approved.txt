@@ -1,0 +1,11 @@
+Вітаємо, {{ suggestion.user.username }}!
+
+Вашу пропозицію змін до книги «{{ suggestion.book.title }}» прийнято. Дякуємо, що допомагаєте робити каталог точнішим.
+{% if suggestion.admin_note %}
+Коментар модератора: {{ suggestion.admin_note }}
+{% endif %}
+Перейти до книги:
+{{ site_url }}{{ suggestion.book.get_absolute_url }}
+
+З повагою,
+команда {{ site_name }}

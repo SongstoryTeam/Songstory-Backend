@@ -35,3 +35,25 @@ def send_verification_rejected(verification) -> None:
         {"verification": verification},
         verification.user.email,
     )
+
+
+def notify_admin_new_suggestion(suggestion) -> None:
+    _send(
+        "Нова пропозиція змін до книги",
+        "emails/admin_new_suggestion.txt",
+        {"suggestion": suggestion},
+        settings.ADMIN_EMAIL,
+    )
+
+
+def send_suggestion_approved(suggestion) -> None:
+    _send("Вашу пропозицію прийнято", "emails/suggestion_approved.txt", {"suggestion": suggestion}, suggestion.user.email)
+
+
+def send_suggestion_rejected(suggestion) -> None:
+    _send(
+        "Результат розгляду пропозиції",
+        "emails/suggestion_rejected.txt",
+        {"suggestion": suggestion},
+        suggestion.user.email,
+    )

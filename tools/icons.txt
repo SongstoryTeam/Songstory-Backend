@@ -8,6 +8,7 @@ chevron-left
 chevron-right
 contact
 disc-3
+ellipsis
 external-link
 eye
 eye-off
@@ -22,6 +23,7 @@ monitor
 moon
 music
 palette
+pencil-line
 play
 plus
 search

@@ -1,0 +1,30 @@
+<div class="menu" data-menu>
+    <button type="button"
+            class="btn btn-ghost btn-icon"
+            aria-label="Інші дії з книгою"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="book-menu"
+            data-menu-toggle>
+        <i data-lucide="ellipsis" size="16" aria-hidden="true"></i>
+    </button>
+    <div class="menu__panel" id="book-menu" role="menu" aria-label="Дії з книгою" hidden data-menu-panel>
+        <a href="{% url 'core:suggest_edit' book.slug %}" class="menu__item" role="menuitem">
+            <i data-lucide="pencil-line" size="16" aria-hidden="true"></i> Запропонувати зміни
+        </a>
+        {% if can_manage %}
+            <a href="{% url 'core:add_chapters' book.slug %}" class="menu__item" role="menuitem">
+                <i data-lucide="list-plus" size="16" aria-hidden="true"></i> Додати розділи
+            </a>
+        {% endif %}
+        {% if verification_state == 'available' %}
+            <a href="{% url 'core:apply_author' book.slug %}" class="menu__item" role="menuitem">
+                <i data-lucide="badge-check" size="16" aria-hidden="true"></i> Я автор
+            </a>
+        {% elif verification_state == 'pending' %}
+            <span class="menu__item" role="menuitem" aria-disabled="true">
+                <i data-lucide="badge-check" size="16" aria-hidden="true"></i> Заявка розглядається
+            </span>
+        {% endif %}
+    </div>
+</div>

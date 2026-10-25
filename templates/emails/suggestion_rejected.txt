@@ -1,0 +1,10 @@
+Вітаємо, {{ suggestion.user.username }}.
+
+На жаль, вашу пропозицію змін до книги «{{ suggestion.book.title }}» не прийнято.
+{% if suggestion.admin_note %}
+Причина: {{ suggestion.admin_note }}
+{% endif %}
+Ви можете надіслати нову пропозицію зі сторінки книги.
+
+З повагою,
+команда {{ site_name }}

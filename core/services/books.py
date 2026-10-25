@@ -104,17 +104,18 @@ def import_external_book(external: ExternalBook, user: User) -> tuple[Book, bool
     return book, True
 
 
-def find_duplicate(title: str, author_name: str, isbn: str = "") -> Book | None:
+def find_duplicate(title: str, author_name: str, isbn: str = "", *, exclude_pk: int | None = None) -> Book | None:
+    books = Book.objects.exclude(pk=exclude_pk) if exclude_pk is not None else Book.objects.all()
     code = clean_isbn(isbn)
     if code:
-        by_isbn = Book.objects.filter(isbn=code).first()
+        by_isbn = books.filter(isbn=code).first()
         if by_isbn:
             return by_isbn
     identity = title_identity(clean_title(title))
     if not identity:
         return None
     author_key = name_key(clean_person_name(author_name))
-    for candidate in Book.objects.filter(title_key__startswith=identity[: limits.TEXT_MAX_LENGTH]).select_related("author").order_by("pk"):
+    for candidate in books.filter(title_key__startswith=identity[: limits.TEXT_MAX_LENGTH]).select_related("author").order_by("pk"):
         candidate_key = candidate.author.name_key if candidate.author_id else ""
         if candidate_key == author_key and title_identity(candidate.title) == identity:
             return candidate
