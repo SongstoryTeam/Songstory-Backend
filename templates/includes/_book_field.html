@@ -1,0 +1,23 @@
+<div class="form-group">
+    <div class="form-group__head">
+        <label for="{{ field.id_for_label }}">
+            {{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}
+        </label>
+        {% if resettable %}
+            <button type="button" class="field-reset" data-field-reset aria-label="Повернути значення: {{ field.label }}">Повернути</button>
+        {% endif %}
+    </div>
+    {{ field }}
+    {% if field.name == 'genre_name' %}
+        <datalist id="{{ form.GENRE_DATALIST_ID }}">
+            {% for name in form.genre_names %}<option value="{{ name }}"></option>{% endfor %}
+        </datalist>
+    {% endif %}
+    {% if field.name == 'cover_url' %}
+        <span class="field-feedback" data-cover-feedback aria-live="polite"></span>
+    {% endif %}
+    {% for error in field.errors %}
+        <p class="field-error" data-wizard-error>{{ error }}</p>
+    {% endfor %}
+    {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+</div>

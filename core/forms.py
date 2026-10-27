@@ -176,6 +176,7 @@ class AccentForm(forms.ModelForm):
 
 class BookFieldsForm(StyledFormMixin, forms.Form):
     GENRE_DATALIST_ID = "genre-options"
+    INITIAL_ATTR = "data-initial"
 
     title = forms.CharField(
         label="Назва",
@@ -235,6 +236,10 @@ class BookFieldsForm(StyledFormMixin, forms.Form):
     @cached_property
     def genre_names(self) -> list[str]:
         return list(Genre.objects.values_list("name", flat=True))
+
+    @property
+    def book_fields(self):
+        return [self[name] for name in BookFieldsForm.base_fields]
 
     def clean_title(self):
         title = clean_title(self.cleaned_data["title"])
@@ -336,12 +341,15 @@ class BookEditSuggestionForm(BookFieldsForm):
     )
 
     def __init__(self, *args, book, user, **kwargs):
-        kwargs.setdefault("initial", suggestion_service.book_snapshot(book))
+        snapshot = suggestion_service.book_snapshot(book)
+        kwargs.setdefault("initial", snapshot)
         super().__init__(*args, **kwargs)
         self.book = book
         self.user = user
         self.changes: dict = {}
         self.fields["author_name"].required = bool(book.author_id)
+        for name, value in snapshot.items():
+            self.fields[name].widget.attrs[self.INITIAL_ATTR] = "" if value is None else str(value)
 
     def clean(self):
         cleaned = super().clean()

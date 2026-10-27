@@ -2,21 +2,6 @@
   max-width: 620px;
 }
 
-.req {
-  color: var(--clr-accent);
-}
-
-.field-feedback {
-  display: block;
-  min-height: 16px;
-  font-size: var(--text-xs);
-  margin-top: 4px;
-}
-
-.field-feedback--pending { color: var(--clr-muted); }
-.field-feedback--ok      { color: var(--clr-green); }
-.field-feedback--error   { color: var(--clr-danger); }
-
 .password-field {
   position: relative;
 }

@@ -1,0 +1,136 @@
+.book-form {
+  max-width: 880px;
+  margin-inline: auto;
+}
+
+.book-form--blocked {
+  max-width: 560px;
+}
+
+.book-form .alert {
+  margin-bottom: 18px;
+}
+
+.book-form__layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.book-preview {
+  order: -1;
+  width: 132px;
+  margin-inline: auto;
+}
+
+.book-card--static {
+  cursor: default;
+}
+
+.book-card--static:hover .book-card__cover {
+  transform: none;
+  box-shadow: var(--shadow-book);
+}
+
+.form-group__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-reset {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--text-xs);
+  color: var(--clr-accent);
+  cursor: pointer;
+}
+
+.field-reset:hover {
+  text-decoration: underline;
+}
+
+.form-group:not(.is-changed) .field-reset {
+  display: none;
+}
+
+.form-group.is-changed input,
+.form-group.is-changed textarea {
+  border-color: var(--clr-accent);
+  box-shadow: 0 0 0 3px var(--clr-accent-lt);
+}
+
+.book-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.book-form__status {
+  flex: 1 1 100%;
+  font-size: var(--text-sm);
+  color: var(--clr-muted);
+}
+
+.book-form__actions .btn[type="submit"]:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.book-lookup {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--clr-border);
+}
+
+.book-lookup[aria-busy="true"] {
+  opacity: .6;
+  transition: opacity var(--transition);
+}
+
+.book-lookup__group + .book-lookup__group {
+  margin-top: 20px;
+}
+
+.book-lookup__heading {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--clr-ink);
+}
+
+.book-lookup__hint {
+  margin: 2px 0 10px;
+  font-size: var(--text-xs);
+  color: var(--clr-muted);
+}
+
+.book-lookup__empty {
+  font-size: var(--text-sm);
+  color: var(--clr-muted);
+}
+
+@media (min-width: 760px) {
+  .book-form__layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    gap: 36px;
+    align-items: start;
+  }
+
+  .book-preview {
+    order: 0;
+    width: auto;
+    margin-inline: 0;
+    position: sticky;
+    top: 24px;
+  }
+
+  .book-form__status {
+    flex: 1;
+  }
+}

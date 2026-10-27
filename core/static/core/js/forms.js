@@ -1,5 +1,3 @@
-const BUSY_LABEL = 'Зачекайте…';
-
 document.addEventListener('submit', (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement) || form.hasAttribute('data-no-busy')) return;
@@ -10,7 +8,7 @@ document.addEventListener('submit', (event) => {
             button.disabled = true;
             button.setAttribute('aria-busy', 'true');
             button.dataset.label = button.textContent;
-            button.textContent = BUSY_LABEL;
+            button.textContent = document.body.dataset.busyLabel;
         });
     }, 0);
 });

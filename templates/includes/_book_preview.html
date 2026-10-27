@@ -1,0 +1,25 @@
+<aside class="book-preview" data-preview data-cover-delay="{{ COVER_CHECK_DEBOUNCE_MS }}" hidden aria-label="Так книга виглядатиме в каталозі">
+    <div class="book-card book-card--static">
+        <div class="book-card__spine-wrap">
+            <div class="book-card__cover" data-preview-cover>
+                <div class="book-card__no-cover" data-preview-fallback></div>
+            </div>
+        </div>
+        <div class="book-card__meta">
+            <div class="book-card__title" data-preview-title></div>
+            <div class="book-card__author" data-preview-author hidden></div>
+            <div class="book-card__author" data-preview-meta hidden></div>
+        </div>
+    </div>
+    <script type="application/json" data-preview-copy>
+        {
+            "placeholder": "Назва книги",
+            "cover": {
+                "pending": "Перевіряємо зображення…",
+                "ok": "Зображення знайдено.",
+                "invalid": "Потрібне посилання, що починається з https://",
+                "broken": "Не вдалося завантажити зображення. Перевірте посилання або залиште поле порожнім."
+            }
+        }
+    </script>
+</aside>

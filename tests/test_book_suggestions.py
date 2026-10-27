@@ -102,6 +102,32 @@ class SuggestionFormTests(SuggestionTestCase):
         self.assertEqual(BookEditSuggestion.objects.get().changes, {"description": {"old": "", "new": "Опис"}})
 
 
+class SuggestionPageTests(SuggestionTestCase):
+    def test_every_book_field_carries_its_original_value(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, f'data-initial="{self.book.title}"')
+        self.assertContains(response, 'data-initial="1840"')
+        self.assertContains(response, 'data-initial=""', count=4)
+
+    def test_book_fields_exclude_the_reason(self):
+        names = [field.name for field in self.client.get(self.url).context["form"].book_fields]
+        self.assertEqual(names, ["title", "author_name", "year", "genre_name", "isbn", "description", "cover_url"])
+
+    def test_original_values_survive_a_validation_error(self):
+        response = self.suggest(title="Нова назва", isbn="123")
+        self.assertContains(response, f'data-initial="{self.book.title}"')
+        self.assertContains(response, 'value="Нова назва"')
+
+    def test_page_offers_preview_and_change_controls(self):
+        response = self.client.get(self.url)
+        for marker in ("data-preview", "data-cover-feedback", "data-change-submit", "data-change-reset-all", "data-field-reset"):
+            self.assertContains(response, marker)
+
+    def test_reason_cannot_be_reset(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, "data-field-reset", count=7)
+
+
 class SubmissionTests(SuggestionTestCase):
     def test_only_changed_fields_are_stored_and_admin_is_notified(self):
         response = self.suggest(year=1841, genre_name="поезія", reason="Помилка у році")

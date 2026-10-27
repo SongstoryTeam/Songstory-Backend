@@ -5,13 +5,13 @@
 {% block meta_robots %}noindex, nofollow{% endblock %}
 
 {% block extra_css %}
-    <link rel="stylesheet" href="{% static 'core/css/book-wizard.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/book-form.css' %}">
 {% endblock %}
 
 {% block content %}
     <div class="content-pad">
         {% if pending_left == 0 %}
-            <div class="form-box book-wizard book-wizard--blocked">
+            <div class="form-box book-form book-form--blocked">
                 <div class="empty-state">
                     <div class="empty-state__title">Книги чекають на перевірку</div>
                     <p class="empty-state__text">
@@ -22,7 +22,7 @@
                 </div>
             </div>
         {% else %}
-            <div class="form-box book-wizard"
+            <div class="form-box wizard book-form"
                  data-book-wizard
                  data-check-url="{% url 'core:check_book' %}"
                  data-suggest-url="{% url 'core:search_suggest' %}"
@@ -48,8 +48,8 @@
                     <div class="alert alert--error mb-16">{{ form.non_field_errors.0 }}</div>
                 {% endif %}
 
-                <div class="book-wizard__layout">
-                    <form method="post" novalidate data-wizard-form class="book-wizard__form">
+                <div class="book-form__layout">
+                    <form method="post" novalidate data-wizard-form class="book-form__form">
                         {% csrf_token %}
 
                         {% for step in form.steps_with_fields %}
@@ -73,24 +73,7 @@
                                 {% endif %}
 
                                 {% for field in step.bound_fields %}
-                                    <div class="form-group">
-                                        <label for="{{ field.id_for_label }}">
-                                            {{ field.label }}{% if field.field.required %} <span class="req">*</span>{% endif %}
-                                        </label>
-                                        {{ field }}
-                                        {% if field.name == 'genre_name' %}
-                                            <datalist id="{{ form.GENRE_DATALIST_ID }}">
-                                                {% for name in form.genre_names %}<option value="{{ name }}"></option>{% endfor %}
-                                            </datalist>
-                                        {% endif %}
-                                        {% if field.name == 'cover_url' %}
-                                            <span class="field-feedback" data-cover-feedback aria-live="polite"></span>
-                                        {% endif %}
-                                        {% for error in field.errors %}
-                                            <p class="field-error" data-wizard-error>{{ error }}</p>
-                                        {% endfor %}
-                                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
-                                    </div>
+                                    {% include 'includes/_book_field.html' %}
                                 {% endfor %}
 
                                 {% if forloop.first %}
@@ -98,6 +81,25 @@
                                     <div class="book-lookup" data-lookup hidden>
                                         <div data-lookup-results></div>
                                     </div>
+                                    <script type="application/json" data-book-copy>
+                                        {
+                                            "loading": "Шукаємо в каталозі та в інтернеті…",
+                                            "found": "Знайдено схожих книг: {count}",
+                                            "empty": "Схожих книг не знайдено. Продовжуйте, і ми додамо її вручну.",
+                                            "unavailable": "Пошук тимчасово недоступний. Можна продовжити й додати книгу вручну.",
+                                            "rateLimited": "Забагато запитів. Зачекайте хвилину або продовжуйте вручну.",
+                                            "localHeading": "Уже в каталозі",
+                                            "localHint": "Якщо це ваша книга, відкрийте її замість створення копії.",
+                                            "externalHeading": "Знайдено в інтернеті",
+                                            "externalHint": "Додайте одним кліком: обкладинка й опис підтягнуться автоматично.",
+                                            "open": "Відкрити",
+                                            "add": "Додати",
+                                            "importFailed": "Не вдалося додати книгу. Спробуйте ще раз.",
+                                            "authorUnknown": "Автор невідомий",
+                                            "duplicateExists": "Така книга вже є: ",
+                                            "duplicatePending": "Така книга вже надіслана на перевірку."
+                                        }
+                                    </script>
                                 {% endif %}
 
                                 {% if forloop.last %}
@@ -124,20 +126,7 @@
                         </div>
                     </form>
 
-                    <aside class="book-preview" data-preview hidden aria-label="Так книга виглядатиме в каталозі">
-                        <div class="book-card book-card--static">
-                            <div class="book-card__spine-wrap">
-                                <div class="book-card__cover" data-preview-cover>
-                                    <div class="book-card__no-cover" data-preview-fallback></div>
-                                </div>
-                            </div>
-                            <div class="book-card__meta">
-                                <div class="book-card__title" data-preview-title></div>
-                                <div class="book-card__author" data-preview-author hidden></div>
-                                <div class="book-card__author" data-preview-meta hidden></div>
-                            </div>
-                        </div>
-                    </aside>
+                    {% include 'includes/_book_preview.html' %}
                 </div>
             </div>
         {% endif %}
@@ -145,6 +134,10 @@
 {% endblock %}
 
 {% block extra_js %}
+    <script src="{% static 'core/js/modules/dom.js' %}" defer></script>
     <script src="{% static 'core/js/modules/wizard.js' %}" defer></script>
+    <script src="{% static 'core/js/modules/cover-checker.js' %}" defer></script>
+    <script src="{% static 'core/js/modules/book-preview.js' %}" defer></script>
+    <script src="{% static 'core/js/modules/book-lookup.js' %}" defer></script>
     <script src="{% static 'core/js/book-wizard.js' %}" defer></script>
 {% endblock %}

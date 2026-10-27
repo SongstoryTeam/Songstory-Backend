@@ -25,6 +25,16 @@ class CreateBookPageTests(TestCase):
         for marker in ("data-book-wizard", 'data-wizard-step="0"', 'data-wizard-step="2"', "data-preview", "data-lookup"):
             self.assertContains(response, marker)
 
+    def test_wizard_root_activates_wizard_styles(self):
+        self.assertContains(self.client.get(self.url), 'class="form-box wizard book-form"')
+
+    def test_preview_receives_cover_check_delay_from_settings(self):
+        with override_settings(COVER_CHECK_DEBOUNCE_MS=777):
+            self.assertContains(self.client.get(self.url), 'data-cover-delay="777"')
+
+    def test_creation_form_has_no_reset_controls(self):
+        self.assertNotContains(self.client.get(self.url), "data-field-reset")
+
     def test_title_is_prefilled_from_search_query(self):
         response = self.client.get(self.url, {"title": "  Тіні   забутих "})
         self.assertEqual(response.context["form"].initial["title"], "Тіні забутих")

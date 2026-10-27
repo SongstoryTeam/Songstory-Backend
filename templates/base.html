@@ -43,7 +43,7 @@
         <script defer data-domain="{{ PLAUSIBLE_DOMAIN }}" src="https://plausible.io/js/script.js"></script>
     {% endif %}
 </head>
-<body>
+<body data-busy-label="{{ BUSY_SUBMIT_LABEL }}">
 <div class="app-shell">
     {% include 'includes/_sidebar.html' %}
 
