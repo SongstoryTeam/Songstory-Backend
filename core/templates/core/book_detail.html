@@ -25,6 +25,10 @@
             <div class="alert alert--info">Книга очікує схвалення модератора. Поки що її бачите лише ви.</div>
         {% endif %}
 
+        {% if suggestion %}
+            {% include 'includes/_suggestion_banner.html' %}
+        {% endif %}
+
         <section class="book-hero">
             <div class="book-hero__cover">
                 <div class="book-card__cover">

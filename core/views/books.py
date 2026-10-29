@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib import messages
@@ -14,9 +15,14 @@ from core.models import AuthorVerification, Book, Comment
 from core.ratelimits import IP, rate_limited
 from core.seo import book_json_ld
 from core.services import books as book_service
+from core.services import suggestions as suggestion_service
 from core.services.book_search import get_external_book
 from core.services.normalize import clean_person_name, clean_title
 from core.services.recommendations import grouped_recommendations
+
+
+ORIGINAL_VIEW_PARAM = "view"
+ORIGINAL_VIEW_VALUE = "original"
 
 
 def get_visible_book(request, slug: str) -> Book:
@@ -49,6 +55,11 @@ def verification_state(user, book: Book) -> str:
 
 def book_detail(request, slug: str):
     book = get_visible_book(request, slug)
+    suggestion = suggestion_service.pending_for(request.user, book)
+    outdated_fields = suggestion_service.outdated_fields(suggestion, book)
+    showing_original = request.GET.get(ORIGINAL_VIEW_PARAM) == ORIGINAL_VIEW_VALUE
+    if suggestion and not showing_original:
+        suggestion_service.preview(book, suggestion)
     chapters = book.chapters.annotate(recommendations_total=Count("recommendations"))
     playlists = book.playlists.select_related("user").annotate(tracks_total=Count("items"))
     return render(
@@ -65,6 +76,10 @@ def book_detail(request, slug: str):
             "can_manage": book.can_manage(request.user),
             "verification_state": verification_state(request.user, book),
             "structured_data": book_json_ld(book),
+            "suggestion": suggestion,
+            "showing_original": showing_original,
+            "original_view_query": urlencode({ORIGINAL_VIEW_PARAM: ORIGINAL_VIEW_VALUE}),
+            "outdated_fields": outdated_fields,
         },
     )
 

@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -182,9 +183,22 @@ class AuthorVerificationAdmin(admin.ModelAdmin):
         self.message_user(request, f"Відхилено заявок: {len(pending)}.", messages.SUCCESS)
 
 
+class BookEditSuggestionAdminForm(forms.ModelForm):
+    seen_revision = forms.IntegerField(required=False, widget=forms.HiddenInput)
+
+    class Meta:
+        model = BookEditSuggestion
+        fields = ("status", "admin_note")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["seen_revision"].initial = self.instance.revision
+
+
 @admin.register(BookEditSuggestion)
 class BookEditSuggestionAdmin(admin.ModelAdmin):
-    list_display = ("book", "user", "changed_fields", "status", "submitted_at", "reviewed_by")
+    form = BookEditSuggestionAdminForm
+    list_display = ("book", "user", "changed_fields", "status", "revision", "submitted_at", "updated_at", "reviewed_by")
     list_filter = ("status",)
     list_select_related = ("book", "user", "reviewed_by")
     search_fields = ("book__title", "user__username")
@@ -195,9 +209,12 @@ class BookEditSuggestionAdmin(admin.ModelAdmin):
         "reason",
         "status",
         "admin_note",
+        "revision",
         "submitted_at",
+        "updated_at",
         "reviewed_at",
         "reviewed_by",
+        "seen_revision",
     )
     actions = ["approve_selected", "reject_selected"]
 
@@ -205,7 +222,17 @@ class BookEditSuggestionAdmin(admin.ModelAdmin):
         return False
 
     def get_readonly_fields(self, request, obj=None):
-        readonly = ["book", "user", "changes_table", "reason", "submitted_at", "reviewed_at", "reviewed_by"]
+        readonly = [
+            "book",
+            "user",
+            "changes_table",
+            "reason",
+            "revision",
+            "submitted_at",
+            "updated_at",
+            "reviewed_at",
+            "reviewed_by",
+        ]
         if obj is not None and not obj.is_pending:
             readonly += ["status", "admin_note"]
         return readonly
@@ -223,9 +250,16 @@ class BookEditSuggestionAdmin(admin.ModelAdmin):
             "<tr><th>{}</th><td>{}</td><td>{}</td></tr>",
             ((row.label, row.old, row.new) for row in obj.change_rows()),
         )
+        outdated = suggestion_service.outdated_fields(obj, obj.book) if obj.is_pending else []
+        warning = (
+            format_html('<p class="help">Після подання в книзі змінилося: {}.</p>', ", ".join(outdated))
+            if outdated
+            else ""
+        )
         return format_html(
-            "<table><thead><tr><th></th><th>Було</th><th>Стане</th></tr></thead><tbody>{}</tbody></table>",
+            "<table><thead><tr><th></th><th>Було</th><th>Стане</th></tr></thead><tbody>{}</tbody></table>{}",
             rows,
+            warning,
         )
 
     def save_model(self, request, obj, form, change):
@@ -238,7 +272,7 @@ class BookEditSuggestionAdmin(admin.ModelAdmin):
             obj.status = BookEditSuggestion.Status.PENDING
         super().save_model(request, obj, form, change)
         if decision in reviewers:
-            self._review(request, obj, reviewers[decision])
+            self._review(request, obj, reviewers[decision], form.cleaned_data.get("seen_revision"))
 
     @admin.action(description="Прийняти вибрані пропозиції")
     def approve_selected(self, request, queryset):
@@ -254,9 +288,9 @@ class BookEditSuggestionAdmin(admin.ModelAdmin):
         pending = queryset.filter(status=BookEditSuggestion.Status.PENDING).select_related("user", "book")
         return sum(self._review(request, suggestion, review) for suggestion in pending)
 
-    def _review(self, request, suggestion, review) -> bool:
+    def _review(self, request, suggestion, review, expected_revision: int | None = None) -> bool:
         try:
-            review(suggestion, request.user, suggestion.admin_note)
+            review(suggestion, request.user, suggestion.admin_note, expected_revision=expected_revision)
         except suggestion_service.SuggestionError as error:
             self.message_user(request, f"{suggestion.book}: {error}", messages.ERROR)
             return False

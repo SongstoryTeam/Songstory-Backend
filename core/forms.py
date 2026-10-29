@@ -174,9 +174,14 @@ class AccentForm(forms.ModelForm):
         widgets = {"accent": forms.RadioSelect(attrs={"class": "accent-option__input", "data-accent-option": ""})}
 
 
+def attribute_value(value) -> str:
+    return "" if value is None else str(value)
+
+
 class BookFieldsForm(StyledFormMixin, forms.Form):
     GENRE_DATALIST_ID = "genre-options"
     INITIAL_ATTR = "data-initial"
+    SAVED_ATTR = "data-saved"
 
     title = forms.CharField(
         label="Назва",
@@ -340,29 +345,41 @@ class BookEditSuggestionForm(BookFieldsForm):
         ),
     )
 
-    def __init__(self, *args, book, user, **kwargs):
-        snapshot = suggestion_service.book_snapshot(book)
-        kwargs.setdefault("initial", snapshot)
+    NO_CHANGES_MESSAGE = "Ви нічого не змінили."
+    NO_CHANGES_WHEN_REVISING_MESSAGE = (
+        "Усі поля збігаються з опублікованою версією. Щоб прибрати пропозицію, відкличте її."
+    )
+
+    def __init__(self, *args, book, user, suggestion=None, **kwargs):
+        published = suggestion_service.book_snapshot(book)
+        proposed = suggestion_service.proposed_values(book, suggestion) if suggestion else published
+        kwargs.setdefault("initial", {**proposed, "reason": suggestion.reason if suggestion else ""})
         super().__init__(*args, **kwargs)
         self.book = book
         self.user = user
+        self.suggestion = suggestion
         self.changes: dict = {}
         self.fields["author_name"].required = bool(book.author_id)
-        for name, value in snapshot.items():
-            self.fields[name].widget.attrs[self.INITIAL_ATTR] = "" if value is None else str(value)
+        for name, value in published.items():
+            self.fields[name].widget.attrs[self.INITIAL_ATTR] = attribute_value(value)
+        if suggestion:
+            for name, value in proposed.items():
+                self.fields[name].widget.attrs[self.SAVED_ATTR] = attribute_value(value)
 
     def clean(self):
         cleaned = super().clean()
         if self.errors:
             return cleaned
-        if suggestion_service.pending_suggestions_left(self.user) == 0:
+        if not self.suggestion and suggestion_service.pending_suggestions_left(self.user) == 0:
             raise forms.ValidationError(
                 f"На розгляді вже {settings.PENDING_SUGGESTIONS_LIMIT} ваших пропозицій. "
                 "Дочекайтесь рішення модератора, щоб надіслати нові."
             )
         self.changes = suggestion_service.compute_changes(self.book, cleaned)
         if not self.changes:
-            raise forms.ValidationError("Ви нічого не змінили.")
+            raise forms.ValidationError(
+                self.NO_CHANGES_WHEN_REVISING_MESSAGE if self.suggestion else self.NO_CHANGES_MESSAGE
+            )
         if suggestion_service.touches_identity(self.changes) and suggestion_service.find_conflicting_book(
             self.book, cleaned
         ):

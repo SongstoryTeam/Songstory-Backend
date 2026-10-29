@@ -1,0 +1,36 @@
+<article class="suggestion-card">
+    <header class="suggestion-card__head">
+        <a href="{{ suggestion.book.get_absolute_url }}" class="suggestion-card__book">{{ suggestion.book.title }}</a>
+        <span class="tag tag--{{ suggestion.status }}">{{ suggestion.get_status_display }}</span>
+    </header>
+    <p class="suggestion-card__meta">
+        Подано {{ suggestion.submitted_at|date:"d.m.Y" }}{% if suggestion.revision > 1 %} · редакція {{ suggestion.revision }}, оновлено {{ suggestion.updated_at|date:"d.m.Y" }}{% endif %}
+    </p>
+    <dl class="suggestion-changes">
+        {% for row in suggestion.change_rows %}
+            <div class="suggestion-changes__row">
+                <dt>{{ row.label }}</dt>
+                <dd>
+                    <span class="suggestion-changes__old">{{ row.old|truncatechars:80 }}</span>
+                    <span aria-hidden="true">→</span>
+                    <span class="visually-hidden">змінити на</span>
+                    <span class="suggestion-changes__new">{{ row.new|truncatechars:80 }}</span>
+                </dd>
+            </div>
+        {% endfor %}
+    </dl>
+    {% if suggestion.reason %}<p class="suggestion-card__reason">{{ suggestion.reason }}</p>{% endif %}
+    {% if outdated_fields %}
+        <p class="suggestion-card__warning">Після подання в книзі змінилося: {{ outdated_fields|join:", " }}. Перегляньте пропозицію.</p>
+    {% endif %}
+    {% if suggestion.admin_note %}
+        <p class="suggestion-card__note"><strong>Коментар модератора:</strong> {{ suggestion.admin_note }}</p>
+    {% endif %}
+    {% if suggestion.is_pending %}
+        <div class="suggestion-card__actions">
+            <a href="{{ suggestion.book.get_absolute_url }}" class="btn btn-ghost btn-sm">Переглянути на сторінці книги</a>
+            <a href="{% url 'core:suggest_edit' suggestion.book.slug %}" class="btn btn-accent btn-sm">Змінити</a>
+            {% include 'includes/_suggestion_withdraw.html' with next_url=request.get_full_path %}
+        </div>
+    {% endif %}
+</article>

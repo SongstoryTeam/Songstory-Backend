@@ -16,8 +16,11 @@
             <h1 class="page-title">{{ playlist.title }}</h1>
             {% if playlist.description %}<p class="text-muted">{{ playlist.description }}</p>{% endif %}
             {% if can_manage %}
-                <form method="post" action="{% url 'core:playlist_delete' playlist.pk %}" class="mt-16" data-no-busy
-                      data-confirm="Видалити плейлист?">
+                <form method="post" action="{% url 'core:playlist_delete' playlist.pk %}" class="mt-16"
+                      data-confirm
+                      data-confirm-title="Видалити плейлист?"
+                      data-confirm-message="Плейлист «{{ playlist.title }}» буде видалено без можливості відновити."
+                      data-confirm-action="Видалити">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-ghost btn-sm">Видалити плейлист</button>
                 </form>

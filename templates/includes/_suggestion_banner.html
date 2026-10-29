@@ -1,0 +1,24 @@
+<div class="suggestion-banner" role="status">
+    <div class="suggestion-banner__body">
+        <p class="suggestion-banner__title">
+            {% if showing_original %}Ви дивитесь опубліковану версію книги{% else %}Ви бачите книгу з вашими змінами{% endif %}
+        </p>
+        <p class="suggestion-banner__text">
+            Ваша пропозиція ще на розгляді (змінено: {{ suggestion.field_labels|join:", " }}). Іншим користувачам вона не видна.
+        </p>
+        {% if outdated_fields %}
+            <p class="suggestion-banner__warning">
+                Після подання пропозиції в книзі змінилося: {{ outdated_fields|join:", " }}. Перегляньте пропозицію, щоб вона не перезаписала новіші дані.
+            </p>
+        {% endif %}
+    </div>
+    <div class="suggestion-banner__actions">
+        {% if showing_original %}
+            <a href="{{ book.get_absolute_url }}" class="btn btn-accent btn-sm">Показати зі змінами</a>
+        {% else %}
+            <a href="?{{ original_view_query }}" class="btn btn-ghost btn-sm">Показати оригінал</a>
+        {% endif %}
+        <a href="{% url 'core:suggest_edit' book.slug %}" class="btn btn-ghost btn-sm">Змінити</a>
+        {% include 'includes/_suggestion_withdraw.html' %}
+    </div>
+</div>

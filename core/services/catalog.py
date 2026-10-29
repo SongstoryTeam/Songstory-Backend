@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 
 from django.conf import settings
-from django.core.paginator import Page, Paginator
+from django.core.paginator import Page
 from django.db.models import Count, Q
 
 from core.models import Book, Genre
+from core.utils.pagination import paginate
 
 from .books import find_duplicate
 from .external import ExternalBook
@@ -16,7 +17,6 @@ SORT_OPTIONS = {
     "title": ("За назвою", ("title",)),
 }
 DEFAULT_SORT = "new"
-PAGE_RANGE_EDGE = 1
 
 
 def visible_books(user):
@@ -66,14 +66,14 @@ def catalog_page(user, *, genre_slug: str, sort: str, with_music: bool, page_num
     if with_music:
         queryset = queryset.filter(recommendations_total__gt=0)
     queryset = queryset.order_by(*SORT_OPTIONS[sort_key][1])
-    paginator = Paginator(queryset, settings.CATALOG_PAGE_SIZE)
-    page = paginator.get_page(page_number)
-    page_range = list(
-        paginator.get_elided_page_range(
-            page.number, on_each_side=settings.CATALOG_PAGE_WINDOW, on_ends=PAGE_RANGE_EDGE
-        )
+    pagination = paginate(queryset, page_number, settings.CATALOG_PAGE_SIZE)
+    return CatalogResult(
+        page=pagination.page,
+        sort=sort_key,
+        genre=genre_slug,
+        with_music=with_music,
+        page_range=pagination.page_range,
     )
-    return CatalogResult(page=page, sort=sort_key, genre=genre_slug, with_music=with_music, page_range=page_range)
 
 
 def genres_in_use():

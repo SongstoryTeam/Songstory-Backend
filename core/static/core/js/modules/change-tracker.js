@@ -9,9 +9,19 @@ window.Songstery.createChangeTracker = (root, form) => {
     if (!submit || !status || !fields.length) return null;
 
     const copy = dom.readJson(root, '[data-change-copy]');
+    const hasSavedProposal = fields.some((field) => 'saved' in field.dataset);
+
     const normalize = (text) => text.replace(/\r\n?/g, '\n').trim();
-    const isChanged = (field) => normalize(field.value) !== normalize(field.dataset.initial);
+    const differsFrom = (field, baseline) => normalize(field.value) !== normalize(baseline);
+    const savedValue = (field) => field.dataset.saved ?? field.dataset.initial;
+    const isChanged = (field) => differsFrom(field, field.dataset.initial);
+    const isUnsaved = (field) => differsFrom(field, savedValue(field));
     const groupOf = (field) => field.closest('.form-group');
+
+    function statusText(changedCount, hasUnsaved) {
+        if (!changedCount) return hasSavedProposal ? copy.reverted : copy.unchanged;
+        return hasUnsaved ? dom.format(copy.changed, {count: changedCount}) : copy.saved;
+    }
 
     function restore(field) {
         field.value = field.dataset.initial;
@@ -20,10 +30,11 @@ window.Songstery.createChangeTracker = (root, form) => {
 
     function sync() {
         const changed = fields.filter(isChanged);
+        const hasUnsaved = fields.some(isUnsaved);
         fields.forEach((field) => groupOf(field).classList.toggle('is-changed', changed.includes(field)));
-        submit.disabled = !changed.length;
+        submit.disabled = !changed.length || !hasUnsaved;
         resetAll.hidden = !changed.length;
-        status.textContent = changed.length ? dom.format(copy.changed, {count: changed.length}) : copy.unchanged;
+        status.textContent = statusText(changed.length, hasUnsaved);
     }
 
     form.addEventListener('input', sync);

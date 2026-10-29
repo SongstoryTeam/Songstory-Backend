@@ -1,0 +1,11 @@
+<form method="post"
+      action="{% url 'core:withdraw_suggestion' suggestion.pk %}"
+      class="list-row__form"
+      data-confirm
+      data-confirm-title="Відкликати пропозицію?"
+      data-confirm-message="Книга «{{ suggestion.book.title }}» залишиться такою, якою її бачать усі. Ваші зміни буде прибрано з розгляду."
+      data-confirm-action="Відкликати">
+    {% csrf_token %}
+    {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+    <button type="submit" class="btn btn-ghost btn-sm">Відкликати</button>
+</form>

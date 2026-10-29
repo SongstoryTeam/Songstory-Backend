@@ -134,3 +134,20 @@
     flex: 1;
   }
 }
+
+.book-form__withdraw {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--clr-border);
+}
+
+.book-form__withdraw p {
+  flex: 1 1 260px;
+  font-size: var(--text-sm);
+  color: var(--clr-muted);
+}

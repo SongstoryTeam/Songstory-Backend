@@ -11,34 +11,41 @@ from .external import ExternalBook
 from .normalize import clean_external_id, clean_genre_name, clean_isbn, clean_person_name, clean_title
 
 
+def find_author(cleaned_name: str) -> Author | None:
+    return Author.objects.filter(name_key=name_key(cleaned_name)).order_by("pk").first()
+
+
+def find_genre(cleaned_name: str) -> Genre | None:
+    folded = cleaned_name.casefold()
+    return next((genre for genre in Genre.objects.all() if genre.name.casefold() == folded), None)
+
+
 def get_or_create_author(name: str) -> Author | None:
     cleaned = clean_person_name(name)
     if not cleaned:
         return None
-    key = name_key(cleaned)
-    existing = Author.objects.filter(name_key=key).order_by("pk").first()
+    existing = find_author(cleaned)
     if existing:
         return existing
     try:
         with transaction.atomic():
             return Author.objects.create(name=cleaned)
     except IntegrityError:
-        return Author.objects.filter(name_key=key).order_by("pk").first() or Author.objects.filter(name=cleaned).first()
+        return find_author(cleaned) or Author.objects.filter(name=cleaned).first()
 
 
 def get_or_create_genre(name: str) -> Genre | None:
     cleaned = clean_genre_name(name)
     if not cleaned:
         return None
-    folded = cleaned.casefold()
-    existing = next((genre for genre in Genre.objects.all() if genre.name.casefold() == folded), None)
+    existing = find_genre(cleaned)
     if existing:
         return existing
     try:
         with transaction.atomic():
             return Genre.objects.create(name=cleaned)
     except IntegrityError:
-        return next((genre for genre in Genre.objects.all() if genre.name.casefold() == folded), None)
+        return find_genre(cleaned)
 
 
 def pending_books_count(user: User) -> int:

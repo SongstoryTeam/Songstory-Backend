@@ -143,12 +143,12 @@ class SubmissionTests(SuggestionTestCase):
         self.book.refresh_from_db()
         self.assertEqual(self.book.year, 1840)
 
-    def test_second_pending_suggestion_for_same_book_is_blocked(self):
+    def test_second_submission_for_same_book_revises_the_pending_one(self):
         self.suggest(year=1841)
-        response = self.client.get(self.url)
-        self.assertRedirects(response, self.book.get_absolute_url())
         self.suggest(year=1842)
-        self.assertEqual(BookEditSuggestion.objects.count(), 1)
+        suggestion = BookEditSuggestion.objects.get()
+        self.assertEqual(suggestion.changes["year"]["new"], 1842)
+        self.assertEqual(suggestion.revision, 2)
 
     def test_race_on_pending_constraint_is_reported(self):
         suggestion_service.submit_suggestion(

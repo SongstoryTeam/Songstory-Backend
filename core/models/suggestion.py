@@ -23,6 +23,7 @@ class BookEditSuggestion(models.Model):
         PENDING = "pending", "Очікує"
         APPROVED = "approved", "Схвалено"
         REJECTED = "rejected", "Відхилено"
+        WITHDRAWN = "withdrawn", "Відкликано"
 
     class Field(models.TextChoices):
         TITLE = "title", "Назва"
@@ -41,7 +42,9 @@ class BookEditSuggestion(models.Model):
     reason = models.TextField("Пояснення", blank=True, max_length=limits.SUGGESTION_REASON_MAX_LENGTH)
     status = models.CharField(max_length=limits.CODE_MAX_LENGTH, choices=Status.choices, default=Status.PENDING)
     admin_note = models.TextField("Нотатка модератора", blank=True)
+    revision = models.PositiveSmallIntegerField("Редакція", default=1)
     submitted_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     reviewed_by = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True, blank=True, related_name="reviewed_book_edits"
@@ -80,6 +83,16 @@ class BookEditSuggestion(models.Model):
             ChangeRow(self.Field(name).label, self._display(change["old"]), self._display(change["new"]))
             for name, change in self.changes.items()
         ]
+
+    def revise(self, changes: dict, reason: str) -> None:
+        self.changes = changes
+        self.reason = reason
+        self.revision += 1
+        self.save(update_fields=["changes", "reason", "revision", "updated_at"])
+
+    def withdraw(self) -> None:
+        self.status = self.Status.WITHDRAWN
+        self.save(update_fields=["status", "updated_at"])
 
     def close(self, status: str, reviewer: User, note: str = "") -> None:
         self.status = status

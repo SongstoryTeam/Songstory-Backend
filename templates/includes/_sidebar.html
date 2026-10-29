@@ -3,6 +3,7 @@
 {% url 'core:book_list' as catalog_url %}
 {% url 'core:search' as search_url %}
 {% url 'core:profile' as profile_url %}
+{% url 'core:my_suggestions' as suggestions_url %}
 {% url 'core:settings' as settings_url %}
 {% nav_active 'core:profile' as profile_active %}
 
@@ -26,6 +27,7 @@
             <span class="sidebar__label">Мій простір</span>
             {% include 'includes/_sidebar_item.html' with href=profile_url fragment='recommendations' icon='disc-3' label='Мої рекомендації' %}
             {% include 'includes/_sidebar_item.html' with href=profile_url fragment='playlists' icon='list-music' label='Мої плейлисти' %}
+            {% include 'includes/_sidebar_item.html' with url_name='core:my_suggestions' href=suggestions_url icon='pencil-line' label='Мої пропозиції' %}
         {% endif %}
     </nav>
 

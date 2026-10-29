@@ -10,7 +10,7 @@
     </button>
     <div class="menu__panel" id="book-menu" role="menu" aria-label="Дії з книгою" hidden data-menu-panel>
         <a href="{% url 'core:suggest_edit' book.slug %}" class="menu__item" role="menuitem">
-            <i data-lucide="pencil-line" size="16" aria-hidden="true"></i> Запропонувати зміни
+            <i data-lucide="pencil-line" size="16" aria-hidden="true"></i> {% if suggestion %}Змінити мою пропозицію{% else %}Запропонувати зміни{% endif %}
         </a>
         {% if can_manage %}
             <a href="{% url 'core:add_chapters' book.slug %}" class="menu__item" role="menuitem">

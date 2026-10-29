@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Мої пропозиції — {{ SITE_NAME }}{% endblock %}
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+    <div class="content-pad">
+        <header>
+            <h1 class="page-title">Мої пропозиції</h1>
+            <p class="text-muted text-sm">
+                Поки пропозиція на розгляді, на сторінці книги ви бачите її зі своїми змінами й можете повернути оригінал, змінити пропозицію або відкликати її.
+            </p>
+        </header>
+
+        <section class="mt-24" aria-labelledby="pending-suggestions">
+            <h2 class="section-title" id="pending-suggestions">На розгляді</h2>
+            {% if pending_left is not None %}
+                <p class="text-muted text-sm mb-16">Одночасно на розгляді може бути до {{ pending_limit }} пропозицій. Вільно: {{ pending_left }}.</p>
+            {% endif %}
+            {% for entry in pending %}
+                {% include 'includes/_suggestion_card.html' with suggestion=entry.suggestion outdated_fields=entry.outdated_fields %}
+            {% empty %}
+                <div class="empty-state empty-state--inline">
+                    <div class="empty-state__title">Немає пропозицій на розгляді</div>
+                    <p class="empty-state__text">Запропонувати зміни можна з меню «⋯» на сторінці книги.</p>
+                    <a href="{% url 'core:book_list' %}" class="btn btn-accent">До каталогу</a>
+                </div>
+            {% endfor %}
+        </section>
+
+        {% if page.object_list %}
+            <section class="mt-32" id="suggestion-history" aria-labelledby="history-suggestions">
+                <h2 class="section-title" id="history-suggestions">Історія</h2>
+                {% for suggestion in page.object_list %}
+                    {% include 'includes/_suggestion_card.html' with outdated_fields=None %}
+                {% endfor %}
+                {% include 'includes/_pagination.html' with anchor='suggestion-history' %}
+            </section>
+        {% endif %}
+    </div>
+{% endblock %}
