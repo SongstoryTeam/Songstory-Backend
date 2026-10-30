@@ -185,16 +185,16 @@ def withdraw_suggestion(suggestion: BookEditSuggestion) -> BookEditSuggestion:
 
 
 def approve_suggestion(
-    suggestion: BookEditSuggestion,
-    reviewer: User,
-    note: str = "",
-    *,
-    notify: bool = True,
-    expected_revision: int | None = None,
+        suggestion: BookEditSuggestion,
+        reviewer: User,
+        note: str = "",
+        *,
+        notify: bool = True,
+        expected_revision: int | None = None,
 ) -> BookEditSuggestion:
     with transaction.atomic():
         locked = _lock_pending(suggestion, expected_revision)
-        book = Book.objects.select_for_update().select_related("author", "genre").get(pk=locked.book_id)
+        book = Book.objects.select_for_update(of=("self",)).select_related("author", "genre").get(pk=locked.book_id)
         merged = {**book_snapshot(book), **locked.new_values}
         if touches_identity(locked.changes) and find_conflicting_book(book, merged):
             raise SuggestionConflict
@@ -209,12 +209,12 @@ def approve_suggestion(
 
 
 def reject_suggestion(
-    suggestion: BookEditSuggestion,
-    reviewer: User,
-    note: str = "",
-    *,
-    notify: bool = True,
-    expected_revision: int | None = None,
+        suggestion: BookEditSuggestion,
+        reviewer: User,
+        note: str = "",
+        *,
+        notify: bool = True,
+        expected_revision: int | None = None,
 ) -> BookEditSuggestion:
     with transaction.atomic():
         locked = _lock_pending(suggestion, expected_revision)
@@ -225,7 +225,8 @@ def reject_suggestion(
 
 
 def _lock_pending(suggestion: BookEditSuggestion, expected_revision: int | None = None) -> BookEditSuggestion:
-    locked = BookEditSuggestion.objects.select_for_update().select_related("user", "book").get(pk=suggestion.pk)
+    locked = BookEditSuggestion.objects.select_for_update(of=("self",)).select_related("user", "book").get(
+        pk=suggestion.pk)
     if not locked.is_pending:
         raise SuggestionAlreadyReviewed
     if expected_revision is not None and locked.revision != expected_revision:
