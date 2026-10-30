@@ -1,8 +1,10 @@
 {% load core_extras %}
 {% if url_name %}{% nav_active url_name as is_active %}{% endif %}
+{% firstof is_active force_active as current %}
 <a href="{{ href }}{% if fragment %}#{{ fragment }}{% endif %}"
-   class="sidebar__item{% if is_active %} is-active{% endif %}"
-   {% if is_active %}aria-current="page"{% endif %}>
+   class="sidebar__item{% if current %} is-active{% endif %}"
+   {% if current %}aria-current="page"{% endif %}>
     <i data-lucide="{{ icon }}" size="18" class="sidebar__item-icon" aria-hidden="true"></i>
     <span class="sidebar__item-label">{{ label }}</span>
+    {% if badge %}<span class="sidebar__badge">{{ badge }}</span>{% endif %}
 </a>

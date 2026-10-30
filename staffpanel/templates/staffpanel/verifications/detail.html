@@ -1,0 +1,109 @@
+{% extends 'staffpanel/base.html' %}
+
+{% block title %}Заявка {{ verification.user.username }} — Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Заявка на підтвердження авторства{% endblock %}
+{% block panel_lead %}{{ verification.user.username }} · {{ verification.book.title }}{% endblock %}
+{% block panel_actions %}
+    <a class="btn btn-ghost btn-sm" href="{% url 'staff:verifications' %}">
+        <i data-lucide="arrow-left" size="16" aria-hidden="true"></i> До списку
+    </a>
+{% endblock %}
+
+{% block panel_content %}
+    <div class="detail-layout">
+        <section class="panel-card" aria-labelledby="applicant-title">
+            <h2 class="panel-card__title" id="applicant-title">Заявка</h2>
+            <dl class="detail-list">
+                <div><dt>Стан</dt><dd>{% include 'staffpanel/verifications/_status.html' with status=verification.status label=verification.get_status_display %}</dd></div>
+                <div>
+                    <dt>Заявник</dt>
+                    <dd>
+                        {% if perms.auth.view_user %}
+                            <a href="{% url 'staff:user_detail' verification.user.pk %}">{{ verification.user.username }}</a>
+                        {% else %}
+                            {{ verification.user.username }}
+                        {% endif %}
+                        {% if verification.user.email %}<span class="text-muted"> · {{ verification.user.email }}</span>{% endif %}
+                    </dd>
+                </div>
+                <div>
+                    <dt>Книга</dt>
+                    <dd>
+                        <a href="{{ verification.book.get_absolute_url }}">{{ verification.book.title }}</a>
+                        <span class="text-muted"> · {{ verification.book.author.name|default:"автор невідомий" }}</span>
+                    </dd>
+                </div>
+                <div><dt>Подано</dt><dd>{{ verification.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</dd></div>
+                {% if verification.publisher_url %}
+                    <div>
+                        <dt>Сторінка видавця</dt>
+                        <dd><a href="{{ verification.publisher_url }}" target="_blank" rel="noopener noreferrer nofollow">{{ verification.publisher_url|truncatechars:60 }}</a></dd>
+                    </div>
+                {% endif %}
+                {% if verification.additional_notes %}
+                    <div><dt>Додаткова інформація</dt><dd>{{ verification.additional_notes|linebreaksbr }}</dd></div>
+                {% endif %}
+            </dl>
+        </section>
+
+        <section class="panel-card" aria-labelledby="proofs-title">
+            <h2 class="panel-card__title" id="proofs-title">Документи</h2>
+            {% if can_review %}
+                <ul class="proof-list">
+                    {% for field, label in proofs %}
+                        <li>
+                            <a class="list-row" href="{% url 'staff:proof_download' verification.pk field %}">
+                                <i data-lucide="file-text" size="18" aria-hidden="true"></i>
+                                <span class="list-row__title">{{ label }}</span>
+                                <i data-lucide="download" size="16" aria-hidden="true"></i>
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <p class="text-muted text-xs">Кожне завантаження документа фіксується в журналі дій.</p>
+            {% else %}
+                <p class="text-muted text-sm">Доступ до документів мають лише ті, хто розглядає заявки.</p>
+            {% endif %}
+        </section>
+    </div>
+
+    {% if not pending %}
+        <section class="panel-card mt-24" aria-labelledby="result-title">
+            <h2 class="panel-card__title" id="result-title">Рішення</h2>
+            <dl class="detail-list">
+                <div><dt>Розглянув</dt><dd>{{ verification.reviewed_by.username|default:"—" }}</dd></div>
+                <div><dt>Коли</dt><dd>{{ verification.reviewed_at|date:"SHORT_DATETIME_FORMAT" }}</dd></div>
+                {% if verification.admin_note %}<div><dt>Коментар</dt><dd>{{ verification.admin_note|linebreaksbr }}</dd></div>{% endif %}
+            </dl>
+        </section>
+    {% elif form %}
+        <section class="form-box form-box--narrow mt-24" aria-labelledby="review-title">
+            <h2 class="section-title" id="review-title">Рішення</h2>
+            {% if taken %}
+                <div class="alert alert--warning mb-16">Авторство цієї книги вже підтверджено іншим користувачем. Схвалити заявку не можна.</div>
+            {% endif %}
+            <form method="post" novalidate data-no-busy>
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.note.id_for_label }}">{{ form.note.label }}</label>
+                    {{ form.note }}
+                    <small>Обов'язково для відмови. Користувач побачить цей текст у листі.</small>
+                    {% for error in form.note.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                    {% for error in form.decision.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                </div>
+                <div class="flex gap-12 wrap">
+                    <button type="submit" name="decision" value="{{ Decision.APPROVE }}" class="btn btn-accent"{% if taken %} disabled{% endif %}>
+                        <i data-lucide="check" size="16" aria-hidden="true"></i> Схвалити
+                    </button>
+                    <button type="submit" name="decision" value="{{ Decision.REJECT }}" class="btn btn-danger"
+                            data-confirm
+                            data-confirm-title="Відхилити заявку?"
+                            data-confirm-message="Користувач отримає лист із вашим коментарем."
+                            data-confirm-action="Відхилити">
+                        <i data-lucide="x" size="16" aria-hidden="true"></i> Відхилити
+                    </button>
+                </div>
+            </form>
+        </section>
+    {% endif %}
+{% endblock %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load core_extras %}
+{% load core_extras staff_tags %}
 
 {% block title %}{{ book.title }}{% if book.author %} — {{ book.author.name }}{% endif %} — {{ SITE_NAME }}{% endblock %}
 {% block meta_description %}Музичні рекомендації до книги «{{ book.title }}»{% if book.author %} — {{ book.author.name }}{% endif %}.{% endblock %}
@@ -20,6 +20,8 @@
             <span aria-hidden="true">/</span>
             <span>{{ book.title }}</span>
         </nav>
+
+        {% if staff_nav %}{% staff_book_toolbar book %}{% endif %}
 
         {% if not book.is_approved %}
             <div class="alert alert--info">Книга очікує схвалення модератора. Поки що її бачите лише ви.</div>

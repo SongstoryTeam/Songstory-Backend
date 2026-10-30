@@ -155,7 +155,7 @@ class AuthorVerificationAdmin(admin.ModelAdmin):
     def _link(obj, field: str):
         if not obj.pk or not getattr(obj, field):
             return "—"
-        url = reverse("core:proof_download", kwargs={"pk": obj.pk, "field": field})
+        url = reverse("staff:proof_download", kwargs={"pk": obj.pk, "field": field})
         return format_html('<a href="{}">Завантажити</a>', url)
 
     def save_model(self, request, obj, form, change):

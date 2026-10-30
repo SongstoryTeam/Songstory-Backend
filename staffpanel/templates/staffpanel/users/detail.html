@@ -1,0 +1,73 @@
+{% extends 'staffpanel/base.html' %}
+
+{% block title %}{{ subject.username }} — Користувачі — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}{{ subject.username }}{% endblock %}
+{% block panel_lead %}{% include 'staffpanel/users/_tags.html' with person=subject %}{% endblock %}
+{% block panel_actions %}
+    <a class="btn btn-ghost btn-sm" href="{% url 'staff:users' %}">
+        <i data-lucide="arrow-left" size="16" aria-hidden="true"></i> До списку
+    </a>
+{% endblock %}
+
+{% block panel_content %}
+    <div class="detail-layout">
+        <section class="panel-card" aria-labelledby="account-title">
+            <h2 class="panel-card__title" id="account-title">Акаунт</h2>
+            <dl class="detail-list">
+                <div><dt>Ім'я</dt><dd>{{ subject.get_full_name|default:"—" }}</dd></div>
+                <div><dt>Пошта</dt><dd>{{ subject.email|default:"—" }}</dd></div>
+                <div><dt>Телефон</dt><dd>{{ subject.profile.phone|default:"—" }}</dd></div>
+                <div><dt>Реєстрація</dt><dd>{{ subject.date_joined|date:"SHORT_DATETIME_FORMAT" }}</dd></div>
+                <div><dt>Останній вхід</dt><dd>{% if subject.last_login %}{{ subject.last_login|date:"SHORT_DATETIME_FORMAT" }}{% else %}—{% endif %}</dd></div>
+                {% if subject.profile.bio %}<div><dt>Про себе</dt><dd>{{ subject.profile.bio|linebreaksbr }}</dd></div>{% endif %}
+            </dl>
+        </section>
+
+        <section class="panel-card" aria-labelledby="summary-title">
+            <h2 class="panel-card__title" id="summary-title">Внесок</h2>
+            <dl class="detail-list">
+                <div><dt>Рекомендації</dt><dd>{{ summary.recommendations }}</dd></div>
+                <div><dt>Плейлисти</dt><dd>{{ summary.playlists }}</dd></div>
+                <div><dt>Коментарі</dt><dd>{{ summary.comments }}</dd></div>
+                <div><dt>Додані книги</dt><dd>{{ summary.books }}</dd></div>
+            </dl>
+        </section>
+    </div>
+
+    {% if actions %}
+        <section class="panel__section" aria-labelledby="actions-title">
+            <h2 class="section-title" id="actions-title">Дії</h2>
+            <div class="flex gap-12 wrap">
+                {% for action in actions %}
+                    {% url 'staff:user_action' subject.pk action.key as action_url %}
+                    {% include 'staffpanel/_action_form.html' with url=action_url labelled=True next=request.path %}
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if authored_books %}
+        <section class="panel__section" aria-labelledby="authored-title">
+            <h2 class="section-title" id="authored-title">Підтверджене авторство</h2>
+            {% for book in authored_books %}
+                <a href="{{ book.get_absolute_url }}" class="list-row">
+                    <i data-lucide="book-open" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">{{ book.title }}</span>
+                </a>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    {% if verifications and perms.core.view_authorverification %}
+        <section class="panel__section" aria-labelledby="history-title">
+            <h2 class="section-title" id="history-title">Заявки на авторство</h2>
+            {% for item in verifications %}
+                <a href="{% url 'staff:verification_detail' item.pk %}" class="list-row">
+                    <i data-lucide="badge-check" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">{{ item.book.title }}</span>
+                    <span class="list-row__meta">{{ item.get_status_display }}</span>
+                </a>
+            {% endfor %}
+        </section>
+    {% endif %}
+{% endblock %}

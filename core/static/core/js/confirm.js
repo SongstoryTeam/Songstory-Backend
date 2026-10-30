@@ -9,21 +9,30 @@
     const message = slot('message');
     const action = slot('action');
 
-    function submitConfirmed(form) {
-        form.setAttribute(BYPASS_ATTRIBUTE, '');
-        form.requestSubmit();
-        form.removeAttribute(BYPASS_ATTRIBUTE);
+    function originOf(form, submitter) {
+        return submitter && submitter.hasAttribute('data-confirm') ? submitter : form;
     }
 
-    function ask(form) {
-        title.textContent = form.dataset.confirmTitle;
-        message.textContent = form.dataset.confirmMessage;
-        action.textContent = form.dataset.confirmAction;
+    function submitConfirmed(form, submitter) {
+        form.setAttribute(BYPASS_ATTRIBUTE, '');
+        try {
+            form.requestSubmit(submitter || undefined);
+        } finally {
+            form.removeAttribute(BYPASS_ATTRIBUTE);
+        }
+    }
+
+    function ask(form, submitter, origin) {
+        const {confirmTitle, confirmMessage, confirmAction} = origin.dataset;
+        title.textContent = confirmTitle;
+        message.textContent = confirmMessage || '';
+        message.hidden = !confirmMessage;
+        action.textContent = confirmAction;
         dialog.returnValue = '';
         dialog.addEventListener(
             'close',
             () => {
-                if (dialog.returnValue === CONFIRMED_VALUE) submitConfirmed(form);
+                if (dialog.returnValue === CONFIRMED_VALUE) submitConfirmed(form, submitter);
             },
             {once: true},
         );
@@ -34,10 +43,11 @@
         'submit',
         (event) => {
             const form = event.target;
-            if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-confirm')) return;
-            if (form.hasAttribute(BYPASS_ATTRIBUTE)) return;
+            if (!(form instanceof HTMLFormElement) || form.hasAttribute(BYPASS_ATTRIBUTE)) return;
+            const origin = originOf(form, event.submitter);
+            if (!origin.hasAttribute('data-confirm')) return;
             event.preventDefault();
-            ask(form);
+            ask(form, event.submitter, origin);
         },
         true,
     );

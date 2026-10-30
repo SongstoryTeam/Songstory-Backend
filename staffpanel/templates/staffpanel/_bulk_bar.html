@@ -1,0 +1,24 @@
+{% if bulk_actions %}
+    <form id="bulk-form" class="bulk-bar" method="post" action="{{ bulk_url }}" data-no-busy data-bulk-bar
+          data-empty-label="Нічого не вибрано" data-count-label="Вибрано: {count}">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <label class="bulk-bar__all">
+            <input type="checkbox" data-select-all>
+            <span>Вибрати всі</span>
+        </label>
+        <span class="bulk-bar__count" data-bulk-count role="status" aria-live="polite">Нічого не вибрано</span>
+        <div class="bulk-bar__actions">
+            {% for action in bulk_actions %}
+                <button type="submit" name="action" value="{{ action.key }}" data-bulk-action disabled
+                        class="btn btn-sm {% if action.danger %}btn-danger{% else %}btn-ghost{% endif %}"{% if action.danger %}
+                        data-confirm
+                        data-confirm-title="{{ action.confirm_title }}"
+                        data-confirm-message="{{ action.confirm_message }}"
+                        data-confirm-action="{{ action.label }}"{% endif %}>
+                    <i data-lucide="{{ action.icon }}" size="16" aria-hidden="true"></i> {{ action.label }}
+                </button>
+            {% endfor %}
+        </div>
+    </form>
+{% endif %}

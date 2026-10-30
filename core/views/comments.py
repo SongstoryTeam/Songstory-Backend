@@ -4,12 +4,14 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.views.decorators.http import require_POST
 
+from core import audit
 from core.forms import CommentForm
 from core.models import Book, Chapter, Comment, Playlist
 from core.ratelimits import rate_limited
 
 TARGET_MODELS = {"book": Book, "chapter": Chapter, "playlist": Playlist}
 COMMENTS_ANCHOR = "#comments"
+MODERATION_LOG = "Коментар видалено модератором"
 
 
 def resolve_target(post):
@@ -53,6 +55,8 @@ def delete_comment(request, pk: int):
     comment = get_object_or_404(Comment, pk=pk)
     destination = comment.target.get_absolute_url()
     if comment.user_id == request.user.pk or request.user.is_staff:
+        if comment.user_id != request.user.pk:
+            audit.record(request.user, [comment], audit.DELETION, MODERATION_LOG)
         comment.delete()
         messages.success(request, "Коментар видалено.")
     return redirect(f"{destination}{COMMENTS_ANCHOR}")

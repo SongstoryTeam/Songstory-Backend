@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission as AuthPermission
 from django.contrib.auth.models import User
 
 from core.models import Author, Book, Chapter, Platform, Track
@@ -5,6 +6,14 @@ from core.models import Author, Book, Chapter, Platform, Track
 
 def make_user(username: str = "reader", **extra) -> User:
     return User.objects.create_user(username, f"{username}@example.com", "pass-12345", **extra)
+
+
+def make_staff(username: str = "moderator", *permissions: str, superuser: bool = False) -> User:
+    user = make_user(username, is_staff=True, is_superuser=superuser)
+    for permission in permissions:
+        app_label, codename = str(permission).split(".")
+        user.user_permissions.add(AuthPermission.objects.get(content_type__app_label=app_label, codename=codename))
+    return User.objects.get(pk=user.pk)
 
 
 def make_book(user: User | None = None, title: str = "Кобзар", author: str = "Тарас Шевченко", approved: bool = True) -> Book:

@@ -1,0 +1,18 @@
+<form method="post" action="{{ url }}" class="action-form" data-no-busy{% if action.danger %}
+      data-confirm
+      data-confirm-title="{{ action.confirm_title }}"
+      data-confirm-message="{{ action.confirm_message }}"
+      data-confirm-action="{{ action.label }}"{% endif %}>
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    {% if labelled %}
+        <button type="submit" class="btn btn-sm {% if action.danger %}btn-danger{% else %}btn-ghost{% endif %}">
+            <i data-lucide="{{ action.icon }}" size="16" aria-hidden="true"></i> {{ action.label }}
+        </button>
+    {% else %}
+        <button type="submit" class="row-action{% if action.danger %} row-action--danger{% endif %}"
+                title="{{ action.label }}" aria-label="{{ action.label }}">
+            <i data-lucide="{{ action.icon }}" size="16" aria-hidden="true"></i>
+        </button>
+    {% endif %}
+</form>

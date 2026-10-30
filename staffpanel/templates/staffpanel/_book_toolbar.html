@@ -1,0 +1,32 @@
+{% if actions or can_edit or can_open or verification_url %}
+    <aside class="staff-toolbar" aria-label="Інструменти модератора">
+        <span class="staff-toolbar__title">
+            <i data-lucide="shield-check" size="16" aria-hidden="true"></i> Модерація
+        </span>
+        <div class="staff-toolbar__actions">
+            {% if can_edit %}
+                <a class="btn btn-ghost btn-sm" href="{% url 'core:suggest_edit' book.slug %}">
+                    <i data-lucide="pencil" size="16" aria-hidden="true"></i> Редагувати
+                </a>
+            {% endif %}
+            {% for action in actions %}
+                {% url 'staff:book_action' book.pk action.key as action_url %}
+                {% if action.danger %}
+                    {% include 'staffpanel/_action_form.html' with url=action_url labelled=True %}
+                {% else %}
+                    {% include 'staffpanel/_action_form.html' with url=action_url labelled=True next=request.get_full_path %}
+                {% endif %}
+            {% endfor %}
+            {% if verification_url %}
+                <a class="btn btn-ghost btn-sm" href="{{ verification_url }}">
+                    <i data-lucide="badge-check" size="16" aria-hidden="true"></i> Заявка автора
+                </a>
+            {% endif %}
+            {% if can_open %}
+                <a class="btn btn-ghost btn-sm" href="{% url 'staff:books' %}">
+                    <i data-lucide="layout-dashboard" size="16" aria-hidden="true"></i> Усі книги
+                </a>
+            {% endif %}
+        </div>
+    </aside>
+{% endif %}

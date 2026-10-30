@@ -10,7 +10,8 @@ from django.urls import reverse
 from core.models import AuthorVerification, Book, Comment, Playlist, Recommendation, Track
 from core.services.external import ExternalBook, ExternalSearch
 from core.services.music_links import TrackMetadata
-from tests.conftest_helpers import make_book, make_chapter, make_track, make_user
+from staffpanel.access import Permission
+from tests.conftest_helpers import make_book, make_chapter, make_staff, make_track, make_user
 
 YOUTUBE_URL = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
@@ -346,14 +347,20 @@ class AuthorVerificationTests(TestCase):
         self.assertTrue(self.user.profile.is_verified_author)
         self.assertEqual(mail.outbox[-1].to, [self.user.email])
 
-    def test_proof_download_is_staff_only(self):
+    def test_proof_download_requires_review_permission(self):
         with self.settings(PRIVATE_MEDIA_ROOT=self.private_root()):
             self.client.post(self.url, self.payload())
             verification = AuthorVerification.objects.get()
-            url = reverse("core:proof_download", args=[verification.pk, "proof_document"])
+            url = reverse("staff:proof_download", args=[verification.pk, "proof_document"])
+            self.assertEqual(self.client.get(url).status_code, 404)
+            self.client.logout()
             self.assertEqual(self.client.get(url).status_code, 302)
-            self.client.force_login(make_user("moderator", is_staff=True))
-            self.assertEqual(self.client.get(url).status_code, 200)
+            self.client.force_login(make_user("plain_staff", is_staff=True))
+            self.assertEqual(self.client.get(url).status_code, 404)
+            self.client.force_login(make_staff("moderator", Permission.VERIFICATIONS_REVIEW))
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            self.assertIn("no-store", response["Cache-Control"])
 
 
 @override_settings(CACHES=CACHES)

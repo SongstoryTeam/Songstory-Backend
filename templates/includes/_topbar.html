@@ -23,6 +23,9 @@
 
     <div class="topbar__actions">
         {% if user.is_authenticated %}
+            {% if staff_nav %}
+                {% include 'staffpanel/_topbar_entry.html' %}
+            {% endif %}
             <a href="{% url 'core:create_book' %}" class="btn btn-accent btn-sm">
                 <i data-lucide="plus" size="16" aria-hidden="true"></i>
                 <span class="topbar__action-label">Додати книгу</span>

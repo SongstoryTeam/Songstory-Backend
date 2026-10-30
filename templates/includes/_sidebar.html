@@ -29,6 +29,10 @@
             {% include 'includes/_sidebar_item.html' with href=profile_url fragment='playlists' icon='list-music' label='Мої плейлисти' %}
             {% include 'includes/_sidebar_item.html' with url_name='core:my_suggestions' href=suggestions_url icon='pencil-line' label='Мої пропозиції' %}
         {% endif %}
+
+        {% if staff_nav %}
+            {% include 'staffpanel/_sidebar_section.html' %}
+        {% endif %}
     </nav>
 
     <div class="sidebar__footer">

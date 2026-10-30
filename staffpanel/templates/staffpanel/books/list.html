@@ -1,0 +1,79 @@
+{% extends 'staffpanel/base.html' %}
+{% load core_extras %}
+
+{% block title %}Книги — Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Книги{% endblock %}
+{% block panel_lead %}{{ page.paginator.count }} {{ page.paginator.count|uk_plural:"книга,книги,книг" }}{% endblock %}
+
+{% block panel_content %}
+    {% include 'staffpanel/_filters.html' %}
+
+    {% if rows %}
+        {% url 'staff:book_bulk' as bulk_url %}
+        {% include 'staffpanel/_bulk_bar.html' %}
+
+        <div class="table-wrap">
+            <table class="data-table">
+                <caption class="visually-hidden">Список книг</caption>
+                <thead>
+                    <tr>
+                        {% if bulk_actions %}<th scope="col" class="data-table__check"><span class="visually-hidden">Вибір</span></th>{% endif %}
+                        <th scope="col">Книга</th>
+                        <th scope="col">Стан</th>
+                        <th scope="col">Додав</th>
+                        <th scope="col" class="data-table__num">Рекомендацій</th>
+                        <th scope="col">Додано</th>
+                        <th scope="col"><span class="visually-hidden">Дії</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% with book=row.obj %}
+                            <tr>
+                                {% if bulk_actions %}
+                                    <td class="data-table__check">
+                                        <input type="checkbox" name="ids" value="{{ book.pk }}" form="bulk-form" data-select-row
+                                               aria-label="Вибрати «{{ book.title }}»">
+                                    </td>
+                                {% endif %}
+                                <td class="data-table__main">
+                                    <a href="{{ book.get_absolute_url }}">{{ book.title }}</a>
+                                    <span class="data-table__sub">{{ book.author.name|default:"Автор невідомий" }}{% if book.year %} · {{ book.year }}{% endif %}</span>
+                                </td>
+                                <td>
+                                    {% if book.is_approved %}
+                                        <span class="tag tag--ok">Опубліковано</span>
+                                    {% else %}
+                                        <span class="tag tag--warn">На перевірці</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ book.creator.username|default:"—" }}</td>
+                                <td class="data-table__num">{{ book.recommendations_total }}</td>
+                                <td>{{ book.created_at|date:"SHORT_DATE_FORMAT" }}</td>
+                                <td class="data-table__actions">
+                                    <div class="row-actions">
+                                        {% if perms.core.change_book %}
+                                            <a class="row-action" href="{% url 'core:suggest_edit' book.slug %}" title="Редагувати" aria-label="Редагувати">
+                                                <i data-lucide="pencil" size="16" aria-hidden="true"></i>
+                                            </a>
+                                        {% endif %}
+                                        {% for action in row.actions %}
+                                            {% url 'staff:book_action' book.pk action.key as action_url %}
+                                            {% include 'staffpanel/_action_form.html' with url=action_url next=request.get_full_path %}
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'includes/_pagination.html' with anchor='' %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">Нічого не знайдено</div>
+            <p class="empty-state__text">{% if filters.query %}Спробуйте змінити запит або фільтр.{% else %}У цьому стані книг немає.{% endif %}</p>
+        </div>
+    {% endif %}
+{% endblock %}

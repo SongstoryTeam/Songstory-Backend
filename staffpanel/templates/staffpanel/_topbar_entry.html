@@ -1,0 +1,6 @@
+<a href="{{ staff_nav.entry_url }}" class="topbar__button topbar__staff"
+   title="Панель керування"
+   aria-label="Панель керування{% if staff_nav.pending_total %}, очікує розгляду: {{ staff_nav.pending_total }}{% endif %}">
+    <i data-lucide="shield-check" size="20" aria-hidden="true"></i>
+    {% if staff_nav.pending_total %}<span class="topbar__badge" aria-hidden="true">{{ staff_nav.pending_badge }}</span>{% endif %}
+</a>

@@ -1,0 +1,95 @@
+{% extends 'staffpanel/base.html' %}
+{% load core_extras %}
+
+{% block title %}Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Панель керування{% endblock %}
+{% block panel_lead %}Вітаємо, {{ user.username }}. Тут зібрано все, що чекає на вашу увагу.{% endblock %}
+
+{% block panel_content %}
+    {% if pending_books or pending_verifications %}
+        <section class="panel__section" aria-labelledby="queues-title">
+            <h2 class="section-title" id="queues-title">Потребує уваги</h2>
+            <div class="panel-grid">
+                {% if pending_books %}
+                    <a class="queue-card{% if pending_books.total %} queue-card--alert{% endif %}" href="{% url 'staff:books' %}">
+                        <span class="queue-card__value">{{ pending_books.total }}</span>
+                        <span class="queue-card__label">{{ pending_books.total|uk_plural:"книга,книги,книг" }} на перевірці</span>
+                    </a>
+                {% endif %}
+                {% if pending_verifications %}
+                    <a class="queue-card{% if pending_verifications.total %} queue-card--alert{% endif %}" href="{% url 'staff:verifications' %}">
+                        <span class="queue-card__value">{{ pending_verifications.total }}</span>
+                        <span class="queue-card__label">{{ pending_verifications.total|uk_plural:"заявка,заявки,заявок" }} авторів очікує</span>
+                    </a>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if metrics %}
+        <section class="panel__section" aria-labelledby="metrics-title">
+            <h2 class="section-title" id="metrics-title">Сайт у цифрах</h2>
+            <div class="panel-grid">
+                {% for metric in metrics %}
+                    <div class="stat-card">
+                        <span class="stat-card__label"><i data-lucide="{{ metric.icon }}" size="16" aria-hidden="true"></i> {{ metric.label }}</span>
+                        <span class="stat-card__value">{{ metric.total }}</span>
+                        <span class="stat-card__trend">+{{ metric.recent }} за {{ trend_days }} {{ trend_days|uk_plural:"день,дні,днів" }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {% if pending_books.items %}
+        <section class="panel__section" aria-labelledby="queue-books-title">
+            <div class="section-head">
+                <h2 class="section-title" id="queue-books-title">Книги в черзі</h2>
+                <a class="section-head__link" href="{% url 'staff:books' %}">Усі книги</a>
+            </div>
+            {% for book in pending_books.items %}
+                <a href="{{ book.get_absolute_url }}" class="list-row">
+                    <i data-lucide="book-open" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">{{ book.title }}<span class="text-muted"> · {{ book.author.name|default:"автор невідомий" }}</span></span>
+                    <span class="list-row__meta">{{ book.creator.username|default:"—" }}, {{ book.created_at|timesince }} тому</span>
+                </a>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    {% if pending_verifications.items %}
+        <section class="panel__section" aria-labelledby="queue-verifications-title">
+            <div class="section-head">
+                <h2 class="section-title" id="queue-verifications-title">Заявки в черзі</h2>
+                <a class="section-head__link" href="{% url 'staff:verifications' %}">Усі заявки</a>
+            </div>
+            {% for item in pending_verifications.items %}
+                <a href="{% url 'staff:verification_detail' item.pk %}" class="list-row">
+                    <i data-lucide="badge-check" size="18" aria-hidden="true"></i>
+                    <span class="list-row__title">{{ item.user.username }}<span class="text-muted"> · {{ item.book.title }}</span></span>
+                    <span class="list-row__meta">{{ item.submitted_at|timesince }} тому</span>
+                </a>
+            {% endfor %}
+        </section>
+    {% endif %}
+
+    {% if recent_activity %}
+        <section class="panel__section" aria-labelledby="activity-title">
+            <div class="section-head">
+                <h2 class="section-title" id="activity-title">Остання активність</h2>
+                <a class="section-head__link" href="{% url 'staff:activity' %}">Увесь журнал</a>
+            </div>
+            <ul class="activity-feed">
+                {% for entry in recent_activity %}
+                    <li class="activity-feed__item">
+                        <span class="activity-feed__text">
+                            <strong>{{ entry.user.username }}</strong>
+                            {{ entry.get_change_message|lower }} · {{ entry.content_type.name }} «{{ entry.object_repr }}»
+                        </span>
+                        <time class="text-muted text-xs" datetime="{{ entry.action_time|date:'c' }}">{{ entry.action_time|timesince }} тому</time>
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endif %}
+{% endblock %}

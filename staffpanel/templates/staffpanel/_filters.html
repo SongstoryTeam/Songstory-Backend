@@ -1,0 +1,25 @@
+{% load core_extras %}
+<form class="panel-filter" method="get" action="{{ request.path }}" role="search" data-no-busy>
+    {% if states %}<input type="hidden" name="state" value="{{ current_state }}">{% endif %}
+    <div class="panel-filter__field">
+        <i data-lucide="search" size="16" aria-hidden="true"></i>
+        <label class="visually-hidden" for="{{ filters.form.q.id_for_label }}">Пошук</label>
+        {{ filters.form.q }}
+    </div>
+    <button type="submit" class="btn btn-ghost btn-sm">Знайти</button>
+    {% if filters.query %}
+        <a class="toolbar__reset" href="{% query_url q='' %}">
+            <i data-lucide="x" size="14" aria-hidden="true"></i> Скинути
+        </a>
+    {% endif %}
+</form>
+
+{% if states %}
+    <nav class="chips chips--scroll" aria-label="Фільтр за станом">
+        {% for value, label in states %}
+            <a class="chip" href="{% query_url state=value %}"{% if value == current_state %} aria-current="true"{% endif %}>
+                {{ label }}{% if pending_total and value == pending_state %} <span class="chip__count">{{ pending_total }}</span>{% endif %}
+            </a>
+        {% endfor %}
+    </nav>
+{% endif %}

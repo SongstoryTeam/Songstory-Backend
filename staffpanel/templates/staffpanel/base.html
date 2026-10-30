@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block meta_robots %}noindex, nofollow{% endblock %}
+
+{% block extra_js %}
+    <script src="{% static 'staffpanel/js/panel.js' %}" defer></script>
+{% endblock %}
+
+{% block content %}
+    <div class="content-pad panel">
+        <header class="panel__head">
+            <div>
+                <h1 class="page-title">{% block panel_title %}{% endblock %}</h1>
+                <p class="panel__lead">{% block panel_lead %}{% endblock %}</p>
+            </div>
+            <div class="panel__actions">{% block panel_actions %}{% endblock %}</div>
+        </header>
+        {% block panel_content %}{% endblock %}
+    </div>
+{% endblock %}

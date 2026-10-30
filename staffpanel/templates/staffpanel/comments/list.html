@@ -1,0 +1,64 @@
+{% extends 'staffpanel/base.html' %}
+{% load core_extras %}
+
+{% block title %}Коментарі — Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Коментарі{% endblock %}
+{% block panel_lead %}{{ page.paginator.count }} {{ page.paginator.count|uk_plural:"коментар,коментарі,коментарів" }}{% endblock %}
+
+{% block panel_content %}
+    {% include 'staffpanel/_filters.html' %}
+
+    {% if entries %}
+        {% url 'staff:comment_bulk' as bulk_url %}
+        {% include 'staffpanel/_bulk_bar.html' %}
+
+        <div class="table-wrap">
+            <table class="data-table">
+                <caption class="visually-hidden">Список коментарів</caption>
+                <thead>
+                    <tr>
+                        {% if bulk_actions %}<th scope="col" class="data-table__check"><span class="visually-hidden">Вибір</span></th>{% endif %}
+                        <th scope="col">Коментар</th>
+                        <th scope="col">Автор</th>
+                        <th scope="col">Де</th>
+                        <th scope="col">Додано</th>
+                        <th scope="col"><span class="visually-hidden">Дії</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                        <tr>
+                            {% if bulk_actions %}
+                                <td class="data-table__check">
+                                    <input type="checkbox" name="ids" value="{{ entry.comment.pk }}" form="bulk-form" data-select-row
+                                           aria-label="Вибрати коментар користувача {{ entry.comment.user.username }}">
+                                </td>
+                            {% endif %}
+                            <td class="data-table__main">
+                                {{ entry.comment.text|truncatechars:140 }}
+                                {% if entry.comment.parent_id %}<span class="data-table__sub">Відповідь</span>{% endif %}
+                            </td>
+                            <td>{{ entry.comment.user.username }}</td>
+                            <td><a href="{{ entry.target.url }}#comments">{{ entry.target.label|truncatechars:48 }}</a></td>
+                            <td>{{ entry.comment.created_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td class="data-table__actions">
+                                <div class="row-actions">
+                                    {% for action in entry.actions %}
+                                        {% url 'staff:comment_action' entry.comment.pk action.key as action_url %}
+                                        {% include 'staffpanel/_action_form.html' with url=action_url next=request.get_full_path %}
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'includes/_pagination.html' with anchor='' %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">Коментарів не знайдено</div>
+            <p class="empty-state__text">Спробуйте змінити запит.</p>
+        </div>
+    {% endif %}
+{% endblock %}

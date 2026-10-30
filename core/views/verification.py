@@ -1,15 +1,10 @@
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
-from django.http import FileResponse, Http404
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 
 from core import emails
 from core.forms import AuthorVerificationForm
-from core.models import AuthorVerification
 from core.views.books import get_visible_book, verification_state
-
-PROOF_FIELDS = ("proof_document", "proof_authorship")
 
 BLOCKING_MESSAGES = {
     "pending": "Вашу заявку вже розглядають.",
@@ -36,14 +31,3 @@ def apply_author(request, slug: str):
         messages.success(request, "Заявку надіслано. Ми розглянемо її найближчим часом.")
         return redirect(book)
     return render(request, "core/apply_author.html", {"form": form, "book": book})
-
-
-@staff_member_required
-def proof_download(request, pk: int, field: str):
-    if field not in PROOF_FIELDS:
-        raise Http404
-    verification = get_object_or_404(AuthorVerification, pk=pk)
-    stored = getattr(verification, field)
-    if not stored:
-        raise Http404
-    return FileResponse(stored.open("rb"), as_attachment=True, filename=stored.name.rsplit("/", 1)[-1])

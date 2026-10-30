@@ -37,6 +37,7 @@
     <script src="{% static 'core/js/modules/theme-init.js' %}"></script>
     <link rel="stylesheet" href="{% static 'core/css/tokens.css' %}">
     <link rel="stylesheet" href="{% static 'core/css/styles.css' %}">
+    {% if staff_nav %}<link rel="stylesheet" href="{% static 'staffpanel/css/panel.css' %}">{% endif %}
     {% block extra_css %}{% endblock %}
 
     {% if PLAUSIBLE_DOMAIN %}

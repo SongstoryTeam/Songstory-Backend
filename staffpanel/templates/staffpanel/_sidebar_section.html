@@ -1,0 +1,4 @@
+<span class="sidebar__label">Керування</span>
+{% for item in staff_nav.items %}
+    {% include 'includes/_sidebar_item.html' with href=item.url icon=item.icon label=item.label badge=item.badge_label force_active=item.is_active %}
+{% endfor %}

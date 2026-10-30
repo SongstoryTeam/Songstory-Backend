@@ -1,0 +1,50 @@
+{% extends 'staffpanel/base.html' %}
+{% load core_extras %}
+
+{% block title %}Заявки авторів — Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Заявки авторів{% endblock %}
+{% block panel_lead %}{{ page.paginator.count }} {{ page.paginator.count|uk_plural:"заявка,заявки,заявок" }}{% endblock %}
+
+{% block panel_content %}
+    {% include 'staffpanel/_filters.html' %}
+
+    {% if page.object_list %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <caption class="visually-hidden">Заявки на підтвердження авторства</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Заявник</th>
+                        <th scope="col">Книга</th>
+                        <th scope="col">Стан</th>
+                        <th scope="col">Подано</th>
+                        <th scope="col">Розглянув</th>
+                        <th scope="col"><span class="visually-hidden">Дії</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in page.object_list %}
+                        <tr>
+                            <td class="data-table__main"><a href="{% url 'staff:verification_detail' item.pk %}">{{ item.user.username }}</a></td>
+                            <td>{{ item.book.title }}</td>
+                            <td>{% include 'staffpanel/verifications/_status.html' with status=item.status label=item.get_status_display %}</td>
+                            <td>{{ item.submitted_at|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td>{{ item.reviewed_by.username|default:"—" }}</td>
+                            <td class="data-table__actions">
+                                <a class="btn btn-ghost btn-sm" href="{% url 'staff:verification_detail' item.pk %}">
+                                    {% if item.status == 'pending' %}Розглянути{% else %}Відкрити{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'includes/_pagination.html' with anchor='' %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">Заявок немає</div>
+            <p class="empty-state__text">{% if filters.query %}За цим запитом нічого не знайдено.{% else %}У цьому стані заявок немає.{% endif %}</p>
+        </div>
+    {% endif %}
+{% endblock %}

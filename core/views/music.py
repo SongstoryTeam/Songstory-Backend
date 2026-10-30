@@ -4,6 +4,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from core import audit
 from core.forms import PickTrackForm, TrackDraftForm, TrackLinkForm
 from core.models import Recommendation
 from core.ratelimits import rate_limited
@@ -15,6 +16,7 @@ from core.views.books import get_visible_book
 ACTION_PICK = "pick"
 ACTION_LINK = "link"
 ACTION_DRAFT = "draft"
+MODERATION_LOG = "Рекомендацію видалено модератором"
 
 
 def target_url(book, chapter):
@@ -106,6 +108,8 @@ def recommendation_delete(request, pk: int):
     if recommendation.user_id != request.user.pk and not request.user.is_staff:
         return redirect(target_url(recommendation.book, recommendation.chapter))
     destination = target_url(recommendation.book, recommendation.chapter)
+    if recommendation.user_id != request.user.pk:
+        audit.record(request.user, [recommendation], audit.DELETION, MODERATION_LOG)
     recommendation.delete()
     messages.success(request, "Рекомендацію видалено.")
     return redirect(destination)

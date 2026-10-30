@@ -1,0 +1,6 @@
+<span class="tag-group">
+    {% if person.is_superuser %}<span class="tag tag--accent">Суперкористувач</span>{% elif person.is_staff %}<span class="tag tag--accent">Персонал</span>{% endif %}
+    {% if person.profile.is_verified_author %}<span class="tag tag--ok">Автор</span>{% endif %}
+    {% if not person.is_active %}<span class="tag tag--danger">Заблоковано</span>{% endif %}
+    {% if person.is_active and not person.is_staff and not person.profile.is_verified_author %}<span class="tag">Учасник</span>{% endif %}
+</span>

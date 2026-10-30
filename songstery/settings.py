@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "core.apps.CoreConfig",
+    "staffpanel.apps.StaffPanelConfig",
 ]
 
 MIDDLEWARE = [
@@ -67,6 +68,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "core.context_processors.site",
+                "staffpanel.context_processors.staff",
             ],
         },
     },
@@ -121,6 +123,7 @@ RATE_LIMITS = {
     "accent": "30/m",
     "suggest_edit": "10/h",
     "suggestion_withdraw": "30/h",
+    "staff_action": "120/m",
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -212,6 +215,28 @@ BULK_CHAPTERS_MAX = 100
 PENDING_BOOKS_LIMIT = 5
 PENDING_SUGGESTIONS_LIMIT = 10
 COMMENT_MAX_LENGTH = 2000
+
+STAFF_PANEL_PREFIX = env_value("STAFF_PANEL_PREFIX", "panel")
+STAFF_PAGE_SIZE = 25
+STAFF_BULK_MAX = 100
+STAFF_RECENT_LIMIT = 6
+STAFF_TREND_DAYS = 7
+STAFF_BADGE_CAP = 99
+STAFF_BADGE_CACHE_TTL = 30
+STAFF_STATS_CACHE_TTL = 60
+_MODERATION_PERMISSIONS = [
+    "core.view_book",
+    "core.change_book",
+    "core.delete_book",
+    "core.view_authorverification",
+    "core.change_authorverification",
+    "core.view_comment",
+    "core.delete_comment",
+]
+STAFF_ROLES = {
+    "Модератори": _MODERATION_PERMISSIONS,
+    "Адміністратори": [*_MODERATION_PERMISSIONS, "auth.view_user", "auth.change_user", "admin.view_logentry"],
+}
 
 EXTERNAL_HTTP_TIMEOUT = 5
 EXTERNAL_SEARCH_LIMIT = 10

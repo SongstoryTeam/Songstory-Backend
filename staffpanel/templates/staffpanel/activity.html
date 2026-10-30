@@ -1,0 +1,47 @@
+{% extends 'staffpanel/base.html' %}
+{% load core_extras %}
+
+{% block title %}Журнал дій — Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Журнал дій{% endblock %}
+{% block panel_lead %}Усі зміни, зроблені персоналом через панель і через адмінку Django.{% endblock %}
+
+{% block panel_content %}
+    {% include 'staffpanel/_filters.html' %}
+
+    {% if page.object_list %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <caption class="visually-hidden">Журнал дій персоналу</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Час</th>
+                        <th scope="col">Хто</th>
+                        <th scope="col">Дія</th>
+                        <th scope="col">Об'єкт</th>
+                        <th scope="col">Подробиці</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in page.object_list %}
+                        <tr>
+                            <td>{{ entry.action_time|date:"SHORT_DATETIME_FORMAT" }}</td>
+                            <td>{{ entry.user.username }}</td>
+                            <td><span class="tag{% if entry.is_deletion %} tag--danger{% elif entry.is_addition %} tag--ok{% endif %}">{{ entry.get_action_flag_display }}</span></td>
+                            <td class="data-table__main">
+                                {{ entry.object_repr|truncatechars:60 }}
+                                <span class="data-table__sub">{{ entry.content_type.name }}</span>
+                            </td>
+                            <td>{{ entry.get_change_message|default:"—" }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'includes/_pagination.html' with anchor='' %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">Записів немає</div>
+            <p class="empty-state__text">Дії персоналу з'являтимуться тут.</p>
+        </div>
+    {% endif %}
+{% endblock %}

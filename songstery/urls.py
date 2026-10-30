@@ -30,6 +30,7 @@ urlpatterns = [
     path("sw.js", pages.service_worker, name="service_worker"),
     path("manifest.webmanifest", pages.manifest, name="manifest"),
     path("offline/", pages.offline, name="offline"),
+    path(f"{settings.STAFF_PANEL_PREFIX}/", include("staffpanel.urls")),
     path("", include("core.urls")),
 ]
 

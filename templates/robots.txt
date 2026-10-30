@@ -1,10 +1,10 @@
 User-agent: *
 Allow: /
 Disallow: /admin/
+Disallow: {% url 'staff:dashboard' %}
 Disallow: /profile/
 Disallow: /search/
 Disallow: /comments/
 Disallow: /accounts/
-Disallow: /verification/
 
 Sitemap: {{ request.scheme }}://{{ SITE_DOMAIN }}/sitemap.xml

@@ -1,0 +1,49 @@
+{% extends 'staffpanel/base.html' %}
+{% load core_extras %}
+
+{% block title %}Користувачі — Панель керування — {{ SITE_NAME }}{% endblock %}
+{% block panel_title %}Користувачі{% endblock %}
+{% block panel_lead %}{{ page.paginator.count }} {{ page.paginator.count|uk_plural:"користувач,користувачі,користувачів" }}{% endblock %}
+
+{% block panel_content %}
+    {% include 'staffpanel/_filters.html' %}
+
+    {% if page.object_list %}
+        <div class="table-wrap">
+            <table class="data-table">
+                <caption class="visually-hidden">Список користувачів</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Користувач</th>
+                        <th scope="col">Пошта</th>
+                        <th scope="col">Статус</th>
+                        <th scope="col">Реєстрація</th>
+                        <th scope="col">Останній вхід</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for person in page.object_list %}
+                        <tr>
+                            <td class="data-table__main">
+                                <a class="data-table__person" href="{% url 'staff:user_detail' person.pk %}">
+                                    {% include 'includes/_avatar.html' with person=person size='sm' %}
+                                    {{ person.username }}
+                                </a>
+                            </td>
+                            <td>{{ person.email|default:"—" }}</td>
+                            <td>{% include 'staffpanel/users/_tags.html' with person=person %}</td>
+                            <td>{{ person.date_joined|date:"SHORT_DATE_FORMAT" }}</td>
+                            <td>{% if person.last_login %}{{ person.last_login|date:"SHORT_DATETIME_FORMAT" }}{% else %}—{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'includes/_pagination.html' with anchor='' %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state__title">Нікого не знайдено</div>
+            <p class="empty-state__text">Спробуйте змінити запит або фільтр.</p>
+        </div>
+    {% endif %}
+{% endblock %}
