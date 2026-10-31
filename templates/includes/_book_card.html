@@ -8,6 +8,7 @@
         </div>
     </div>
     <div class="book-card__meta">
+        {% if not book.is_approved %}<span class="tag book-card__status">На перевірці</span>{% endif %}
         <div class="book-card__title">{{ book.title }}</div>
         {% if book.author %}<div class="book-card__author">{{ book.author.name }}</div>{% endif %}
         {% if show_count and book.recommendations_total %}

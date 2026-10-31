@@ -60,14 +60,21 @@ class Author(models.Model):
             book.save(update_fields=["search_key"])
 
 
+def listing_condition(user, prefix: str = "") -> Q:
+    condition = Q(**{f"{prefix}is_approved": True})
+    if user.is_authenticated:
+        condition |= Q(**{f"{prefix}creator": user})
+    return condition
+
+
 class BookQuerySet(models.QuerySet):
     def visible_to(self, user) -> "BookQuerySet":
         if user.is_authenticated and user.is_staff:
             return self
-        condition = Q(is_approved=True)
-        if user.is_authenticated:
-            condition |= Q(creator=user)
-        return self.filter(condition)
+        return self.filter(listing_condition(user))
+
+    def listed_for(self, user) -> "BookQuerySet":
+        return self.filter(listing_condition(user))
 
     def search(self, query: str) -> "BookQuerySet":
         terms = search_terms(query)
@@ -156,13 +163,16 @@ class Book(models.Model):
         author_name = self.author.name if self.author_id else ""
         return search_form(f"{self.title} {author_name}")[: limits.BOOK_SEARCH_KEY_MAX_LENGTH]
 
+    def is_owned_by(self, user) -> bool:
+        return user.is_authenticated and self.creator_id == user.pk
+
     def is_visible_to(self, user) -> bool:
         if self.is_approved:
             return True
-        return user.is_authenticated and (user.is_staff or user == self.creator)
+        return user.is_authenticated and (user.is_staff or self.is_owned_by(user))
 
     def can_manage(self, user) -> bool:
-        return user.is_authenticated and (user.is_staff or user == self.creator)
+        return user.is_authenticated and (user.is_staff or self.is_owned_by(user))
 
 
 class Chapter(models.Model):

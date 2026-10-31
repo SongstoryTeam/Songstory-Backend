@@ -23,7 +23,7 @@ def home(request):
     return render(
         request,
         "core/home.html",
-        {"shelves": catalog.home_shelves(request.user), "genres": catalog.genres_in_use()},
+        {"shelves": catalog.home_shelves(request.user), "genres": catalog.genres_in_use(request.user)},
     )
 
 
@@ -41,8 +41,8 @@ def book_list(request):
         {
             "result": result,
             "page": result.page,
-            "genres": catalog.genres_in_use(),
-            "catalog_total": catalog.approved_total(),
+            "genres": catalog.genres_in_use(request.user),
+            "catalog_total": catalog.listed_total(request.user),
             "sort_options": [(key, label) for key, (label, _) in catalog.SORT_OPTIONS.items()],
             "params": {"genre": GENRE_PARAM, "sort": SORT_PARAM, "music": MUSIC_PARAM, "page": PAGE_PARAM},
             "music_enabled": MUSIC_ENABLED,

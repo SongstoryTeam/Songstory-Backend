@@ -23,6 +23,11 @@ from core.services.recommendations import grouped_recommendations
 
 ORIGINAL_VIEW_PARAM = "view"
 ORIGINAL_VIEW_VALUE = "original"
+BOOK_ADDED_MESSAGE = "Книгу додано."
+BOOK_SUBMITTED_MESSAGE = "Книгу надіслано на перевірку. До схвалення модератором її бачите лише ви."
+IMPORTED_MESSAGE = "Книгу додано до каталогу."
+ALREADY_IMPORTED_MESSAGE = "Ця книга вже є в каталозі."
+ALREADY_PENDING_MESSAGE = "Ця книга вже очікує на перевірку модератором."
 
 
 def get_visible_book(request, slug: str) -> Book:
@@ -74,6 +79,7 @@ def book_detail(request, slug: str):
             "comment_form": CommentForm(),
             "comment_target": {"book": book.pk},
             "can_manage": book.can_manage(request.user),
+            "is_owner": book.is_owned_by(request.user),
             "verification_state": verification_state(request.user, book),
             "structured_data": book_json_ld(book),
             "suggestion": suggestion,
@@ -124,9 +130,9 @@ def create_book(request):
     if request.method == "POST" and form.is_valid():
         book = book_service.create_book(user=request.user, **form.cleaned_data)
         if book.is_approved:
-            messages.success(request, "Книгу додано.")
+            messages.success(request, BOOK_ADDED_MESSAGE)
         else:
-            messages.info(request, "Книгу надіслано на перевірку. Ви бачите її лише ви, доки її не схвалять.")
+            messages.info(request, BOOK_SUBMITTED_MESSAGE)
         return redirect(book)
     return render(
         request,
@@ -168,7 +174,13 @@ def import_book(request):
         messages.error(request, "Не вдалося отримати дані про книгу. Спробуйте пізніше.")
         return respond_with_location(request, reverse("core:search"), status=HTTPStatus.BAD_GATEWAY)
     book, created = book_service.import_external_book(external, request.user)
-    messages.success(request, "Книгу додано до каталогу." if created else "Ця книга вже є в каталозі.")
+    if created:
+        messages.success(request, IMPORTED_MESSAGE)
+    elif book.is_visible_to(request.user):
+        messages.success(request, ALREADY_IMPORTED_MESSAGE)
+    else:
+        messages.info(request, ALREADY_PENDING_MESSAGE)
+        return respond_with_location(request, reverse("core:book_list"))
     return respond_with_location(request, book.get_absolute_url())
 
 

@@ -2,9 +2,9 @@ from dataclasses import dataclass
 
 from django.conf import settings
 from django.core.paginator import Page
-from django.db.models import Count, Q
+from django.db.models import Count
 
-from core.models import Book, Genre
+from core.models import Book, Genre, listing_condition
 from core.utils.pagination import paginate
 
 from .books import find_duplicate
@@ -20,7 +20,7 @@ DEFAULT_SORT = "new"
 
 
 def visible_books(user):
-    return Book.objects.visible_to(user).select_related("author", "genre")
+    return Book.objects.listed_for(user).select_related("author", "genre")
 
 
 def home_shelves(user) -> list[dict]:
@@ -76,12 +76,14 @@ def catalog_page(user, *, genre_slug: str, sort: str, with_music: bool, page_num
     )
 
 
-def genres_in_use():
-    return Genre.objects.annotate(books_total=Count("books", filter=Q(books__is_approved=True))).filter(books_total__gt=0)
+def genres_in_use(user):
+    return Genre.objects.annotate(books_total=Count("books", filter=listing_condition(user, "books__"))).filter(
+        books_total__gt=0
+    )
 
 
-def approved_total() -> int:
-    return Book.objects.filter(is_approved=True).count()
+def listed_total(user) -> int:
+    return Book.objects.listed_for(user).count()
 
 
 def search_local(user, query: str, limit: int):

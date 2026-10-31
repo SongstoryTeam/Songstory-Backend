@@ -246,6 +246,10 @@
   line-height: 1.4;
 }
 
+.book-card__status {
+  margin-bottom: 6px;
+}
+
 .book-card__meta {
   margin-top: 14px;
   text-align: center;

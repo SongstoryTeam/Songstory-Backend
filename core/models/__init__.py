@@ -1,4 +1,4 @@
-from .book import Author, Book, Chapter, Genre
+from .book import Author, Book, Chapter, Genre, listing_condition
 from .music import Platform, Playlist, PlaylistItem, Recommendation, Track
 from .profile import Accent, UserProfile
 from .social import Comment
@@ -14,6 +14,7 @@ __all__ = [
     "Chapter",
     "Comment",
     "Genre",
+    "listing_condition",
     "Platform",
     "Playlist",
     "PlaylistItem",

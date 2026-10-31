@@ -24,7 +24,11 @@
         {% if staff_nav %}{% staff_book_toolbar book %}{% endif %}
 
         {% if not book.is_approved %}
-            <div class="alert alert--info">Книга очікує схвалення модератора. Поки що її бачите лише ви.</div>
+            {% if is_owner %}
+                <div class="alert alert--info">Книга очікує схвалення модератора. Поки що її бачите лише ви.</div>
+            {% else %}
+                <div class="alert alert--info">Книга ще не опублікована. Її бачать лише той, хто її додав, і модератори.</div>
+            {% endif %}
         {% endif %}
 
         {% if suggestion %}
