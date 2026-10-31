@@ -122,6 +122,7 @@ RATE_LIMITS = {
     "playlist": "20/h",
     "accent": "30/m",
     "suggest_edit": "10/h",
+    "avatar": "10/m",
     "suggestion_withdraw": "30/h",
     "staff_action": "120/m",
 }
@@ -251,6 +252,28 @@ APPLE_BOOKS_COUNTRY = "ua"
 EXTERNAL_HTTP_USER_AGENT = env_value("EXTERNAL_HTTP_USER_AGENT", f"{SITE_NAME}/1.0 ({SITE_URL})")
 EXTERNAL_FAILURE_COOLDOWN = 60
 EXTERNAL_BOOK_CACHE_TTL = 60 * 60 * 24
+
+AVATAR_MAX_BYTES = env.int("AVATAR_MAX_BYTES", default=5 * 1024 * 1024)
+AVATAR_CONTENT_TYPES = frozenset({"image/jpeg", "image/png", "image/webp", "image/gif"})
+AVATAR_FETCH_TIMEOUT = EXTERNAL_HTTP_TIMEOUT
+AVATAR_FETCH_DEADLINE = 10
+AVATAR_DEFAULT_BLOCKED_HOSTS = (
+    "pornhub.com",
+    "xvideos.com",
+    "xnxx.com",
+    "xhamster.com",
+    "redtube.com",
+    "youporn.com",
+    "onlyfans.com",
+    "rule34.xxx",
+    "e621.net",
+    "motherless.com",
+    "bestgore.com",
+)
+AVATAR_EXTRA_BLOCKED_HOSTS = env.list("AVATAR_BLOCKED_HOSTS", default=[])
+AVATAR_BLOCKED_HOSTS = frozenset(
+    host.strip().lower() for host in (*AVATAR_DEFAULT_BLOCKED_HOSTS, *AVATAR_EXTRA_BLOCKED_HOSTS) if host.strip()
+)
 
 VERIFICATION_UPLOAD_MAX_BYTES = 10 * 1024 * 1024
 VERIFICATION_ALLOWED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"]

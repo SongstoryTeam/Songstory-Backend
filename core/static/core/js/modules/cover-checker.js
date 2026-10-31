@@ -25,8 +25,8 @@ window.Songstery.createCoverChecker = ({delay, onState}) => {
     function loads(url) {
         return new Promise((resolve) => {
             const image = new Image();
-            image.addEventListener('load', () => resolve(true), {once: true});
-            image.addEventListener('error', () => resolve(false), {once: true});
+            image.addEventListener('load', () => resolve(image), {once: true});
+            image.addEventListener('error', () => resolve(null), {once: true});
             image.src = url;
         });
     }
@@ -41,9 +41,9 @@ window.Songstery.createCoverChecker = ({delay, onState}) => {
         if (!url) return onState(STATES.INVALID, '');
 
         onState(STATES.PENDING, '');
-        const isLoaded = await loads(url);
+        const image = await loads(url);
         if (current !== generation) return undefined;
-        return onState(isLoaded ? STATES.OK : STATES.BROKEN, isLoaded ? url : '');
+        return onState(image ? STATES.OK : STATES.BROKEN, image ? url : '', image);
     }
 
     function schedule(raw) {

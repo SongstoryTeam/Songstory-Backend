@@ -1,0 +1,79 @@
+<section class="settings-section" id="avatar" aria-labelledby="avatar-title">
+    <header class="settings-section__head">
+        <h2 class="settings-section__title" id="avatar-title">Фото профілю</h2>
+        <p class="settings-section__desc">Вставте посилання на фото, і ми одразу покажемо, як вас бачитимуть інші. Файли на наш сервер не завантажуються.</p>
+    </header>
+
+    <div class="settings-card">
+        <div class="settings-row settings-row--stack">
+            <form method="post" action="{% url 'core:avatar_update' %}" class="avatar-editor" data-avatar-editor data-check-delay="{{ COVER_CHECK_DEBOUNCE_MS }}">
+                {% csrf_token %}
+                {{ avatar_form.avatar_x }}
+                {{ avatar_form.avatar_y }}
+
+                <div class="avatar-editor__stage-column">
+                    <div class="avatar-editor__stage"
+                         data-avatar-stage
+                         tabindex="0"
+                         role="group"
+                         aria-label="Кадрування фото"
+                         aria-describedby="avatar-stage-hint">
+                        {% include 'includes/_avatar.html' with person=user size='xl' %}
+                    </div>
+                    <p class="avatar-editor__hint" id="avatar-stage-hint">Перетягніть фото, щоб змінити кадр. На клавіатурі працюють стрілки та клавіші + і −.</p>
+                </div>
+
+                <div class="avatar-editor__fields">
+                    <div class="form-group">
+                        <label for="{{ avatar_form.avatar_url.id_for_label }}">{{ avatar_form.avatar_url.label }}</label>
+                        {{ avatar_form.avatar_url }}
+                        <span class="field-feedback" data-avatar-feedback aria-live="polite"></span>
+                        {% for error in avatar_form.avatar_url.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+                        <small>{{ avatar_form.avatar_url.help_text }}</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ avatar_form.avatar_zoom.id_for_label }}">{{ avatar_form.avatar_zoom.label }}</label>
+                        {{ avatar_form.avatar_zoom }}
+                        {% for field in avatar_form %}
+                            {% if field.name != 'avatar_url' %}{% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}{% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="avatar-editor__preview" role="group" aria-label="Так вас бачитимуть">
+                        {% include 'includes/_avatar.html' with person=user size='lg' %}
+                        {% include 'includes/_avatar.html' with person=user %}
+                        <span class="avatar-editor__name">{{ user.username }}</span>
+                    </div>
+
+                    <div class="avatar-editor__actions">
+                        <button type="submit" class="btn btn-accent btn-sm">Зберегти фото</button>
+                        <button type="button" class="btn btn-ghost btn-sm" data-avatar-reset hidden>Скинути кадр</button>
+                    </div>
+                </div>
+
+                <script type="application/json" data-avatar-copy>
+                    {
+                        "pending": "Перевіряємо фото…",
+                        "ok": "Фото знайдено. Перетягніть його, щоб змінити кадр.",
+                        "invalid": "Потрібне посилання, що починається з https://",
+                        "broken": "Не вдалося завантажити фото. Перевірте посилання."
+                    }
+                </script>
+            </form>
+
+            {% if user.profile.has_avatar %}
+                <form method="post"
+                      action="{% url 'core:avatar_remove' %}"
+                      class="avatar-editor__remove"
+                      data-confirm
+                      data-confirm-title="Прибрати фото?"
+                      data-confirm-message="Замість фото знову показуватиметься літера вашого імені."
+                      data-confirm-action="Прибрати">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-ghost btn-sm">Прибрати фото</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</section>

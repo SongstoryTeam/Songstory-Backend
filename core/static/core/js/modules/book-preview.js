@@ -1,12 +1,9 @@
 window.Songstery = window.Songstery || {};
 
 window.Songstery.createBookPreview = (root, form) => {
-    const {createCoverChecker, dom} = window.Songstery;
+    const {createCoverChecker, createFieldFeedback, dom} = window.Songstery;
     const preview = root.querySelector('[data-preview]');
-    if (!preview || !createCoverChecker) return null;
-
-    const MODIFIERS = Object.freeze({pending: 'pending', ok: 'ok', invalid: 'error', broken: 'error'});
-    const FEEDBACK_CLASS = 'field-feedback';
+    if (!preview || !createCoverChecker || !createFieldFeedback) return null;
 
     const copy = dom.readJson(preview, '[data-preview-copy]');
     const part = (name) => preview.querySelector(`[data-preview-${name}]`);
@@ -15,7 +12,7 @@ window.Songstery.createBookPreview = (root, form) => {
     const title = part('title');
     const author = part('author');
     const meta = part('meta');
-    const feedback = root.querySelector('[data-cover-feedback]');
+    const feedback = createFieldFeedback(root.querySelector('[data-cover-feedback]'), copy.cover);
     const field = (name) => form.elements[name];
     const read = (name) => field(name).value.trim();
 
@@ -42,9 +39,7 @@ window.Songstery.createBookPreview = (root, form) => {
             image.remove();
         }
 
-        const modifier = MODIFIERS[state];
-        feedback.textContent = copy.cover[state] ?? '';
-        feedback.className = modifier ? `${FEEDBACK_CLASS} ${FEEDBACK_CLASS}--${modifier}` : FEEDBACK_CLASS;
+        feedback.show(state);
     }
 
     const coverChecker = createCoverChecker({delay: Number(preview.dataset.coverDelay), onState: renderCover});

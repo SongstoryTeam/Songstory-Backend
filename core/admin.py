@@ -21,6 +21,8 @@ from .models import (
     UserProfile,
 )
 
+ADMIN_AVATAR_PREVIEW_SIZE = 96
+
 admin.site.site_header = "Songstery"
 admin.site.site_title = "Songstery"
 admin.site.index_title = "Керування сайтом"
@@ -114,10 +116,34 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "phone", "accent", "is_verified_author")
+    list_display = ("user", "phone", "accent", "is_verified_author", "has_avatar")
     list_filter = ("is_verified_author", "accent")
-    search_fields = ("user__username", "user__email")
+    search_fields = ("user__username", "user__email", "avatar_url")
     raw_id_fields = ("user",)
+    readonly_fields = ("avatar_preview",)
+    actions = ("reset_avatars",)
+
+    @admin.display(boolean=True, description="Є фото")
+    def has_avatar(self, obj):
+        return obj.has_avatar
+
+    @admin.display(description="Фото профілю")
+    def avatar_preview(self, obj):
+        if not obj.has_avatar:
+            return "—"
+        return format_html(
+            '<img src="{}" alt="" width="{size}" height="{size}" referrerpolicy="no-referrer" '
+            'style="object-fit: cover; border-radius: 50%">',
+            obj.avatar_url,
+            size=ADMIN_AVATAR_PREVIEW_SIZE,
+        )
+
+    @admin.action(description="Прибрати фото профілю")
+    def reset_avatars(self, request, queryset):
+        profiles = list(queryset.exclude(avatar_url=""))
+        for profile in profiles:
+            profile.reset_avatar()
+        self.message_user(request, f"Фото прибрано: {len(profiles)}.", messages.SUCCESS)
 
 
 @admin.register(AuthorVerification)

@@ -1,6 +1,8 @@
 from django import template
 from django.utils.http import urlencode
 
+from core import limits
+
 register = template.Library()
 
 
@@ -45,3 +47,9 @@ def query_url(context, *, anchor: str = "", reset: str = "page", **changes) -> s
     query = urlencode(params, doseq=True)
     suffix = f"#{anchor}" if anchor else ""
     return f"{request.path}?{query}{suffix}" if query else f"{request.path}{suffix}"
+
+
+@register.simple_tag
+def avatar_style(profile) -> str:
+    scale = profile.avatar_zoom / limits.AVATAR_ZOOM_UNIT
+    return f"--avatar-x: {profile.avatar_x}%; --avatar-y: {profile.avatar_y}%; --avatar-zoom: {scale:g}"

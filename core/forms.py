@@ -8,7 +8,9 @@ from django.utils.functional import cached_property
 
 from . import limits
 from .models import AuthorVerification, Genre, Platform, Track, UserProfile
+from .models.profile import AVATAR_FIELDS
 from .services import suggestions as suggestion_service
+from .services.avatars import AvatarRejected, validate_avatar_url
 from .services.books import find_duplicate, pending_books_left
 from .services.normalize import (
     ISBN_INPUT_MAX,
@@ -30,6 +32,11 @@ TEXTAREA_ROWS_COMPACT = 2
 TEXTAREA_ROWS_SHORT = 3
 TEXTAREA_ROWS_DEFAULT = 4
 TEXTAREA_ROWS_LONG = 5
+POSITION_ATTRS = {
+    "min": limits.AVATAR_POSITION_MIN,
+    "max": limits.AVATAR_POSITION_MAX,
+    "data-default": limits.AVATAR_POSITION_DEFAULT,
+}
 
 
 class StyledFormMixin:
@@ -172,6 +179,61 @@ class AccentForm(forms.ModelForm):
         model = UserProfile
         fields = ["accent"]
         widgets = {"accent": forms.RadioSelect(attrs={"class": "accent-option__input", "data-accent-option": ""})}
+
+
+def position_field() -> forms.IntegerField:
+    return forms.IntegerField(
+        min_value=limits.AVATAR_POSITION_MIN,
+        max_value=limits.AVATAR_POSITION_MAX,
+        widget=forms.HiddenInput(attrs=POSITION_ATTRS),
+    )
+
+
+class AvatarForm(forms.ModelForm):
+    avatar_url = forms.URLField(
+        label="Посилання на фото",
+        required=False,
+        max_length=limits.URL_MAX_LENGTH,
+        help_text="Пряме https-посилання на фото. Воно не завантажується на наш сервер.",
+        widget=forms.URLInput(
+            attrs={"class": "form-input", "placeholder": "https://…", "autocomplete": "off", "inputmode": "url"}
+        ),
+    )
+    avatar_x = position_field()
+    avatar_y = position_field()
+    avatar_zoom = forms.IntegerField(
+        label="Масштаб",
+        min_value=limits.AVATAR_ZOOM_MIN,
+        max_value=limits.AVATAR_ZOOM_MAX,
+        widget=forms.NumberInput(
+            attrs={
+                "type": "range",
+                "class": "avatar-editor__zoom",
+                "step": limits.AVATAR_ZOOM_STEP,
+                "data-default": limits.AVATAR_ZOOM_DEFAULT,
+            }
+        ),
+    )
+
+    class Meta:
+        model = UserProfile
+        fields = list(AVATAR_FIELDS)
+
+    def clean_avatar_url(self) -> str:
+        url = self.cleaned_data["avatar_url"]
+        if not url:
+            return ""
+        try:
+            return validate_avatar_url(url)
+        except AvatarRejected as rejection:
+            raise forms.ValidationError(str(rejection)) from None
+
+    def clean(self):
+        cleaned = super().clean()
+        if not self.errors and not cleaned.get("avatar_url"):
+            for name in AVATAR_FIELDS:
+                cleaned[name] = self.instance._meta.get_field(name).get_default()
+        return cleaned
 
 
 def attribute_value(value) -> str:

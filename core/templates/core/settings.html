@@ -14,11 +14,13 @@
         <div class="settings">
             <nav class="settings-nav" aria-label="Розділи налаштувань">
                 <a class="settings-nav__link" href="#appearance"><i data-lucide="palette" size="16" aria-hidden="true"></i> Вигляд</a>
+                {% if avatar_form %}<a class="settings-nav__link" href="#avatar"><i data-lucide="user-round" size="16" aria-hidden="true"></i> Фото</a>{% endif %}
                 <a class="settings-nav__link" href="#account"><i data-lucide="user-round" size="16" aria-hidden="true"></i> Акаунт</a>
             </nav>
 
             <div class="settings__sections">
                 {% include 'includes/settings/_appearance.html' %}
+                {% if avatar_form %}{% include 'includes/settings/_avatar.html' %}{% endif %}
                 {% include 'includes/settings/_account.html' %}
             </div>
         </div>
@@ -28,4 +30,12 @@
 {% block extra_js %}
     <script src="{% static 'core/js/modules/settings-theme.js' %}" defer></script>
     {% if accent_form %}<script src="{% static 'core/js/modules/settings-accent.js' %}" defer></script>{% endif %}
+    {% if avatar_form %}
+        <script src="{% static 'core/js/modules/dom.js' %}" defer></script>
+        <script src="{% static 'core/js/modules/cover-checker.js' %}" defer></script>
+        <script src="{% static 'core/js/modules/field-feedback.js' %}" defer></script>
+        <script src="{% static 'core/js/modules/avatar-crop.js' %}" defer></script>
+        <script src="{% static 'core/js/modules/avatar-editor.js' %}" defer></script>
+        <script src="{% static 'core/js/settings-avatar.js' %}" defer></script>
+    {% endif %}
 {% endblock %}

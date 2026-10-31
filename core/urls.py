@@ -31,4 +31,6 @@ urlpatterns = [
     path("profile/", accounts.profile, name="profile"),
     path("settings/", preferences.settings_page, name="settings"),
     path("settings/accent/", preferences.update_accent, name="accent_update"),
+    path("settings/avatar/", preferences.update_avatar, name="avatar_update"),
+    path("settings/avatar/remove/", preferences.remove_avatar, name="avatar_remove"),
 ]

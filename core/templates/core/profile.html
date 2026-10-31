@@ -16,6 +16,9 @@
                     <p class="profile-header__bio">{{ user.profile.bio|linebreaksbr }}</p>
                 {% endif %}
             </div>
+            <a href="{% url 'core:settings' %}#avatar" class="btn btn-ghost btn-sm profile-header__action">
+                <i data-lucide="pencil-line" size="16" aria-hidden="true"></i> Моє фото
+            </a>
             <a href="{% url 'core:settings' %}#appearance" class="btn btn-ghost btn-sm profile-header__action">
                 <i data-lucide="palette" size="16" aria-hidden="true"></i> Мій колір
             </a>
