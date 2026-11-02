@@ -22,8 +22,17 @@
                     <i data-lucide="external-link" size="11" aria-hidden="true"></i>
                 </a>
             </div>
+            {% if group.chapters and not chapter %}
+                <ul class="track-card__chapters" aria-label="Розділи">
+                    {% for item in group.chapters %}
+                        <li><a href="{{ item.get_absolute_url }}" class="track-card__chapter">
+                            <i data-lucide="book-open" size="11" aria-hidden="true"></i> {{ item.display_title }}
+                        </a></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
-        {% if user.is_authenticated %}
+        {% if user.is_authenticated and not readonly %}
             <div class="track-card__actions">
                 {% if group.mine %}
                     <form method="post" action="{% url 'core:recommendation_delete' group.mine.pk %}" class="recommend-toggle"

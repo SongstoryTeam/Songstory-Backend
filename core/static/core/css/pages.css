@@ -662,3 +662,28 @@ a.list-row:hover {
         display: none;
     }
 }
+
+.track-card__chapters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.track-card__chapter {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border: 1px solid var(--clr-border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--clr-muted);
+}
+
+.track-card__chapter:hover {
+    color: var(--clr-accent);
+    border-color: var(--clr-accent);
+}

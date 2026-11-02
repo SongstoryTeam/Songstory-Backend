@@ -54,7 +54,7 @@
                 <ul class="book-hero__meta">
                     {% if book.year %}<li><i data-lucide="calendar" size="14" aria-hidden="true"></i> {{ book.year }}</li>{% endif %}
                     <li><i data-lucide="book-open" size="14" aria-hidden="true"></i> {{ chapters|length }} {{ chapters|length|uk_plural:"розділ,розділи,розділів" }}</li>
-                    <li><i data-lucide="music" size="14" aria-hidden="true"></i> {{ groups|length }} {{ groups|length|uk_plural:"трек,треки,треків" }}</li>
+                    <li><i data-lucide="music" size="14" aria-hidden="true"></i> {{ tracks_total }} {{ tracks_total|uk_plural:"трек,треки,треків" }}</li>
                 </ul>
                 {% if book.description %}<p class="book-hero__description">{{ book.description|truncatechars:600 }}</p>{% endif %}
 
@@ -77,7 +77,7 @@
         <section class="mt-32" aria-labelledby="book-music">
             <h2 class="section-title" id="book-music">Музика до книги</h2>
             {% for group in groups %}
-                {% include 'includes/_track_card.html' with group=group chapter=None %}
+                {% include 'includes/_track_card.html' with group=group chapter=None readonly=groups_from_chapters %}
             {% empty %}
                 <div class="empty-state empty-state--inline">
                     <div class="empty-state__title">Тут ще тихо</div>

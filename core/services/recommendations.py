@@ -11,6 +11,7 @@ class TrackGroup:
     recommendations: list[Recommendation] = field(default_factory=list)
     mine: Recommendation | None = None
     by_verified_author: bool = False
+    chapters: list[Chapter] = field(default_factory=list)
 
     @property
     def count(self) -> int:
@@ -27,12 +28,7 @@ def recommend(user: User, track: Track, book: Book, chapter: Chapter | None = No
     )
 
 
-def grouped_recommendations(book: Book, chapter: Chapter | None, user) -> list[TrackGroup]:
-    queryset = (
-        Recommendation.objects.filter(book=book, chapter=chapter)
-        .select_related("track", "user")
-        .order_by("created_at", "pk")
-    )
+def build_groups(queryset, book: Book, user) -> list[TrackGroup]:
     groups: dict[int, TrackGroup] = {}
     for item in queryset:
         group = groups.setdefault(item.track_id, TrackGroup(track=item.track))
@@ -41,7 +37,32 @@ def grouped_recommendations(book: Book, chapter: Chapter | None, user) -> list[T
             group.mine = item
         if book.verified_author_id and item.user_id == book.verified_author_id:
             group.by_verified_author = True
+        if item.chapter_id and all(chapter.pk != item.chapter_id for chapter in group.chapters):
+            group.chapters.append(item.chapter)
+    for group in groups.values():
+        group.chapters.sort(key=lambda chapter: chapter.number)
     return sorted(groups.values(), key=lambda group: (not group.by_verified_author, -group.count))
+
+
+def grouped_recommendations(book: Book, chapter: Chapter | None, user) -> list[TrackGroup]:
+    queryset = (
+        Recommendation.objects.filter(book=book, chapter=chapter)
+        .select_related("track", "user", "chapter")
+        .order_by("created_at", "pk")
+    )
+    return build_groups(queryset, book, user)
+
+
+def book_music_groups(book: Book, user) -> tuple[list[TrackGroup], bool]:
+    groups = grouped_recommendations(book, None, user)
+    if groups:
+        return groups, False
+    queryset = (
+        Recommendation.objects.filter(book=book, chapter__isnull=False)
+        .select_related("track", "user", "chapter")
+        .order_by("created_at", "pk")
+    )
+    return build_groups(queryset, book, user), True
 
 
 def book_tracks(book: Book):

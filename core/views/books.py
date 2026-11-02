@@ -18,7 +18,7 @@ from core.services import books as book_service
 from core.services import suggestions as suggestion_service
 from core.services.book_search import get_external_book
 from core.services.normalize import clean_person_name, clean_title
-from core.services.recommendations import grouped_recommendations
+from core.services.recommendations import book_music_groups, book_tracks, grouped_recommendations
 
 
 ORIGINAL_VIEW_PARAM = "view"
@@ -66,6 +66,7 @@ def book_detail(request, slug: str):
     if suggestion and not showing_original:
         suggestion_service.preview(book, suggestion)
     chapters = book.chapters.annotate(recommendations_total=Count("recommendations"))
+    groups, groups_from_chapters = book_music_groups(book, request.user)
     playlists = book.playlists.select_related("user").annotate(tracks_total=Count("items"))
     return render(
         request,
@@ -73,7 +74,9 @@ def book_detail(request, slug: str):
         {
             "book": book,
             "chapters": chapters,
-            "groups": grouped_recommendations(book, None, request.user),
+            "groups": groups,
+            "groups_from_chapters": groups_from_chapters,
+            "tracks_total": book_tracks(book).count(),
             "playlists": playlists,
             "comments": threaded_comments(book=book),
             "comment_form": CommentForm(),
