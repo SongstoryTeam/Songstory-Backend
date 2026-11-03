@@ -38,14 +38,14 @@
                     </a>
                 {% endif %}
             </div>
-            {% for group in groups %}
-                {% include 'includes/_track_card.html' with group=group %}
-            {% empty %}
+            {% if groups %}
+                {% include 'includes/_track_list.html' with groups=groups chapter=chapter %}
+            {% else %}
                 <div class="empty-state empty-state--inline">
                     <div class="empty-state__title">До цього розділу ще нічого не радили</div>
                     <p class="empty-state__text">Яка пісня пасує до цієї сцени?</p>
                 </div>
-            {% endfor %}
+            {% endif %}
         </section>
 
         {% include 'includes/_comments.html' %}

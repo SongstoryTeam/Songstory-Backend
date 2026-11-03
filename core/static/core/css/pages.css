@@ -687,3 +687,83 @@ a.list-row:hover {
     color: var(--clr-accent);
     border-color: var(--clr-accent);
 }
+
+.track-more__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    background: transparent;
+    border: 1px dashed var(--clr-border);
+    border-radius: var(--radius-md, 12px);
+    color: var(--clr-muted);
+    font: inherit;
+    font-size: var(--text-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.track-more__toggle:hover,
+.track-more__toggle[aria-expanded="true"] {
+    color: var(--clr-accent);
+    border-color: var(--clr-accent);
+    background: var(--clr-accent-lt);
+}
+
+.track-more__toggle:focus-visible {
+    outline: 2px solid var(--clr-accent);
+    outline-offset: 2px;
+}
+
+.track-more__chevron {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.track-more__toggle[aria-expanded="true"] .track-more__chevron {
+    transform: rotate(180deg);
+}
+
+.track-more.is-ready .track-more__body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.track-more.is-ready.is-open .track-more__body {
+    grid-template-rows: 1fr;
+}
+
+.track-more.is-ready .track-more__inner {
+    min-height: 0;
+    overflow: hidden;
+}
+
+.track-more.is-ready .track-more__item {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.track-more.is-ready.is-open .track-more__item {
+    opacity: 1;
+    transform: none;
+    transition:
+        opacity 0.45s ease calc(var(--i) * var(--stagger)),
+        transform 0.55s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i) * var(--stagger));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .track-more.is-ready .track-more__body,
+    .track-more.is-ready .track-more__item,
+    .track-more__chevron {
+        transition: none;
+    }
+
+    .track-more.is-ready .track-more__item {
+        transform: none;
+    }
+}

@@ -76,14 +76,14 @@
 
         <section class="mt-32" aria-labelledby="book-music">
             <h2 class="section-title" id="book-music">Музика до книги</h2>
-            {% for group in groups %}
-                {% include 'includes/_track_card.html' with group=group chapter=None readonly=groups_from_chapters %}
-            {% empty %}
+            {% if groups %}
+                {% include 'includes/_track_list.html' with groups=groups chapter=None readonly=groups_from_chapters %}
+            {% else %}
                 <div class="empty-state empty-state--inline">
                     <div class="empty-state__title">Тут ще тихо</div>
                     <p class="empty-state__text">Порадьте першу пісню до цієї книги.</p>
                 </div>
-            {% endfor %}
+            {% endif %}
         </section>
 
         <section class="mt-32" aria-labelledby="book-playlists">

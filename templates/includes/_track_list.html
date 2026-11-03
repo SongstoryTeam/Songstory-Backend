@@ -1,0 +1,25 @@
+{% load core_extras %}
+{% with visible=groups|slice:":3" hidden=groups|slice:"3:" %}
+    {% for group in visible %}
+        {% include 'includes/_track_card.html' with group=group chapter=chapter readonly=readonly %}
+    {% endfor %}
+    {% if hidden %}
+        {% with hidden_total=hidden|length %}
+            <div class="track-more" data-collapsible>
+                <div class="track-more__body" id="track-more-{% if chapter %}{{ chapter.pk }}{% else %}book{% endif %}" data-collapsible-body>
+                    <div class="track-more__inner">
+                        {% for group in hidden %}
+                            <div class="track-more__item" data-collapsible-item>
+                                {% include 'includes/_track_card.html' with group=group chapter=chapter readonly=readonly %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <button type="button" class="track-more__toggle" data-collapsible-toggle aria-expanded="false" aria-controls="track-more-{% if chapter %}{{ chapter.pk }}{% else %}book{% endif %}" data-label-open="Згорнути" data-label-closed="Показати ще {{ hidden_total }} {{ hidden_total|uk_plural:"трек,треки,треків" }}" hidden>
+                    <span class="track-more__label" data-collapsible-label>Показати ще {{ hidden_total }} {{ hidden_total|uk_plural:"трек,треки,треків" }}</span>
+                    <i data-lucide="chevron-down" size="16" aria-hidden="true" class="track-more__chevron"></i>
+                </button>
+            </div>
+        {% endwith %}
+    {% endif %}
+{% endwith %}
