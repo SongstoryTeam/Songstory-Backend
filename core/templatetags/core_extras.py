@@ -33,6 +33,16 @@ def uk_plural(number, forms: str) -> str:
     return many
 
 
+@register.filter
+def preview(items):
+    return list(items)[: limits.TRACKS_PREVIEW_COUNT]
+
+
+@register.filter
+def overflow(items):
+    return list(items)[limits.TRACKS_PREVIEW_COUNT :]
+
+
 @register.simple_tag(takes_context=True)
 def query_url(context, *, anchor: str = "", reset: str = "page", **changes) -> str:
     request = context["request"]

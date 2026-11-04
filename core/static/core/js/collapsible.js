@@ -1,6 +1,5 @@
 const READY_CLASS = 'is-ready';
 const OPEN_CLASS = 'is-open';
-const STAGGER_STEP = 45;
 
 function prefersReducedMotion() {
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -33,7 +32,6 @@ function setupCollapsible(root) {
 
     root.querySelectorAll('[data-collapsible-item]').forEach((item, index) => {
         item.style.setProperty('--i', index);
-        item.style.setProperty('--stagger', `${STAGGER_STEP}ms`);
     });
 
     body.inert = true;

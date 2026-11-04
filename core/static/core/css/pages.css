@@ -688,6 +688,10 @@ a.list-row:hover {
     border-color: var(--clr-accent);
 }
 
+.track-more {
+    --stagger: 45ms;
+}
+
 .track-more__toggle {
     display: flex;
     align-items: center;

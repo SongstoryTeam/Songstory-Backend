@@ -1,5 +1,5 @@
 {% load core_extras %}
-{% with visible=groups|slice:":3" hidden=groups|slice:"3:" %}
+{% with visible=groups|preview hidden=groups|overflow %}
     {% for group in visible %}
         {% include 'includes/_track_card.html' with group=group chapter=chapter readonly=readonly %}
     {% endfor %}
