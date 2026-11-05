@@ -2,7 +2,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 
 from core.models import Book, Recommendation
-from core.services.recommendations import grouped_recommendations, recommend
+from core.services.recommendations import book_scope, grouped_recommendations, recommend, scope_page
 from tests.conftest_helpers import make_book, make_chapter, make_track, make_user
 
 
@@ -73,3 +73,53 @@ class RecommendationTests(TestCase):
         groups = grouped_recommendations(self.book, None, self.user)
         self.assertEqual(groups[0].track, authors_pick)
         self.assertTrue(groups[0].by_verified_author)
+
+
+class TrackPageTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.book = make_book(self.user)
+        self.tracks = [make_track(f"track{index:07d}", title=f"Трек {index}") for index in range(7)]
+        for track in self.tracks:
+            recommend(self.user, track, self.book)
+
+    def test_page_is_limited_and_reports_remaining(self):
+        scope, from_chapters = book_scope(self.book)
+        page = scope_page(scope, self.book, self.user, size=3)
+        self.assertFalse(from_chapters)
+        self.assertEqual(len(page.groups), 3)
+        self.assertEqual(page.remaining, 4)
+        self.assertEqual(page.next_offset, 3)
+
+    def test_pages_cover_every_track_once_in_ranked_order(self):
+        popular = self.tracks[-1]
+        recommend(make_user("second"), popular, self.book)
+        scope, _ = book_scope(self.book)
+        seen, offset = [], 0
+        while True:
+            page = scope_page(scope, self.book, self.user, offset=offset, size=3)
+            seen += [group.track for group in page.groups]
+            if not page.remaining:
+                break
+            offset = page.next_offset
+        self.assertEqual(len(seen), len(self.tracks))
+        self.assertEqual(set(seen), set(self.tracks))
+        self.assertEqual(seen[0], popular)
+
+    def test_verified_author_pick_is_first_on_first_page(self):
+        author = make_user("author")
+        self.book.verified_author = author
+        self.book.save()
+        pick = make_track("authorpick01", title="Вибір автора")
+        recommend(author, pick, self.book)
+        scope, _ = book_scope(self.book)
+        page = scope_page(scope, self.book, self.user, size=2)
+        self.assertEqual(page.groups[0].track, pick)
+
+    def test_falls_back_to_chapter_recommendations(self):
+        other = make_book(self.user, title="Інша", author="Інший")
+        chapter = make_chapter(other)
+        recommend(self.user, self.tracks[0], other, chapter)
+        scope, from_chapters = book_scope(other)
+        self.assertTrue(from_chapters)
+        self.assertEqual(len(scope_page(scope, other, self.user).groups), 1)

@@ -76,8 +76,8 @@
 
         <section class="mt-32" aria-labelledby="book-music">
             <h2 class="section-title" id="book-music">Музика до книги</h2>
-            {% if groups %}
-                {% include 'includes/_track_list.html' with groups=groups chapter=None readonly=groups_from_chapters %}
+            {% if page.groups %}
+                {% include 'includes/_track_list.html' with chapter=None readonly=groups_from_chapters %}
             {% else %}
                 <div class="empty-state empty-state--inline">
                     <div class="empty-state__title">Тут ще тихо</div>

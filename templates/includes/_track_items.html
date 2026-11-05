@@ -1,0 +1,12 @@
+{% load core_extras %}
+{% for group in page.groups %}
+    {% include 'includes/_track_card.html' with group=group chapter=chapter readonly=readonly %}
+{% endfor %}
+{% if page.remaining %}
+    <button type="button" class="track-more" data-track-more aria-busy="false"
+            data-url="{% url 'core:book_tracks' book.slug %}?offset={{ page.next_offset }}{% if chapter %}&amp;chapter={{ chapter.number }}{% endif %}"
+            data-error-label="Не вдалося завантажити. Спробувати ще раз">
+        <span class="track-more__spinner" aria-hidden="true"></span>
+        <span class="track-more__label" data-track-more-label>Показати ще {{ page.remaining }} {{ page.remaining|uk_plural:"трек,треки,треків" }}</span>
+    </button>
+{% endif %}

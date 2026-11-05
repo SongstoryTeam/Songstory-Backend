@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 
 from core import audit
 from core.forms import PickTrackForm, TrackDraftForm, TrackLinkForm
@@ -16,6 +16,7 @@ from core.views.books import get_visible_book
 ACTION_PICK = "pick"
 ACTION_LINK = "link"
 ACTION_DRAFT = "draft"
+OFFSET_PARAM = "offset"
 MODERATION_LOG = "Рекомендацію видалено модератором"
 
 
@@ -98,6 +99,29 @@ def recommend(request, slug: str):
             "link_form": link_form,
             "draft_form": draft_form,
         },
+    )
+
+
+def parse_offset(request) -> int:
+    raw = request.GET.get(OFFSET_PARAM, "0")
+    if not (raw.isascii() and raw.isdigit()):
+        raise Http404
+    return int(raw)
+
+
+@require_GET
+def track_page(request, slug: str):
+    book = get_visible_book(request, slug)
+    chapter = resolve_chapter(request, book)
+    if chapter:
+        scope, readonly = recommendation_service.chapter_scope(book, chapter), False
+    else:
+        scope, readonly = recommendation_service.book_scope(book)
+    page = recommendation_service.scope_page(scope, book, request.user, parse_offset(request))
+    return render(
+        request,
+        "includes/_track_items.html",
+        {"book": book, "chapter": chapter, "page": page, "readonly": readonly},
     )
 
 

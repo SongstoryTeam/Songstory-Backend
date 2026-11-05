@@ -446,3 +446,49 @@ class CatalogTests(TestCase):
     def test_filtered_catalog_is_not_indexed(self):
         self.assertContains(self.client.get(self.url, {"music": "1"}), "noindex")
         self.assertNotContains(self.client.get(self.url), "noindex")
+
+class TrackPageViewTests(TestCase):
+    def setUp(self):
+        self.user = make_user()
+        self.book = make_book(self.user)
+        self.chapter = make_chapter(self.book)
+        self.url = reverse("core:book_tracks", args=[self.book.slug])
+
+    def fill(self, total, chapter=None):
+        from core.services.recommendations import recommend
+
+        for index in range(total):
+            recommend(self.user, make_track(f"filler{index:05d}", title=f"Трек {index}"), self.book, chapter)
+
+    def test_book_page_renders_only_first_page(self):
+        from core import limits
+
+        self.fill(limits.TRACKS_PAGE_SIZE + 3)
+        response = self.client.get(self.book.get_absolute_url())
+        self.assertContains(response, 'class="track-card"', count=limits.TRACKS_PAGE_SIZE)
+        self.assertContains(response, "data-track-more")
+
+    def test_next_page_is_served_as_fragment(self):
+        from core import limits
+
+        self.fill(limits.TRACKS_PAGE_SIZE + 3)
+        response = self.client.get(self.url, {"offset": limits.TRACKS_PAGE_SIZE})
+        self.assertContains(response, 'class="track-card"', count=3)
+        self.assertNotContains(response, "data-track-more")
+
+    def test_chapter_scope_is_respected(self):
+        from core import limits
+
+        self.fill(limits.TRACKS_PAGE_SIZE + 2, chapter=self.chapter)
+        response = self.client.get(self.url, {"chapter": self.chapter.number, "offset": 0})
+        self.assertContains(response, "chapter=%s" % self.chapter.number)
+
+    def test_invalid_offset_is_rejected(self):
+        for value in ("-1", "abc", ""):
+            with self.subTest(value=value):
+                self.assertEqual(self.client.get(self.url, {"offset": value}).status_code, 404)
+
+    def test_hidden_book_is_not_exposed(self):
+        hidden = make_book(self.user, title="Прихована", author="Автор", approved=False)
+        response = self.client.get(reverse("core:book_tracks", args=[hidden.slug]))
+        self.assertEqual(response.status_code, 404)

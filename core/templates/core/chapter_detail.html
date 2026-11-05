@@ -38,8 +38,8 @@
                     </a>
                 {% endif %}
             </div>
-            {% if groups %}
-                {% include 'includes/_track_list.html' with groups=groups chapter=chapter %}
+            {% if page.groups %}
+                {% include 'includes/_track_list.html' with chapter=chapter readonly=False %}
             {% else %}
                 <div class="empty-state empty-state--inline">
                     <div class="empty-state__title">До цього розділу ще нічого не радили</div>

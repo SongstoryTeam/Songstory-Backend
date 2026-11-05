@@ -18,6 +18,7 @@ urlpatterns = [
     path("book/<slug:slug>/suggest/", suggestions.suggest_edit, name="suggest_edit"),
     path("suggestions/", suggestions.my_suggestions, name="my_suggestions"),
     path("suggestions/<int:pk>/withdraw/", suggestions.withdraw_suggestion, name="withdraw_suggestion"),
+    path("book/<slug:slug>/tracks/", music.track_page, name="book_tracks"),
     path("book/<slug:slug>/recommend/", music.recommend, name="recommend"),
     path("book/<slug:slug>/playlists/new/", playlists.playlist_create, name="playlist_create"),
     path("book/<slug:slug>/author/apply/", verification.apply_author, name="apply_author"),

@@ -18,7 +18,7 @@ from core.services import books as book_service
 from core.services import suggestions as suggestion_service
 from core.services.book_search import get_external_book
 from core.services.normalize import clean_person_name, clean_title
-from core.services.recommendations import book_music_groups, book_tracks, grouped_recommendations
+from core.services.recommendations import book_scope, book_tracks, chapter_scope, scope_page
 
 
 ORIGINAL_VIEW_PARAM = "view"
@@ -66,7 +66,7 @@ def book_detail(request, slug: str):
     if suggestion and not showing_original:
         suggestion_service.preview(book, suggestion)
     chapters = book.chapters.annotate(recommendations_total=Count("recommendations"))
-    groups, groups_from_chapters = book_music_groups(book, request.user)
+    scope, groups_from_chapters = book_scope(book)
     playlists = book.playlists.select_related("user").annotate(tracks_total=Count("items"))
     return render(
         request,
@@ -74,7 +74,7 @@ def book_detail(request, slug: str):
         {
             "book": book,
             "chapters": chapters,
-            "groups": groups,
+            "page": scope_page(scope, book, request.user),
             "groups_from_chapters": groups_from_chapters,
             "tracks_total": book_tracks(book).count(),
             "playlists": playlists,
@@ -104,7 +104,7 @@ def chapter_detail(request, slug: str, number: int):
         {
             "book": book,
             "chapter": chapter,
-            "groups": grouped_recommendations(book, chapter, request.user),
+            "page": scope_page(chapter_scope(book, chapter), book, request.user),
             "previous_number": siblings[index - 1] if index > 0 else None,
             "next_number": siblings[index + 1] if index < len(siblings) - 1 else None,
             "comments": threaded_comments(chapter=chapter),
