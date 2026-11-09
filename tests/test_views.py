@@ -447,6 +447,7 @@ class CatalogTests(TestCase):
         self.assertContains(self.client.get(self.url, {"music": "1"}), "noindex")
         self.assertNotContains(self.client.get(self.url), "noindex")
 
+
 class TrackPageViewTests(TestCase):
     def setUp(self):
         self.user = make_user()
@@ -463,18 +464,21 @@ class TrackPageViewTests(TestCase):
     def test_book_page_renders_only_first_page(self):
         from core import limits
 
-        self.fill(limits.TRACKS_PAGE_SIZE + 3)
+        self.fill(limits.TRACKS_PREVIEW_COUNT + 3)
         response = self.client.get(self.book.get_absolute_url())
-        self.assertContains(response, 'class="track-card"', count=limits.TRACKS_PAGE_SIZE)
+        self.assertContains(response, 'class="track-card"', count=limits.TRACKS_PREVIEW_COUNT)
         self.assertContains(response, "data-track-more")
 
     def test_next_page_is_served_as_fragment(self):
         from core import limits
 
-        self.fill(limits.TRACKS_PAGE_SIZE + 3)
-        response = self.client.get(self.url, {"offset": limits.TRACKS_PAGE_SIZE})
-        self.assertContains(response, 'class="track-card"', count=3)
-        self.assertNotContains(response, "data-track-more")
+        self.fill(limits.TRACKS_PREVIEW_COUNT + limits.TRACKS_PAGE_SIZE + 3)
+        response = self.client.get(self.url, {"offset": limits.TRACKS_PREVIEW_COUNT})
+        self.assertContains(response, 'class="track-card"', count=limits.TRACKS_PAGE_SIZE)
+        self.assertContains(response, "data-track-more")
+        last = self.client.get(self.url, {"offset": limits.TRACKS_PREVIEW_COUNT + limits.TRACKS_PAGE_SIZE})
+        self.assertContains(last, 'class="track-card"', count=3)
+        self.assertNotContains(last, "data-track-more")
 
     def test_chapter_scope_is_respected(self):
         from core import limits

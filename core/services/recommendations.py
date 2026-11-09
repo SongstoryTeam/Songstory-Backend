@@ -92,5 +92,9 @@ def scope_page(scope: QuerySet, book: Book, user, offset: int = 0, size: int = l
     return TrackPage(groups=groups, remaining=remaining, next_offset=offset + len(track_ids))
 
 
+def first_page(scope: QuerySet, book: Book, user) -> TrackPage:
+    return scope_page(scope, book, user, size=limits.TRACKS_PREVIEW_COUNT)
+
+
 def book_tracks(book: Book):
     return Track.objects.filter(recommendations__book=book).distinct().order_by("title")

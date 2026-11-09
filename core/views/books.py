@@ -18,7 +18,7 @@ from core.services import books as book_service
 from core.services import suggestions as suggestion_service
 from core.services.book_search import get_external_book
 from core.services.normalize import clean_person_name, clean_title
-from core.services.recommendations import book_scope, book_tracks, chapter_scope, scope_page
+from core.services.recommendations import book_scope, book_tracks, chapter_scope, first_page
 
 
 ORIGINAL_VIEW_PARAM = "view"
@@ -74,7 +74,7 @@ def book_detail(request, slug: str):
         {
             "book": book,
             "chapters": chapters,
-            "page": scope_page(scope, book, request.user),
+            "page": first_page(scope, book, request.user),
             "groups_from_chapters": groups_from_chapters,
             "tracks_total": book_tracks(book).count(),
             "playlists": playlists,
@@ -104,7 +104,7 @@ def chapter_detail(request, slug: str, number: int):
         {
             "book": book,
             "chapter": chapter,
-            "page": scope_page(chapter_scope(book, chapter), book, request.user),
+            "page": first_page(chapter_scope(book, chapter), book, request.user),
             "previous_number": siblings[index - 1] if index > 0 else None,
             "next_number": siblings[index + 1] if index < len(siblings) - 1 else None,
             "comments": threaded_comments(chapter=chapter),
