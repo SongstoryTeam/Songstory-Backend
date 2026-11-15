@@ -103,3 +103,17 @@ def exclude_known(items: list[ExternalBook]) -> list[ExternalBook]:
         for item in items
         if item.external_id not in known_ids and find_duplicate(item.title, item.author, item.isbn) is None
     ]
+
+
+def genre_music_total(genre: Genre) -> int:
+    """Скільки опублікованих книг жанру вже мають музику (це те, що можна віддати пошуковику)."""
+    return Book.objects.filter(is_approved=True, genre=genre, recommendations__isnull=False).distinct().count()
+
+
+def popular_with_music(user, limit: int) -> list[Book]:
+    return list(
+        visible_books(user)
+        .with_recommendation_count()
+        .filter(recommendations_total__gt=0)
+        .order_by("-recommendations_total", "-created_at")[:limit]
+    )

@@ -6,7 +6,7 @@ from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import include, path
 from django.views.generic.base import RedirectView
 
-from core.sitemaps import BookSitemap, ChapterSitemap, StaticViewSitemap
+from core.sitemaps import BookSitemap, ChapterSitemap, GenreSitemap, PlaylistSitemap, StaticViewSitemap
 from core.views import accounts, pages
 
 handler404 = "core.views.pages.page_not_found"
@@ -14,8 +14,10 @@ handler500 = "core.views.pages.server_error"
 
 sitemaps = {
     "static": StaticViewSitemap,
+    "genres": GenreSitemap,
     "books": BookSitemap,
     "chapters": ChapterSitemap,
+    "playlists": PlaylistSitemap,
 }
 
 urlpatterns = [

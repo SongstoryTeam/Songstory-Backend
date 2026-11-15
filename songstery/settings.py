@@ -17,7 +17,7 @@ DEBUG = env("DEBUG")
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 
-SITE_NAME = env_value("SITE_NAME", "Songstery")
+SITE_NAME = env_value("SITE_NAME", "Songstory")
 SITE_DOMAIN = env_value("SITE_DOMAIN", "localhost:8000")
 SITE_URL = env_value("SITE_URL", "http://localhost:8000")
 SITE_CONTACT_EMAIL = env("SITE_CONTACT_EMAIL", default="")
@@ -188,7 +188,10 @@ SOCIALACCOUNT_PROVIDERS = {
 GOOGLE_SITE_VERIFICATION = env("GOOGLE_SITE_VERIFICATION", default="")
 GOOGLE_SITE_VERIFICATION_FILE = env_value("GOOGLE_SITE_VERIFICATION_FILE", "googlef9b06c02e8f2e7fc.html")
 
-SITE_DESCRIPTION = "Музичні рекомендації до книг і окремих розділів"
+SITE_DESCRIPTION = (
+    "Музика для книг і читання: добірки треків до улюблених книг та окремих розділів. "
+    "Слухайте, що радять читачі, і додавайте власні пісні."
+)
 PWA_THEME_COLOR = "#C4622D"
 PWA_BACKGROUND_COLOR = "#F7F3EE"
 PWA_CACHE_VERSION = "v2"

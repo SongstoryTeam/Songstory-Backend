@@ -5,18 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
-    <title>{% block title %}{{ SITE_NAME }} — музика до кожної книги{% endblock %}</title>
-    <meta name="description" content="{% block meta_description %}Знаходьте музичні рекомендації до улюблених книг і окремих розділів. Спільнота читачів підбирає треки, що передають настрій історії.{% endblock %}">
-    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <title>{% block title %}Музика для книг і читання — добірки треків до книг | {{ SITE_NAME }}{% endblock %}</title>
+    <meta name="description" content="{% block meta_description %}{{ meta_description|default:SITE_DESCRIPTION }}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow, max-image-preview:large{% endblock %}">
     <link rel="canonical" href="{% block canonical %}{{ CANONICAL_URL }}{% endblock %}">
 
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:site_name" content="{{ SITE_NAME }}">
     <meta property="og:locale" content="uk_UA">
-    <meta property="og:title" content="{% block og_title %}{{ SITE_NAME }} — музика до кожної книги{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Музичні рекомендації до книг і окремих розділів.{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}{{ SITE_NAME }} — музика для книг і читання{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ meta_description|default:SITE_DESCRIPTION }}{% endblock %}">
     <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'images/og-default.png' %}{% endblock %}">
-    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:url" content="{% block og_url %}{{ CANONICAL_URL }}{% endblock %}">
     <meta name="twitter:card" content="summary_large_image">
 
     {% block structured_data %}{% endblock %}

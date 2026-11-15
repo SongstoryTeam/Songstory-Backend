@@ -11,7 +11,7 @@ from core.services.normalize import (
     clean_title,
     clean_year,
 )
-from core import limits
+from core import genre_copy, limits
 from core.text import name_key, search_form, search_terms
 from core.utils.slugs import generate_unique_slug
 
@@ -19,6 +19,17 @@ from core.utils.slugs import generate_unique_slug
 class Genre(models.Model):
     name = models.CharField("Назва", max_length=limits.GENRE_NAME_MAX_LENGTH, unique=True)
     slug = models.SlugField(unique=True, blank=True)
+    seo_title = models.CharField(
+        "SEO-заголовок",
+        max_length=limits.TEXT_MAX_LENGTH,
+        blank=True,
+        help_text="Заголовок сторінки жанру, напр. «Музика для читання фентезі». Якщо порожньо, береться типовий.",
+    )
+    intro = models.TextField(
+        "Вступний текст",
+        blank=True,
+        help_text="Кілька речень про музику для цього жанру. Унікальний текст допомагає сторінці в пошуку.",
+    )
 
     class Meta:
         ordering = ["name"]
@@ -32,6 +43,27 @@ class Genre(models.Model):
         if not self.slug:
             self.slug = generate_unique_slug(Genre, self.name, self)
         super().save(*args, **kwargs)
+
+    def get_absolute_url(self) -> str:
+        # У режимі перегляду пропозицій правок жанр може бути «відв'язаним» і без slug.
+        return reverse("core:genre_detail", kwargs={"slug": self.slug}) if self.slug else ""
+
+    @property
+    def page_title(self) -> str:
+        """Заголовок сторінки жанру: з адмінки, інакше готовий з genre_copy, інакше типовий."""
+        if self.seo_title:
+            return self.seo_title
+        prepared = genre_copy.copy_for(self.name)
+        if prepared:
+            return f"Музика для читання {prepared.phrase}"
+        return f"Музика до книг жанру «{self.name}»"
+
+    @property
+    def intro_text(self) -> str:
+        if self.intro:
+            return self.intro
+        prepared = genre_copy.copy_for(self.name)
+        return prepared.intro if prepared else genre_copy.GENERIC_INTRO.format(name=self.name)
 
 
 class Author(models.Model):

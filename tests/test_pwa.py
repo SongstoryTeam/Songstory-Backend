@@ -40,13 +40,13 @@ class ServiceWorkerTests(TestCase):
     def test_cache_prefix_follows_site_name(self):
         with self.settings(SITE_NAME="Читацька Музика"):
             body = self.client.get(reverse("service_worker")).content.decode()
-        self.assertNotIn("songstery-", body)
+        self.assertNotIn("songstory-", body)
 
     def test_page_exposes_registration_attributes_in_production(self):
         with self.settings(DEBUG=False):
             html = self.client.get(reverse("core:home")).content.decode()
         self.assertIn(f'data-service-worker-url="{reverse("service_worker")}"', html)
-        self.assertIn('data-cache-prefix="songstery-"', html)
+        self.assertIn('data-cache-prefix="songstory-"', html)
 
     def test_registration_url_is_empty_in_debug(self):
         with self.settings(DEBUG=True):

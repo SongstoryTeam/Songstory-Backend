@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from core.forms import BookCreateForm, ChapterCountForm, CommentForm
 from core.models import AuthorVerification, Book, Comment
 from core.ratelimits import IP, rate_limited
-from core.seo import book_json_ld
+from core import seo
 from core.services import books as book_service
 from core.services import suggestions as suggestion_service
 from core.services.book_search import get_external_book
@@ -68,15 +68,20 @@ def book_detail(request, slug: str):
     chapters = book.chapters.annotate(recommendations_total=Count("recommendations"))
     scope, groups_from_chapters = book_scope(book)
     playlists = book.playlists.select_related("user").annotate(tracks_total=Count("items"))
+    page = first_page(scope, book, request.user)
+    tracks_total = book_tracks(book).count()
+    sample_tracks = [group.track for group in page.groups]
     return render(
         request,
         "core/book_detail.html",
         {
             "book": book,
             "chapters": chapters,
-            "page": first_page(scope, book, request.user),
+            "page": page,
             "groups_from_chapters": groups_from_chapters,
-            "tracks_total": book_tracks(book).count(),
+            "tracks_total": tracks_total,
+            "meta_description": seo.book_description(book, tracks_total, sample_tracks),
+            "indexable": book.is_approved and tracks_total > 0,
             "playlists": playlists,
             "comments": threaded_comments(book=book),
             "comment_form": CommentForm(),
@@ -84,7 +89,7 @@ def book_detail(request, slug: str):
             "can_manage": book.can_manage(request.user),
             "is_owner": book.is_owned_by(request.user),
             "verification_state": verification_state(request.user, book),
-            "structured_data": book_json_ld(book),
+            "structured_data": seo.book_json_ld(book, sample_tracks),
             "suggestion": suggestion,
             "showing_original": showing_original,
             "original_view_query": urlencode({ORIGINAL_VIEW_PARAM: ORIGINAL_VIEW_VALUE}),
@@ -98,13 +103,19 @@ def chapter_detail(request, slug: str, number: int):
     chapter = get_object_or_404(book.chapters, number=number)
     siblings = list(book.chapters.values_list("number", flat=True))
     index = siblings.index(chapter.number)
+    page = first_page(chapter_scope(book, chapter), book, request.user)
+    sample_tracks = [group.track for group in page.groups]
+    tracks_total = chapter.recommendations.values("track_id").distinct().count()
     return render(
         request,
         "core/chapter_detail.html",
         {
             "book": book,
             "chapter": chapter,
-            "page": first_page(chapter_scope(book, chapter), book, request.user),
+            "page": page,
+            "meta_description": seo.chapter_description(book, chapter, tracks_total, sample_tracks),
+            "indexable": book.is_approved and tracks_total > 0,
+            "structured_data": seo.chapter_json_ld(book, chapter, sample_tracks),
             "previous_number": siblings[index - 1] if index > 0 else None,
             "next_number": siblings[index + 1] if index < len(siblings) - 1 else None,
             "comments": threaded_comments(chapter=chapter),

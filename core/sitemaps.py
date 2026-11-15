@@ -1,38 +1,66 @@
 from django.contrib.sitemaps import Sitemap
+from django.db.models import Max
 from django.urls import reverse
 
-from .models import Book, Chapter
+from .models import Book, Chapter, Genre, Playlist
 
-STATIC_PRIORITY = 1.0
-BOOK_PRIORITY = 0.8
-CHAPTER_PRIORITY = 0.6
+# Google ігнорує priority та changefreq, тому віддаємо тільки те, що він справді використовує: адреси й lastmod.
+# У карту потрапляють лише сторінки, на яких є що слухати: порожні сторінки мають noindex і шкодять якості сайту.
 
 
 class StaticViewSitemap(Sitemap):
-    priority = STATIC_PRIORITY
-    changefreq = "daily"
-
     def items(self):
-        return ["core:home", "core:book_list"]
+        return ["core:home", "core:reading_music", "core:book_list"]
 
     def location(self, item):
         return reverse(item)
 
 
-class BookSitemap(Sitemap):
-    changefreq = "weekly"
-    priority = BOOK_PRIORITY
-
+class GenreSitemap(Sitemap):
     def items(self):
-        return Book.objects.filter(is_approved=True)
+        return (
+            Genre.objects.filter(books__is_approved=True, books__recommendations__isnull=False)
+            .annotate(updated=Max("books__recommendations__created_at"))
+            .order_by("slug")
+        )
 
     def lastmod(self, obj):
-        return obj.created_at
+        return obj.updated
+
+
+class BookSitemap(Sitemap):
+    def items(self):
+        return (
+            Book.objects.filter(is_approved=True, recommendations__isnull=False)
+            .annotate(updated=Max("recommendations__created_at"))
+            .order_by("pk")
+        )
+
+    def lastmod(self, obj):
+        return obj.updated
 
 
 class ChapterSitemap(Sitemap):
-    changefreq = "monthly"
-    priority = CHAPTER_PRIORITY
-
     def items(self):
-        return Chapter.objects.filter(book__is_approved=True).select_related("book")
+        return (
+            Chapter.objects.filter(book__is_approved=True, recommendations__isnull=False)
+            .select_related("book")
+            .annotate(updated=Max("recommendations__created_at"))
+            .order_by("pk")
+        )
+
+    def lastmod(self, obj):
+        return obj.updated
+
+
+class PlaylistSitemap(Sitemap):
+    def items(self):
+        return (
+            Playlist.objects.filter(book__is_approved=True, items__isnull=False)
+            .select_related("book")
+            .distinct()
+            .order_by("pk")
+        )
+
+    def lastmod(self, obj):
+        return obj.created_at

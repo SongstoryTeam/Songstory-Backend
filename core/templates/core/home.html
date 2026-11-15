@@ -1,11 +1,18 @@
 {% extends 'base.html' %}
 
+{% block title %}Музика для книг і читання — добірки треків до книг | {{ SITE_NAME }}{% endblock %}
+{% block og_title %}Музика для книг і читання — {{ SITE_NAME }}{% endblock %}
+{% block structured_data %}
+    <script type="application/ld+json">{{ structured_data|safe }}</script>
+{% endblock %}
+
 {% block content %}
     <div class="content-pad">
         <header class="page-intro">
-            <h1 class="page-intro__title">Музика до кожної книги та кожного розділу</h1>
+            <h1 class="page-intro__title">Музика для книг і читання</h1>
             <p class="page-intro__text">
                 Знайдіть книгу, послухайте, що до неї радять інші читачі, або додайте власну пісню.
+                Музика є до цілих книг і до окремих розділів.
             </p>
             {% if not user.is_authenticated %}
                 <div class="flex gap-12 mt-16 wrap">
@@ -18,7 +25,7 @@
         {% if genres %}
             <nav class="chips" aria-label="Жанри">
                 {% for genre in genres %}
-                    <a class="chip" href="{% url 'core:book_list' %}?genre={{ genre.slug }}">{{ genre.name }}</a>
+                    <a class="chip" href="{{ genre.get_absolute_url }}">{{ genre.name }}</a>
                 {% endfor %}
             </nav>
         {% endif %}
@@ -49,6 +56,20 @@
                 </section>
             {% endif %}
         {% endfor %}
+
+        <section class="seo-text mt-32" aria-labelledby="home-about">
+            <h2 class="section-title" id="home-about">Яку музику слухати під час читання</h2>
+            <p>
+                {{ SITE_NAME }} збирає музику для книг: читачі радять пісні й треки, які передають настрій
+                історії, а ви знаходите їх за назвою книги чи жанром. Окремі добірки є до розділів, щоб
+                звучання збігалося зі сценою, яку ви читаєте просто зараз.
+            </p>
+            <p>
+                Не знаєте, з чого почати? Прочитайте
+                <a href="{% url 'core:reading_music' %}">як підібрати музику для читання</a>
+                або відкрийте <a href="{% url 'core:book_list' %}?music=1">книги, до яких уже є музика</a>.
+            </p>
+        </section>
 
         {% if not shelves.0.books %}
             <div class="empty-state">

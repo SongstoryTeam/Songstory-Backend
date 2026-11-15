@@ -6,5 +6,18 @@ Disallow: /profile/
 Disallow: /search/
 Disallow: /comments/
 Disallow: /accounts/
-
+Disallow: /login/
+Disallow: /signup/
+Disallow: /settings/
+Disallow: /suggestions/
+Disallow: /offline/
+Disallow: /book/create/
+Disallow: /book/check/
+Disallow: /book/import/
+Disallow: /book/*/recommend/
+Disallow: /book/*/suggest/
+Disallow: /book/*/chapters/add/
+Disallow: /book/*/playlists/new/
+Disallow: /book/*/author/apply/
+Disallow: /book/*/tracks/
 Sitemap: {{ request.scheme }}://{{ SITE_DOMAIN }}/sitemap.xml

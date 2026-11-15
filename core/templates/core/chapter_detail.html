@@ -1,7 +1,11 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ chapter.display_title }} — {{ book.title }} — {{ SITE_NAME }}{% endblock %}
-{% block meta_robots %}{% if book.is_approved %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
+{% block title %}Музика до розділу «{{ chapter.display_title }}» — «{{ book.title }}» | {{ SITE_NAME }}{% endblock %}
+{% block og_title %}Музика до розділу «{{ chapter.display_title }}» — «{{ book.title }}»{% endblock %}
+{% block meta_robots %}{% if indexable %}index, follow, max-image-preview:large{% else %}noindex, follow{% endif %}{% endblock %}
+{% block structured_data %}
+    <script type="application/ld+json">{{ structured_data|safe }}</script>
+{% endblock %}
 
 {% block content %}
     <div class="content-pad">

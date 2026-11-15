@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% load core_extras staff_tags %}
 
-{% block title %}{{ book.title }}{% if book.author %} — {{ book.author.name }}{% endif %} — {{ SITE_NAME }}{% endblock %}
-{% block meta_description %}Музичні рекомендації до книги «{{ book.title }}»{% if book.author %} — {{ book.author.name }}{% endif %}.{% endblock %}
+{% block title %}Музика до книги «{{ book.title }}»{% if book.author %} — {{ book.author.name }}{% endif %} | {{ SITE_NAME }}{% endblock %}
 {% block og_type %}book{% endblock %}
-{% block og_title %}{{ book.title }} — {{ SITE_NAME }}{% endblock %}
+{% block og_title %}Музика до книги «{{ book.title }}»{% if book.author %} — {{ book.author.name }}{% endif %}{% endblock %}
 {% block og_image %}{% if book.cover_url %}{{ book.cover_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 {% block canonical %}{{ request.scheme }}://{{ SITE_DOMAIN }}{{ book.get_absolute_url }}{% endblock %}
-{% block meta_robots %}{% if book.is_approved %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
+{% block meta_robots %}{% if indexable %}index, follow, max-image-preview:large{% else %}noindex, follow{% endif %}{% endblock %}
 
 {% block structured_data %}
     <script type="application/ld+json">{{ structured_data|safe }}</script>
@@ -17,6 +16,10 @@
     <div class="content-pad">
         <nav class="breadcrumbs" aria-label="Навігація">
             <a href="{% url 'core:book_list' %}">Каталог</a>
+            {% if book.genre.slug %}
+                <span aria-hidden="true">/</span>
+                <a href="{{ book.genre.get_absolute_url }}">{{ book.genre.name }}</a>
+            {% endif %}
             <span aria-hidden="true">/</span>
             <span>{{ book.title }}</span>
         </nav>
@@ -43,7 +46,7 @@
                 </div>
             </div>
             <div class="book-hero__body">
-                {% if book.genre %}<span class="tag">{{ book.genre.name }}</span>{% endif %}
+                {% if book.genre.slug %}<a class="tag" href="{{ book.genre.get_absolute_url }}">{{ book.genre.name }}</a>{% elif book.genre %}<span class="tag">{{ book.genre.name }}</span>{% endif %}
                 <h1 class="book-hero__title">{{ book.title }}</h1>
                 <p class="book-hero__author">
                     {{ book.author.name|default:"Автор невідомий" }}
@@ -75,7 +78,7 @@
         </section>
 
         <section class="mt-32" aria-labelledby="book-music">
-            <h2 class="section-title" id="book-music">Музика до книги</h2>
+            <h2 class="section-title" id="book-music">Музика для читання «{{ book.title }}»</h2>
             {% if page.groups %}
                 {% include 'includes/_track_list.html' with chapter=None readonly=groups_from_chapters %}
             {% else %}

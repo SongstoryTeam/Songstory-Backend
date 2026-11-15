@@ -23,8 +23,8 @@ from .models import (
 
 ADMIN_AVATAR_PREVIEW_SIZE = 96
 
-admin.site.site_header = "Songstery"
-admin.site.site_title = "Songstery"
+admin.site.site_header = "Songstory"
+admin.site.site_title = "Songstory"
 admin.site.index_title = "Керування сайтом"
 
 

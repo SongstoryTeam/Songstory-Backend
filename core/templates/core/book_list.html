@@ -2,13 +2,15 @@
 {% load static %}
 {% load core_extras %}
 
-{% block title %}Каталог{% if result.page.number > 1 %} — сторінка {{ result.page.number }}{% endif %} — {{ SITE_NAME }}{% endblock %}
-{% block meta_robots %}{% if result.is_filtered %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
+{% block title %}Каталог книг з музикою для читання{% if result.page.number > 1 %} — сторінка {{ result.page.number }}{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block meta_description %}Каталог книг, до яких читачі радять музику: обирайте книгу за назвою чи жанром і слухайте добірки треків для читання.{% endblock %}
+{% block canonical %}{{ CANONICAL_URL }}{% if result.page.number > 1 and not result.is_filtered %}?page={{ result.page.number }}{% endif %}{% endblock %}
+{% block meta_robots %}{% if result.is_filtered %}noindex, follow{% else %}index, follow, max-image-preview:large{% endif %}{% endblock %}
 
 {% block content %}
     <div class="content-pad catalog">
         <header class="catalog__head">
-            <h1 class="page-title">Каталог</h1>
+            <h1 class="page-title">Каталог книг з музикою</h1>
             <p class="catalog__summary">{{ catalog_total }} {{ catalog_total|uk_plural:"книга,книги,книг" }} у каталозі</p>
         </header>
 

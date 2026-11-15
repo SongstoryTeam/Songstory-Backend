@@ -773,3 +773,11 @@ a.list-row:hover {
         animation-duration: 1.6s;
     }
 }
+
+/* SEO-тексти: читабельна проза на головній, у жанрах і в путівнику */
+.seo-text { color: var(--clr-text-secondary); line-height: 1.65; }
+.seo-text p, .seo-text ul { margin: 0 0 12px; }
+.seo-text ul { padding-left: 20px; }
+.seo-text h3 { margin: 16px 0 4px; font-size: 1rem; }
+.seo-text a { color: var(--clr-accent); text-decoration: underline; }
+.seo-text--article { max-width: 720px; }

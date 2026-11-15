@@ -6,6 +6,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from core import seo
 from core.forms import CommentForm, PlaylistForm, PlaylistTrackForm
 from core.models import Playlist, PlaylistItem
 from core.ratelimits import rate_limited
@@ -50,7 +51,8 @@ def playlist_detail(request, pk: int):
     playlist = get_object_or_404(Playlist.objects.select_related("book", "user"), pk=pk)
     if not playlist.book.is_visible_to(request.user):
         raise Http404
-    items = playlist.items.select_related("track")
+    items = list(playlist.items.select_related("track"))
+    tracks = [item.track for item in items]
     can_manage = playlist.can_manage(request.user)
     add_form = None
     if can_manage:
@@ -63,6 +65,9 @@ def playlist_detail(request, pk: int):
             "playlist": playlist,
             "book": playlist.book,
             "items": items,
+            "meta_description": seo.playlist_description(playlist, len(items)),
+            "indexable": playlist.book.is_approved and bool(items),
+            "structured_data": seo.playlist_json_ld(playlist, tracks),
             "can_manage": can_manage,
             "add_form": add_form,
             "comments": threaded_comments(playlist=playlist),
