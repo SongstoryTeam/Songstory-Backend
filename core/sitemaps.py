@@ -10,7 +10,7 @@ from .models import Book, Chapter, Genre, Playlist
 
 class StaticViewSitemap(Sitemap):
     def items(self):
-        return ["core:home", "core:reading_music", "core:book_list"]
+        return ["core:home", "core:reading_music", "core:book_list", "core:about", "core:privacy", "core:terms"]
 
     def location(self, item):
         return reverse(item)

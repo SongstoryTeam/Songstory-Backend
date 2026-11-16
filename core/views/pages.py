@@ -13,6 +13,18 @@ SERVICE_WORKER_SCOPE = "/"
 NO_CACHE = "no-cache"
 
 
+def privacy(request):
+    return render(request, "core/privacy.html")
+
+
+def terms(request):
+    return render(request, "core/terms.html")
+
+
+def about(request):
+    return render(request, "core/about.html")
+
+
 def robots_txt(request):
     return HttpResponse(render_to_string("robots.txt", request=request), content_type=PLAIN_TEXT_CONTENT_TYPE)
 

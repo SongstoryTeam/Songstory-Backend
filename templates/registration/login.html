@@ -33,7 +33,7 @@
                 </div>
             </form>
 
-            {% if GOOGLE_AUTH_ENABLED %}{% include 'includes/_social_auth.html' with cta_label="Увійти через Google" %}{% endif %}
+            {% if GOOGLE_AUTH_ENABLED %}{% include 'includes/_social_auth.html' with cta_label="Увійти через Google" %}{% include 'includes/_legal_consent.html' %}{% endif %}
 
             <p class="text-sm text-muted text-center mt-16">
                 Ще немає акаунту?

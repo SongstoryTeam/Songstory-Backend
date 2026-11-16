@@ -21,6 +21,7 @@ SITE_NAME = env_value("SITE_NAME", "Songstory")
 SITE_DOMAIN = env_value("SITE_DOMAIN", "localhost:8000")
 SITE_URL = env_value("SITE_URL", "http://localhost:8000")
 SITE_CONTACT_EMAIL = env("SITE_CONTACT_EMAIL", default="")
+LEGAL_UPDATED = "16 листопада 2026"
 SITE_ID = 1
 
 INSTALLED_APPS = [

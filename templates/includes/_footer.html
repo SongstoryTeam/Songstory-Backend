@@ -12,6 +12,12 @@
             <a href="{% url 'core:search' %}">Пошук</a>
         </div>
         <div class="footer-section">
+            <h3>Інформація</h3>
+            <a href="{% url 'core:about' %}">Про проєкт</a>
+            <a href="{% url 'core:privacy' %}">Політика конфіденційності</a>
+            <a href="{% url 'core:terms' %}">Умови використання</a>
+        </div>
+        <div class="footer-section">
             <h3>Акаунт</h3>
             {% if user.is_authenticated %}
                 <a href="{% url 'core:profile' %}">Профіль</a>

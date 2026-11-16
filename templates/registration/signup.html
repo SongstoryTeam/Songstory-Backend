@@ -8,6 +8,7 @@
         <div class="form-box wizard" data-wizard data-check-url="{% url 'signup_check' %}">
             <div class="form-box__title">Приєднатись до {{ SITE_NAME }}</div>
             <p class="form-box__subtitle">Створіть безкоштовний акаунт і починайте ділитись музикою</p>
+            {% include 'includes/_legal_consent.html' %}
 
             <ol class="wizard-progress" role="list" aria-label="Кроки реєстрації">
                 {% for step in form.steps_with_fields %}

@@ -7,6 +7,7 @@ def site(request) -> dict:
         "SITE_NAME": settings.SITE_NAME,
         "SITE_DOMAIN": settings.SITE_DOMAIN,
         "SITE_CONTACT_EMAIL": settings.SITE_CONTACT_EMAIL,
+        "LEGAL_UPDATED": settings.LEGAL_UPDATED,
         "CANONICAL_URL": f"{request.scheme}://{settings.SITE_DOMAIN}{request.path}",
         "GOOGLE_AUTH_ENABLED": bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET),
         "PLAUSIBLE_DOMAIN": settings.PLAUSIBLE_DOMAIN,

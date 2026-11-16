@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load core_extras %}
+
+{% block title %}{{ genre.page_title }}{% if page.number > 1 %} — сторінка {{ page.number }}{% endif %} | {{ SITE_NAME }}{% endblock %}
+{% block og_title %}{{ genre.page_title }}{% endblock %}
+{% block meta_description %}Музика для читання книг жанру «{{ genre.name }}»: {{ music_total }} {{ music_total|uk_plural:"книга,книги,книг" }} з музикою від читачів. Слухайте онлайн.{% endblock %}
+{% block canonical %}{{ CANONICAL_URL }}{% if page.number > 1 %}?page={{ page.number }}{% endif %}{% endblock %}
+{% block meta_robots %}{% if indexable %}index, follow, max-image-preview:large{% else %}noindex, follow{% endif %}{% endblock %}
+{% block structured_data %}
+    <script type="application/ld+json">{{ structured_data|safe }}</script>
+{% endblock %}
+
+{% block content %}
+    <div class="content-pad catalog">
+        <nav class="breadcrumbs" aria-label="Навігація">
+            <a href="{% url 'core:book_list' %}">Каталог</a>
+            <span aria-hidden="true">/</span>
+            <span>{{ genre.name }}</span>
+        </nav>
+
+        <header class="catalog__head">
+            <h1 class="page-title">{{ genre.page_title }}</h1>
+            <div class="seo-text">
+                <p>{{ genre.intro_text|linebreaksbr }}</p>
+                <p>
+                    Більше ідей — у <a href="{% url 'core:reading_music' %}">путівнику з музики для читання</a>.
+                </p>
+            </div>
+        </header>
+
+        {% if genres %}
+            <nav class="chips chips--scroll" aria-label="Жанри">
+                {% for item in genres %}
+                    <a class="chip" href="{{ item.get_absolute_url }}"{% if item.pk == genre.pk %} aria-current="true"{% endif %}>
+                        {{ item.name }} <span class="chip__count">{{ item.books_total }}</span>
+                    </a>
+                {% endfor %}
+            </nav>
+        {% endif %}
+
+        <p class="toolbar__count">{{ result.total }} {{ result.total|uk_plural:"книга,книги,книг" }}</p>
+
+        <div class="books-grid">
+            {% for book in page.object_list %}
+                {% include 'includes/_book_card.html' with book=book show_count=True %}
+            {% endfor %}
+        </div>
+        {% include 'includes/_pagination.html' with page_range=result.page_range %}
+    </div>
+{% endblock %}

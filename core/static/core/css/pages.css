@@ -781,3 +781,7 @@ a.list-row:hover {
 .seo-text h3 { margin: 16px 0 4px; font-size: 1rem; }
 .seo-text a { color: var(--clr-accent); text-decoration: underline; }
 .seo-text--article { max-width: 720px; }
+
+.legal-consent { margin: 8px 0 16px; font-size: var(--text-sm); color: var(--clr-muted); }
+.legal-consent a { color: var(--clr-accent); text-decoration: underline; }
+.legal-meta { font-size: var(--text-sm); color: var(--clr-muted); margin-bottom: 16px; }
