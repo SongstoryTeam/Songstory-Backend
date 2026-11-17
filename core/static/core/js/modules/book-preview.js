@@ -1,7 +1,7 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createBookPreview = (root, form) => {
-    const {createCoverChecker, createFieldFeedback, dom} = window.Songstery;
+window.Songstory.createBookPreview = (root, form) => {
+    const {createCoverChecker, createFieldFeedback, dom} = window.Songstory;
     const preview = root.querySelector('[data-preview]');
     if (!preview || !createCoverChecker || !createFieldFeedback) return null;
 

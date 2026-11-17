@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createFieldFeedback = (node, messages) => {
+window.Songstory.createFieldFeedback = (node, messages) => {
     const BASE_CLASS = 'field-feedback';
     const MODIFIERS = Object.freeze({pending: 'pending', ok: 'ok', invalid: 'error', broken: 'error'});
 

@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib import admin, messages
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -23,8 +24,8 @@ from .models import (
 
 ADMIN_AVATAR_PREVIEW_SIZE = 96
 
-admin.site.site_header = "Songstory"
-admin.site.site_title = "Songstory"
+admin.site.site_header = settings.SITE_NAME
+admin.site.site_title = settings.SITE_NAME
 admin.site.index_title = "Керування сайтом"
 
 

@@ -1,6 +1,6 @@
 (() => {
     const root = document.querySelector('[data-book-wizard]');
-    const {createWizard, createBookPreview, createBookLookup, searchApi, dom} = window.Songstery || {};
+    const {createWizard, createBookPreview, createBookLookup, searchApi, dom} = window.Songstory || {};
     if (!root || !createWizard || !createBookPreview || !createBookLookup || !searchApi) return;
 
     const FIRST_STEP = 0;

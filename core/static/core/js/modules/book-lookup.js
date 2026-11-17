@@ -1,7 +1,7 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createBookLookup = ({root, form, client, searchApi}) => {
-    const {dom} = window.Songstery;
+window.Songstory.createBookLookup = ({root, form, client, searchApi}) => {
+    const {dom} = window.Songstory;
     const {element, format} = dom;
 
     const panel = root.querySelector('[data-lookup]');

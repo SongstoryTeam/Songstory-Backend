@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createAvatarCrop = ({stage, fields, onChange}) => {
+window.Songstory.createAvatarCrop = ({stage, fields, onChange}) => {
     const KEYBOARD_PAN_PX = 8;
     const AXES = Object.freeze(['x', 'y']);
     const ARROW_DIRECTIONS = Object.freeze({

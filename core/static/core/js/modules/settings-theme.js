@@ -1,6 +1,6 @@
 (() => {
     const picker = document.querySelector('[data-theme-picker]');
-    const theme = window.Songstery?.theme;
+    const theme = window.Songstory?.theme;
     if (!picker || !theme) return;
 
     const radios = Array.from(picker.querySelectorAll('[data-theme-option]'));

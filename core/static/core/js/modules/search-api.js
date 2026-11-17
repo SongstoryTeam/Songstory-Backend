@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.searchApi = (() => {
+window.Songstory.searchApi = (() => {
     const CACHE_LIMIT = 30;
 
     class SearchError extends Error {

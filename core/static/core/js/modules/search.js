@@ -1,6 +1,6 @@
 (() => {
     const form = document.querySelector('[data-site-search]');
-    const {searchApi, searchRenderer} = window.Songstery || {};
+    const {searchApi, searchRenderer} = window.Songstory || {};
     if (!form || !searchApi || !searchRenderer) return;
 
     const input = form.querySelector('[data-site-search-input]');

@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.dom = (() => {
+window.Songstory.dom = (() => {
     function element(tag, className, text) {
         const node = document.createElement(tag);
         if (className) node.className = className;

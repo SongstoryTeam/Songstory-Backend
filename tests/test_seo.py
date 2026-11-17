@@ -27,7 +27,7 @@ def graph_types(response) -> list[str]:
     return [node["@type"] for node in json_ld_of(response)["@graph"]]
 
 
-@override_settings(CACHES=CACHES, SITE_URL="https://songstery.test", SITE_DOMAIN="songstery.test")
+@override_settings(CACHES=CACHES, SITE_URL="https://songstory.test", SITE_DOMAIN="songstory.test")
 class SeoTests(TestCase):
     def setUp(self):
         self.user = make_user()
@@ -63,7 +63,7 @@ class SeoTests(TestCase):
         self.assertIn("Яку музику слухати під час читання «Кобзар»", description)
         self.assertIn("Виконавець — Епічна тема", description)
         self.assertLessEqual(len(description), 160)
-        self.assertEqual(canonical_of(response), f"http://songstery.test{self.book.get_absolute_url()}")
+        self.assertEqual(canonical_of(response), f"http://songstory.test{self.book.get_absolute_url()}")
         types = graph_types(response)
         self.assertIn("Book", types)
         self.assertIn("BreadcrumbList", types)

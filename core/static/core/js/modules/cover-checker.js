@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createCoverChecker = ({delay, onState}) => {
+window.Songstory.createCoverChecker = ({delay, onState}) => {
     const STATES = Object.freeze({
         EMPTY: 'empty',
         INVALID: 'invalid',

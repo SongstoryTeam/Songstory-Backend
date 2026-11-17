@@ -1,7 +1,7 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createChangeTracker = (root, form) => {
-    const {dom} = window.Songstery;
+window.Songstory.createChangeTracker = (root, form) => {
+    const {dom} = window.Songstory;
     const submit = form.querySelector('[data-change-submit]');
     const status = root.querySelector('[data-change-status]');
     const resetAll = root.querySelector('[data-change-reset-all]');

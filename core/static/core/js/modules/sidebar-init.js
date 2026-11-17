@@ -1,7 +1,7 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-Songstery.sidebar = (() => {
-    const STORAGE_KEY = 'songstery:sidebar-collapsed';
+Songstory.sidebar = (() => {
+    const STORAGE_KEY = 'songstory:sidebar-collapsed';
 
     const storage = {
         get() {

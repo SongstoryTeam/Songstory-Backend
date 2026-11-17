@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createWizard = (root, hooks = {}) => {
+window.Songstory.createWizard = (root, hooks = {}) => {
     const STEP_ANNOUNCEMENT = (index, total) => `Крок ${index + 1} з ${total}`;
     const FIELD_SELECTOR = 'input, select, textarea';
 

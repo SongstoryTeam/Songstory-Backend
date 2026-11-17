@@ -1,8 +1,8 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.theme = (() => {
-    const STORAGE_KEY = 'songstery:theme';
-    const CHANGE_EVENT = 'songstery:themechange';
+window.Songstory.theme = (() => {
+    const STORAGE_KEY = 'songstory:theme';
+    const CHANGE_EVENT = 'songstory:themechange';
     const PREFERENCES = Object.freeze({LIGHT: 'light', DARK: 'dark', SYSTEM: 'system'});
 
     const root = document.documentElement;

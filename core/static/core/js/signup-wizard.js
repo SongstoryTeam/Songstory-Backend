@@ -4,7 +4,7 @@
   const PERCENT = 100;
 
   const wizard = document.querySelector('[data-wizard]');
-  const {createWizard} = window.Songstery || {};
+  const {createWizard} = window.Songstory || {};
   if (!wizard || !createWizard || !createWizard(wizard)) return;
 
   const checkTimers = new WeakMap();

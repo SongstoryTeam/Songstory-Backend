@@ -1,7 +1,7 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.createAvatarEditor = (root) => {
-    const {createCoverChecker, createFieldFeedback, createAvatarCrop, dom} = window.Songstery;
+window.Songstory.createAvatarEditor = (root) => {
+    const {createCoverChecker, createFieldFeedback, createAvatarCrop, dom} = window.Songstory;
     const stage = root.querySelector('[data-avatar-stage]');
     const feedbackNode = root.querySelector('[data-avatar-feedback]');
     const resetButton = root.querySelector('[data-avatar-reset]');

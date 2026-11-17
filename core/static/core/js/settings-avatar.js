@@ -1,6 +1,6 @@
 (() => {
     const root = document.querySelector('[data-avatar-editor]');
-    const {createAvatarEditor} = window.Songstery || {};
+    const {createAvatarEditor} = window.Songstory || {};
     if (!root || !createAvatarEditor) return;
 
     createAvatarEditor(root);

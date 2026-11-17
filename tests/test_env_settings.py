@@ -3,7 +3,7 @@ from unittest import mock
 
 from django.test import SimpleTestCase
 
-from songstery.settings import env_value
+from songstory.settings import env_value
 
 
 class EnvValueTests(SimpleTestCase):

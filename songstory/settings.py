@@ -55,8 +55,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "songstery.urls"
-WSGI_APPLICATION = "songstery.wsgi.application"
+ROOT_URLCONF = "songstory.urls"
+WSGI_APPLICATION = "songstory.wsgi.application"
 
 TEMPLATES = [
     {

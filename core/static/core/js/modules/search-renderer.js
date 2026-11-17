@@ -1,6 +1,6 @@
-window.Songstery = window.Songstery || {};
+window.Songstory = window.Songstory || {};
 
-window.Songstery.searchRenderer = (() => {
+window.Songstory.searchRenderer = (() => {
     const OPTION_PREFIX = 'site-search-option-';
     const SKELETON_ROWS = 3;
 
