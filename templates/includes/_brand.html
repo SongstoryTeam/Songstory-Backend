@@ -1,4 +1,4 @@
-<a href="{% url 'core:home' %}" class="brand">
-    <span class="brand__mark" aria-hidden="true">{{ SITE_NAME|slice:":1" }}</span>
+{% load static %}<a href="{% url 'core:home' %}" class="brand">
+    <img class="brand__mark" src="{% static BRAND_LOGO_PATH %}" alt="" width="36" height="36">
     <span class="brand__name">{{ SITE_NAME }}</span>
 </a>

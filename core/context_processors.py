@@ -23,6 +23,7 @@ def site(request) -> dict:
         ],
         "FAVICON_PATH": settings.PWA_ICON_PATH.format(size=settings.PWA_FAVICON_SIZE),
         "FAVICON_SIZES": f"{settings.PWA_FAVICON_SIZE}x{settings.PWA_FAVICON_SIZE}",
+        "BRAND_LOGO_PATH": settings.PWA_ICON_PATH.format(size=max(settings.PWA_ICON_SIZES)),
         "GOOGLE_SITE_VERIFICATION": settings.GOOGLE_SITE_VERIFICATION,
         "SEARCH_SUGGEST_MIN_LENGTH": settings.SEARCH_SUGGEST_MIN_LENGTH,
         "SEARCH_SUGGEST_DEBOUNCE_MS": settings.SEARCH_SUGGEST_DEBOUNCE_MS,
